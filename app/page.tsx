@@ -1,7 +1,8 @@
 'use client'
+import { type ReactNode } from 'react'
 import { T } from 'roku-ui'
 
-export default function Home ({ children }: { children: React.ReactNode }) {
+export default function Home ({ children }: { children: ReactNode } & any) {
   return (
     <>
       <T.H1
