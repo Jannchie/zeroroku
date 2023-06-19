@@ -24,6 +24,7 @@ export function BiliRankListItem ({ data, field }: { data: AuthorInfo, field: 'r
         className="ml-1"
         src={getBiliImageSrc(data.face, 38, 38)}
         referrerPolicy="no-referrer"
+        crossOrigin="anonymous"
         size={38}
       />
       <div className="flex-grow flex">

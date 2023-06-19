@@ -327,6 +327,7 @@ function AuthorInfoPanel ({ mid }: { mid: string }) {
           size="lg"
           src={getBiliImageSrc(authorInfo.face)}
           referrerPolicy="no-referrer"
+          crossOrigin="anonymous"
           alt={authorInfo.name}
         />
         <div>
