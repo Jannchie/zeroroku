@@ -75,8 +75,8 @@ dependencies:
     specifier: 18.2.0
     version: 18.2.0(react@18.2.0)
   roku-ui:
-    specifier: ^0.13.6
-    version: 0.13.6(react-dom@18.2.0)(react@18.2.0)
+    specifier: ^0.13.7
+    version: 0.13.7(react-dom@18.2.0)(react@18.2.0)
   tailwindcss:
     specifier: 3.3.2
     version: 3.3.2
@@ -2971,8 +2971,8 @@ packages:
     resolution: {integrity: sha512-IXgzBWvWQwE6PrDI05OvmXUIruQTcoMDzRsOd5CDvHCVLcLHMTSYvOK5Cm46kWqlV3yAbuSpBZdJ5oP5OUoStg==}
     dev: false
 
-  /roku-ui@0.13.6(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-SQz3nbLpMPEuTUnqmcoFf/WJJvUpNracsfKpXoe6uCjFRMsLQurn4NszndKNX+Myr1pXw23fYoH40ByPOVLebA==}
+  /roku-ui@0.13.7(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-wa1RVz8u3DsDVAeQpNa2RYmkEy5b5qHlvtBn5vwehHGEiVVqc6eT19mkhUDkp6589IC++hr8LODjEGNuw2Kumw==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
