@@ -5,8 +5,7 @@ import { type Comment } from './model/Comment'
 import { type AuthorInfo } from './model/AuthorInfo'
 import { type VideoInfo } from './model/VideoInfo'
 
-// const baseURL = 'https://api.zeroroku.com'
-const baseURL = 'http://localhost:8080'
+const baseURL = process.env.NODE_ENV === 'production' ? 'https://api.zeroroku.com' : 'http://localhost:8080'
 
 export type UserRank = User[]
 
