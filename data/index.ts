@@ -39,6 +39,27 @@ export interface AuthorLiveGiftHistory {
   currency: number
 }
 
+export interface LiverInfo {
+  mid: number
+  room_id: number
+  currency: number
+  count: number
+  face: string
+  name: string
+  live_status: number
+  guard_num: number
+}
+
+export function useBiliLiveRankQuery (minutes: number = 60) {
+  return useQuery<LiverInfo[]>({
+    queryKey: ['bili', 'live', 'rank', minutes],
+    queryFn: async () => {
+      const resp = await apiFetch(`/bilibili/live/rank?m=${minutes}`)
+      return await resp.json()
+    },
+  })
+}
+
 export function useBiliAuthorSearchQuery (inputText: string, n: number = 10) {
   return useQuery<SimpleAuthorData[]>({
     queryKey: ['bili', 'author', 'search', inputText],

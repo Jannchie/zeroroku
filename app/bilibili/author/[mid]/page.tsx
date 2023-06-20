@@ -17,8 +17,8 @@ export default function Page ({ params: { mid } }: {
   return (
     <div className="flex flex-col items-stretch gap-2 md:4">
       <AuthorInfoPanel mid={mid} />
-      <FansStatisticPanels mid={mid} />
       <LiveStatisticPanels mid={mid} />
+      <FansStatisticPanels mid={mid} />
       <GiftBarChartPanel mid={mid} />
       <FansAmountLineChart mid={mid} />
     </div>
@@ -124,15 +124,16 @@ function FansAmountLineChart ({ mid }: { mid: string }) {
   const { data: historyData } = useBiliAuthorHistoryQuery(mid)
   const [start] = useState(0)
 
+  const sortedHistoryData = historyData?.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   const margin = 18
   const timeFormater = useMemo(() => d3.timeFormat('%Y-%m-%d'), [])
   const end = start + 7
   const offset = 0
-  const [currentData, setCurrentData] = useState(historyData?.[historyData.length - 1])
-  const currentSlice = useMemo(() => historyData?.reverse().slice(start, end) ?? [], [end, historyData, start])
+  const [currentData, setCurrentData] = useState(sortedHistoryData?.[sortedHistoryData.length - 1])
+  const currentSlice = useMemo(() => sortedHistoryData?.reverse().slice(start, end) ?? [], [end, sortedHistoryData, start])
   useEffect(() => {
     const svg = svgRef.current
-    if (!historyData || !svg) return
+    if (!sortedHistoryData || !svg) return
     const width = svg.clientWidth ?? 400
     const height = svg.clientHeight ?? 300
     const x = d3.scaleBand().domain(currentSlice.map((d) => d.created_at).reverse()).range([margin, width - margin * 2]).paddingOuter(0).paddingInner(0.2)
@@ -181,8 +182,8 @@ function FansAmountLineChart ({ mid }: { mid: string }) {
     return () => {
       d3.select(svg).on('mousemove', null)
     }
-  }, [end, historyData, start, timeFormater, currentSlice])
-  if (!historyData) return null
+  }, [end, sortedHistoryData, start, timeFormater, currentSlice])
+  if (!sortedHistoryData) return null
   const numberFormater = new Intl.NumberFormat('zh-CN', {
     compactDisplay: 'short',
   })
@@ -266,10 +267,15 @@ function FansStatisticPanels ({ mid }: { mid: string }) {
     },
   ]
   return (
-    <StatisticPanels
-      stats={baseStats}
-      formater={numberFormater}
-    />
+    <>
+      <StatisticPanels
+        stats={baseStats}
+        formater={numberFormater}
+      />
+      <div className="text-sm text-[hsl(var(--r-frontground-3))]">
+        { `更新时间 ${new Date(authorInfo.stats.updated_at).toLocaleString()}` }
+      </div>
+    </>
   )
 }
 

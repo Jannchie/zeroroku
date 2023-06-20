@@ -8,7 +8,7 @@ import { toSvg } from 'jdenticon'
 import { TablerNotebook } from '@roku-ui/icons-tabler'
 export function RightPanels () {
   const pathname = usePathname()
-  const { data: comments } = useCommentQuery({
+  const { data: comments, isFetched } = useCommentQuery({
     page: 1,
     pageSize: 10,
     path: pathname,
@@ -43,6 +43,20 @@ export function RightPanels () {
         padding
         className="border"
       >
+        {
+          !isFetched && (
+            <div className="text-gray-500 text-xs">
+              加载中...
+            </div>
+          )
+        }
+        {
+          (!comments || comments?.length === 0) && isFetched && (
+            <div className="text-gray-500 text-xs">
+              暂无评论
+            </div>
+          )
+        }
         {
           comments?.filter(c => !c.parent_id).map((c) => {
             const svgStr = toSvg(c.user.mail, 24, avatarConfig)

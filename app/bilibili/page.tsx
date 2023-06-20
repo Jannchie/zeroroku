@@ -89,6 +89,24 @@ export default function Page () {
       <Panel
         padding
         border
+        className="flex gap-2"
+      >
+        <Btn
+          as={Link}
+          href="/bilibili/rank"
+        >
+          粉丝数相关排行榜
+        </Btn>
+        <Btn
+          as={Link}
+          href="/bilibili/live/rank"
+        >
+          直播相关排行榜
+        </Btn>
+      </Panel>
+      <Panel
+        padding
+        border
       >
         <div className="mt-2">
           <div className="text-sm">
