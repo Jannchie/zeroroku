@@ -1,8 +1,9 @@
 'use client'
 import { TablerMessageCircleCheck, TablerMessageCircleX } from '@roku-ui/icons-tabler'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { createContext, useContext, useEffect } from 'react'
 import { RokuProvider, useTrueTheme, defaults, Notice, Icon, push } from 'roku-ui'
+import { useLocalStorage } from './useLocalStorage'
 
 defaults.border = true
 
@@ -12,6 +13,19 @@ const ThemeSettings = () => {
     document.cookie = `roku.theme=${trueTheme}; path=/`
   }, [trueTheme])
   return <></>
+}
+
+const SettingsContext = createContext({
+  threeDimensionalTransform: false,
+  setThreeDimensionalTransform: (_value: boolean) => {},
+})
+
+export const useSettings = () => {
+  const { threeDimensionalTransform, setThreeDimensionalTransform } = useContext(SettingsContext)
+  return {
+    threeDimensionalTransform,
+    setThreeDimensionalTransform,
+  }
 }
 
 export function pushSuccessNotice (content: string = '操作成功') {
@@ -66,14 +80,27 @@ export function pushErrorNotice (content: string = '操作成功') {
 
 export function Provider ({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient()
+  const [threeDimensionalTransform = false, setThreeDimensionalTransform] = useLocalStorage<boolean>({
+    key: 'zeroroku.threeDimensionalTransform',
+    defaultValue: false,
+  })
+  useEffect(() => {
+  }, [threeDimensionalTransform])
   return (
-    <QueryClientProvider client={queryClient}>
-      <RokuProvider>
-        <ThemeSettings />
-        <div className="pt-8 max-w-[600px] m-auto">
-          { children }
-        </div>
-      </RokuProvider>
-    </QueryClientProvider>
+    <SettingsContext.Provider
+      value={{
+        threeDimensionalTransform,
+        setThreeDimensionalTransform,
+      }}
+    >
+      <QueryClientProvider client={queryClient}>
+        <RokuProvider>
+          <ThemeSettings />
+          <div className="pt-8 max-w-[600px] m-auto">
+            { children }
+          </div>
+        </RokuProvider>
+      </QueryClientProvider>
+    </SettingsContext.Provider>
   )
 }

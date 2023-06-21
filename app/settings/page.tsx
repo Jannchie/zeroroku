@@ -1,7 +1,10 @@
 'use client'
-import { Flex, Panel, T, ThemeToggle } from 'roku-ui'
+import { Btn, Flex, Panel, T, ThemeToggle } from 'roku-ui'
+import { useSettings } from '../Provider'
+import { TablerPerspective, TablerPerspectiveOff } from '@roku-ui/icons-tabler'
 
 export default function Settings () {
+  const { threeDimensionalTransform, setThreeDimensionalTransform } = useSettings()
   return (
     <Flex
       col
@@ -13,10 +16,41 @@ export default function Settings () {
         className="border"
       >
         <div>
-          <div>
-            主题
+          <div className="py-2">
+            <div className="pb-1">
+              主题
+            </div>
+            <ThemeToggle />
           </div>
-          <ThemeToggle />
+          <div className="py-2">
+            <div className="pb-1">
+              3D 变换
+            </div>
+            <Btn
+              className="w-12"
+              color={threeDimensionalTransform ? 'primary' : 'default'}
+              onClick={() => {
+                setThreeDimensionalTransform(!threeDimensionalTransform)
+              }}
+            >
+              {
+                threeDimensionalTransform
+                  ? (
+                    <TablerPerspective
+                      height="1em"
+                      className="mr-2"
+                    />
+                  )
+                  : (
+                    <TablerPerspectiveOff
+                      height="1em"
+                      className="mr-2"
+                    />
+                  )
+              }
+              { threeDimensionalTransform ? '开启' : '关闭' }
+            </Btn>
+          </div>
         </div>
       </Panel>
     </Flex>

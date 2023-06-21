@@ -57,6 +57,30 @@ export interface PostCommentBody {
   path: string
 }
 
+export interface SponsorData {
+  order_id: string
+  user_id: string
+  user_name: string
+  user_avatar: string
+  order_price: number
+  order_fee: number
+  create_date: string
+}
+
+export function useSponsorQuery() {
+  return useQuery<SponsorData[]>({
+    queryKey: ['sponsor'],
+    queryFn: async () => {
+      const resp = await apiFetch('/sponsor')
+      if (resp.status !== 200) {
+        pushErrorNotice('获取信息失败')
+        throw new Error('获取信息失败')
+      }
+      return await resp.json()
+    },
+  })
+}
+
 export function useSendCommentMutation () {
   const queryClient = useQueryClient()
   return useMutation(async (body: PostCommentBody) => {

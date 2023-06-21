@@ -3,7 +3,7 @@ import { Inter, My_Soul } from 'next/font/google'
 import { cookies } from 'next/headers'
 import { Provider } from './Provider'
 import { Nav } from './Nav'
-import { RightPanels } from './Comment'
+import { RightPanels, LeftPanels } from './Comment'
 import { LoginBtn } from './LoginBtn'
 import Script from 'next/script'
 
@@ -66,6 +66,9 @@ export default function RootLayout ({
       <body className={inter.className}>
         <Provider>
           <div className="flex flex-col xl:flex-row h-full relative gap-4">
+            <div className="relative">
+              <LeftPanels />
+            </div>
             <div className="flex-grow">
               <div className={`${fonts.className} text-center text-4xl`}>
                 ZeroRoku

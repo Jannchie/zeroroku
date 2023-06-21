@@ -1,12 +1,14 @@
 'use client'
 import { Avatar, Panel, T, Icon, Textarea, Btn } from 'roku-ui'
 import { usePathname } from 'next/navigation'
-import { useCommentQuery, useSendCommentMutation } from '@/data'
+import { useCommentQuery, useSendCommentMutation, useSponsorQuery } from '@/data'
 import { FriendlyLink } from './FriendlyLink'
 import Image from 'next/image'
 import { toSvg } from 'jdenticon'
 import { TablerNotebook, TablerSend } from '@roku-ui/icons-tabler'
 import { useCallback, useEffect, useState } from 'react'
+import { useSettings } from './Provider'
+import Link from 'next/link'
 
 function CommentTextarea () {
   const [inputValue, setInputValue] = useState('')
@@ -44,6 +46,90 @@ function CommentTextarea () {
   )
 }
 
+const useMediaQuery = (query: string) => {
+  const [matches, setMatches] = useState(false)
+  useEffect(() => {
+    const media = window.matchMedia(query)
+    if (media.matches !== matches) {
+      setMatches(media.matches)
+    }
+    const listener = () => {
+      setMatches(media.matches)
+    }
+    media.addEventListener('change', listener)
+    return () => { media.removeEventListener('change', listener) }
+  }, [matches, query])
+  return matches
+}
+
+export function LeftPanels () {
+  const isXL = useMediaQuery('(min-width: 1280px)')
+  const { threeDimensionalTransform } = useSettings()
+  const { data: sponsors } = useSponsorQuery()
+  const moneyFormater = Intl.NumberFormat('zh-CN', {
+    style: 'currency',
+    currency: 'CNY',
+  })
+  return (
+    <div
+      className="w-full xl:w-96 xl:max-h-screen overflow-hidden h-full top-4 xl:fixed xl:translate-x-[-384px] flex flex-col gap-4"
+      style={threeDimensionalTransform && isXL
+        ? {
+          transition: '',
+          transform: 'perspective(600px) translateX(-384px) rotateY(1deg)',
+          transformStyle: 'preserve-3d',
+          backfaceVisibility: 'hidden',
+        }
+        : {}}
+    >
+      <T.H2 className="flex gap-1 items-center">
+        <Icon size={30}>
+          <TablerNotebook />
+        </Icon>
+        赞助者
+      </T.H2>
+      <div className="text-[hsl(var(--r-frontground-3))] text-sm">
+        他们无私地给予了支持，没有要求任何回报。
+        <Link
+          passHref
+          className="text-[hsl(var(--r-frontground-3))] underline"
+          href="https://azz.ee/jannchie"
+        >
+          加入他们
+        </Link>
+        。
+      </div>
+      {
+        sponsors?.map((sponsor) => {
+          return (
+            <div
+              key={sponsor.order_id}
+              className="flex items-center gap-2 opacity-50"
+            >
+              <Avatar
+                src={sponsor.user_avatar}
+                size={24}
+                className="flex-shrink-0"
+              />
+              <div className="flex flex-col flex-grow">
+                <div className="flex items-center gap-1">
+                  <T.H4 className="!font-normal">{ sponsor.user_name }</T.H4>
+                </div>
+                <div className="text-[hsl(var(--r-frontground-3))] text-xs">
+                  { sponsor.create_date }
+                </div>
+              </div>
+              <T.P className="text-[hsl(var(--r-frontground-3))]">
+                { moneyFormater.format(sponsor.order_price / 100) }
+              </T.P>
+            </div>
+          )
+        })
+      }
+    </div>
+  )
+}
+
 export function RightPanels () {
   const pathname = usePathname()
   const { data: comments, isFetched } = useCommentQuery({
@@ -60,6 +146,8 @@ export function RightPanels () {
       clearInterval(timer)
     }
   }, [])
+  const isXL = useMediaQuery('(min-width: 1280px)')
+  const { threeDimensionalTransform } = useSettings()
   if (pathname === '/login' || pathname === '/settings') return null
   const isBilibili = pathname.startsWith('/bilibili')
   const avatarConfig = {
@@ -73,11 +161,13 @@ export function RightPanels () {
   return (
     <div
       className="w-full xl:w-96 xl:max-h-screen overflow-auto h-full top-4 xl:fixed flex flex-col gap-4"
-      // style={{
-      //   transform: 'perspective(600px) rotateY(-3deg)',
-      //   transformStyle: 'preserve-3d',
-      //   backfaceVisibility: 'hidden',
-      // }}
+      style={threeDimensionalTransform && isXL
+        ? {
+          transform: 'perspective(600px) rotateY(-3deg)',
+          transformStyle: 'preserve-3d',
+          backfaceVisibility: 'hidden',
+        }
+        : {}}
     >
       <T.H2 className="flex gap-1 items-center">
         <Icon size={30}>
