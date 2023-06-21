@@ -72,7 +72,7 @@ export function RightPanels () {
   }
   return (
     <div
-      className="w-full xl:w-96 max-h-screen overflow-auto h-full top-4 xl:fixed flex flex-col gap-4"
+      className="w-full xl:w-96 xl:max-h-screen overflow-auto h-full top-4 xl:fixed flex flex-col gap-4"
       // style={{
       //   transform: 'perspective(600px) rotateY(-3deg)',
       //   transformStyle: 'preserve-3d',
