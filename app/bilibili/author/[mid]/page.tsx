@@ -125,7 +125,8 @@ function FansAmountLineChart ({ mid }: { mid: string }) {
   const [start] = useState(0)
 
   const sortedHistoryData = historyData?.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-  const margin = 18
+  const marginX = 0
+  const marginY = 18
   const timeFormater = useMemo(() => d3.timeFormat('%Y-%m-%d'), [])
   const end = start + 7
   const offset = 0
@@ -136,10 +137,10 @@ function FansAmountLineChart ({ mid }: { mid: string }) {
     if (!sortedHistoryData || !svg) return
     const width = svg.clientWidth ?? 400
     const height = svg.clientHeight ?? 300
-    const x = d3.scaleBand().domain(currentSlice.map((d) => d.created_at).reverse()).range([margin, width - margin * 2]).paddingOuter(0).paddingInner(0.2)
+    const x = d3.scaleBand().domain(currentSlice.map((d) => d.created_at).reverse()).range([marginX, width - marginX * 2]).paddingOuter(0).paddingInner(0.2)
     const y = d3.scaleLinear()
       .domain([Math.min(...currentSlice.map((d) => d.fans)), Math.max(...currentSlice.map((d) => d.fans))])
-      .range([margin + offset, height - margin * 2])
+      .range([marginY + offset, height - marginY * 2])
 
     d3
       .select(svg)
@@ -150,7 +151,7 @@ function FansAmountLineChart ({ mid }: { mid: string }) {
           .attr('rx', 4)
           .attr('fill', 'hsl(var(--r-primary-2))')
           .attr('x', (d) => x(d.created_at) ?? 0)
-          .attr('y', (d) => height - y(d.fans) - margin + offset)
+          .attr('y', (d) => height - y(d.fans) - marginY + offset)
           .attr('width', x.bandwidth())
           .attr('height', (d) => y(d.fans) - offset).attr('class', 'cursor-pointer'),
       )
@@ -162,7 +163,7 @@ function FansAmountLineChart ({ mid }: { mid: string }) {
         .append('g')
         .attr('class', 'x-axis')
         .append('g')
-        .attr('transform', `translate(0,${height - margin})`)
+        .attr('transform', `translate(0,${height - marginY})`)
         .call(d3.axisBottom(x).tickFormat(d => timeFormater(new Date(d))))
     }
 
@@ -173,7 +174,7 @@ function FansAmountLineChart ({ mid }: { mid: string }) {
     d3.select(svg).on('mousemove', function (event) {
       event.preventDefault()
       const [px] = d3.pointer(event)
-      const index = Math.floor((px - margin) / (x.step()))
+      const index = Math.floor((px - marginX) / (x.step()))
       if (index < 0 || index >= currentSlice.length) return
       const data = currentSlice[currentSlice.length - index - 1]
       setCurrentData(data)

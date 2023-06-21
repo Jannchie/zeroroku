@@ -5,6 +5,7 @@ import { Provider } from './Provider'
 import { Nav } from './Nav'
 import { RightPanels } from './Comment'
 import { LoginBtn } from './LoginBtn'
+import Script from 'next/script'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -45,16 +46,32 @@ export default function RootLayout ({
           rel="icon"
           href="/favicon.ico"
         />
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-BKT69PTJLE"
+          strategy="afterInteractive"
+        />
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
+        >
+          { `
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){window.dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'G-BKT69PTJLE');
+        ` }
+        </Script>
       </head>
       <body className={inter.className}>
         <Provider>
           <div className="flex flex-col xl:flex-row h-full relative gap-4">
             <div className="flex-grow">
-              <LoginBtn />
               <div className={`${fonts.className} text-center text-4xl`}>
                 ZeroRoku
               </div>
               <Nav />
+              <LoginBtn />
               { children }
             </div>
             <div className="relative">

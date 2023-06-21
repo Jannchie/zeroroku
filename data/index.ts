@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { type Comment } from './model/Comment'
 import { type AuthorInfo } from './model/AuthorInfo'
 import { type VideoInfo } from './model/VideoInfo'
+import { pushErrorNotice, pushSuccessNotice } from '@/app/Provider'
 
 const baseURL = process.env.NODE_ENV === 'production' ? 'https://api.zeroroku.com' : 'http://localhost:8080'
 
@@ -50,11 +51,37 @@ export interface LiverInfo {
   guard_num: number
 }
 
+export interface PostCommentBody {
+  content: string
+  parent_id?: number
+  path: string
+}
+
+export function useSendCommentMutation () {
+  const queryClient = useQueryClient()
+  return useMutation(async (body: PostCommentBody) => {
+    const resp = await apiFetch('/comment', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+    if (resp.status !== 200) {
+      pushErrorNotice('添加观测记录失败')
+      throw new Error('添加观测记录失败')
+    }
+    void queryClient.invalidateQueries(['comment', body.path])
+    pushSuccessNotice('添加观测记录成功')
+  })
+}
+
 export function useBiliLiveRankQuery (minutes: number = 60) {
   return useQuery<LiverInfo[]>({
     queryKey: ['bili', 'live', 'rank', minutes],
     queryFn: async () => {
       const resp = await apiFetch(`/bilibili/live/rank?m=${minutes}`)
+      if (resp.status !== 200) {
+        pushErrorNotice('获取信息失败')
+        throw new Error('获取信息失败')
+      }
       return await resp.json()
     },
   })
@@ -65,6 +92,10 @@ export function useBiliAuthorSearchQuery (inputText: string, n: number = 10) {
     queryKey: ['bili', 'author', 'search', inputText],
     queryFn: async () => {
       const resp = await apiFetch(`/bilibili/author/search?txt=${inputText}&n=${n}`)
+      if (resp.status !== 200) {
+        pushErrorNotice('获取信息失败')
+        throw new Error('获取信息失败')
+      }
       return await resp.json()
     },
     enabled: inputText.length > 0,
@@ -87,7 +118,7 @@ export function useBiliAuthorLiveGiftQuery (mid: string) {
     queryFn: async () => {
       const resp = await apiFetch(`/bilibili/author/live?mid=${mid}`)
       if (resp.status !== 200) {
-        return null
+        throw new Error('获取信息失败')
       }
       return await resp.json()
     },
@@ -99,6 +130,10 @@ export function useBiliAuthorLatestVideoQuery (mid: string) {
     queryKey: ['bili', 'author', 'latest-video', mid],
     queryFn: async () => {
       const resp = await apiFetch(`/bilibili/author/latest-video?mid=${mid}`)
+      if (resp.status !== 200) {
+        pushErrorNotice('获取信息失败')
+        throw new Error('获取信息失败')
+      }
       return await resp.json()
     },
   })
@@ -109,6 +144,10 @@ export function useBiliAuthorFamousFansQuery (mid: string) {
     queryKey: ['bili', 'author', 'famous-fans', mid],
     queryFn: async () => {
       const resp = await apiFetch(`/bilibili/author/famous-fans?mid=${mid}`)
+      if (resp.status !== 200) {
+        pushErrorNotice('获取信息失败')
+        return
+      }
       return await resp.json()
     },
   })
@@ -119,6 +158,10 @@ export function useBiliAuthorInfoQuery (mid: string) {
     queryKey: ['bili', 'author', mid],
     queryFn: async () => {
       const resp = await apiFetch(`/bilibili/author?mid=${mid}`)
+      if (resp.status !== 200) {
+        pushErrorNotice('获取信息失败')
+        return
+      }
       return await resp.json()
     },
   })

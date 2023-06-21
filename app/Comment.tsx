@@ -1,11 +1,49 @@
 'use client'
-import { Avatar, Panel, T, Icon } from 'roku-ui'
+import { Avatar, Panel, T, Icon, Textarea, Btn } from 'roku-ui'
 import { usePathname } from 'next/navigation'
-import { useCommentQuery } from '@/data'
+import { useCommentQuery, useSendCommentMutation } from '@/data'
 import { FriendlyLink } from './FriendlyLink'
 import Image from 'next/image'
 import { toSvg } from 'jdenticon'
-import { TablerNotebook } from '@roku-ui/icons-tabler'
+import { TablerNotebook, TablerSend } from '@roku-ui/icons-tabler'
+import { useCallback, useEffect, useState } from 'react'
+
+function CommentTextarea () {
+  const [inputValue, setInputValue] = useState('')
+  const sendCommentMutation = useSendCommentMutation()
+  const pathname = usePathname()
+  const onSendCallback = useCallback(() => {
+    sendCommentMutation.mutate({
+      content: inputValue,
+      path: pathname,
+    })
+    setInputValue('')
+  }, [inputValue, pathname, sendCommentMutation])
+  return (
+    <div className="flex gap-1">
+      <Textarea
+        className="flex-grow"
+        placeholder="写下你的观测记录..."
+        maxHeight={16 + 20 * 3}
+        value={inputValue}
+        setValue={setInputValue}
+        onKeyDown={(e) => {
+          // ctl + enter
+          if (e.ctrlKey && e.key === 'Enter') {
+            onSendCallback()
+          }
+        }}
+      />
+      <Btn
+        icon
+        onClick={onSendCallback}
+      >
+        <TablerSend />
+      </Btn>
+    </div>
+  )
+}
+
 export function RightPanels () {
   const pathname = usePathname()
   const { data: comments, isFetched } = useCommentQuery({
@@ -13,6 +51,15 @@ export function RightPanels () {
     pageSize: 10,
     path: pathname,
   })
+  const [now, setNow] = useState(new Date().getTime())
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date().getTime())
+    }, 1000)
+    return () => {
+      clearInterval(timer)
+    }
+  }, [])
   if (pathname === '/login' || pathname === '/settings') return null
   const isBilibili = pathname.startsWith('/bilibili')
   const avatarConfig = {
@@ -44,6 +91,9 @@ export function RightPanels () {
         className="border"
       >
         {
+          <CommentTextarea />
+        }
+        {
           !isFetched && (
             <div className="text-gray-500 text-xs">
               加载中...
@@ -53,7 +103,7 @@ export function RightPanels () {
         {
           (!comments || comments?.length === 0) && isFetched && (
             <div className="text-gray-500 text-xs">
-              暂无评论
+              暂无观测记录
             </div>
           )
         }
@@ -94,7 +144,7 @@ export function RightPanels () {
                       </span>
                     </div>
                     <span className="text-gray-500 px-2">
-                      { getDurationFormated(new Date(c.created_at).getTime() - new Date().getTime()) }
+                      { getDurationFormated(new Date(c.created_at).getTime() - now) }
                     </span>
                   </div>
                   <div className="text-base">
@@ -142,12 +192,11 @@ function getDurationFormated (milliseconds = 0) {
   minutes %= 60
   const days = Math.floor(hours / 24)
   hours %= 24
-
   let result = ''
   if (days) result += `${days}天`
   else if (hours) result += `${hours}小时`
   else if (minutes) result += `${minutes}分`
   else if (seconds) result += `${seconds}秒`
-  else result = '刚刚'
+  else return '刚刚'
   return result + '前'
 }
