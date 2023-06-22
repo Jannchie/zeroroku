@@ -1,5 +1,5 @@
 'use client'
-import { Avatar, Panel, T, Icon, Btn } from 'roku-ui'
+import { Avatar, Panel, T, Icon, Btn, Tag, Flex } from 'roku-ui'
 import { usePathname } from 'next/navigation'
 import { useCommentAttituteMutation, useCommentQuery, useDeleteCommentMutation, useSelfQuery } from '@/data'
 import { FriendlyLink } from './FriendlyLink'
@@ -72,6 +72,33 @@ export function RightPanels () {
       grayscale: [0.3, 0.9],
     },
   }
+  function parseContent (text: string): Array<string | number> {
+    const regex = /(uid[:：])\s*(\d+)/gi
+    const result: Array<string | number> = []
+    let lastEnd = 0
+    let match
+
+    while ((match = regex.exec(text)) !== null) {
+      // Add the text before uid:
+      if (lastEnd !== match.index) {
+        result.push(text.slice(lastEnd, match.index).trim())
+      }
+
+      // Add the uid number
+      result.push(Number(match[2]))
+
+      // Update the end of the last match
+      lastEnd = regex.lastIndex
+    }
+
+    // Add remaining text after the last match
+    if (lastEnd < text.length) {
+      result.push(text.slice(lastEnd).trim())
+    }
+
+    return result
+  }
+
   if (pathname === '/login' || pathname === '/settings') return null
   return (
     <div
@@ -147,7 +174,26 @@ export function RightPanels () {
                   </span>
                 </div>
                 <div className="text-base">
-                  { c.content }
+                  { (
+                    <Flex
+                      align="center"
+                      className="flex-wrap"
+                    >
+                      { parseContent(c.content).map(d => {
+                        return typeof d === 'string'
+                          ? <span>{ d }</span>
+                          : (
+                            <Tag color="primary">
+                              { ' ' }
+                              UID:
+                              { ' ' }
+                              { d }
+                            </Tag>
+                          )
+                      }) }
+                    </Flex>
+                  )
+                  }
                 </div>
 
                 <div className="flex justify-between">
