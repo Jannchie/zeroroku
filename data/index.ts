@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type User } from './model/User'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { type Comment } from './model/Comment'
 import { type AuthorInfo } from './model/AuthorInfo'
 import { type VideoInfo } from './model/VideoInfo'
@@ -15,6 +15,7 @@ export interface AuthorHistoryData {
   mid: number
   fans: number
   created_at: string
+  date: string
 }
 interface LoginRequest {
   account: string
@@ -67,7 +68,7 @@ export interface SponsorData {
   create_date: string
 }
 
-export function useSponsorQuery() {
+export function useSponsorQuery () {
   return useQuery<SponsorData[]>({
     queryKey: ['sponsor'],
     queryFn: async () => {
@@ -94,6 +95,39 @@ export function useSendCommentMutation () {
     }
     void queryClient.invalidateQueries(['comment', body.path])
     pushSuccessNotice('添加观测记录成功')
+  })
+}
+
+export function useCommentAttituteMutation () {
+  const queryClient = useQueryClient()
+  const pathname = usePathname()
+  return useMutation(async ({ id, attitude }: { id: number, attitude: number }) => {
+    const resp = await apiFetch('/comment/attitude', {
+      method: 'POST',
+      body: JSON.stringify({ attitude, id }),
+    })
+    if (resp.status !== 200) {
+      pushErrorNotice('操作失败')
+      throw new Error('操作失败')
+    }
+    void queryClient.invalidateQueries(['comment', pathname])
+    pushSuccessNotice('操作成功')
+  })
+}
+
+export function useDeleteCommentMutation () {
+  const queryClient = useQueryClient()
+  const pathname = usePathname()
+  return useMutation(async (id: number) => {
+    const resp = await apiFetch(`/comment/${id}`, {
+      method: 'DELETE',
+    })
+    if (resp.status !== 200) {
+      pushErrorNotice('删除观测记录失败')
+      throw new Error('删除观测记录失败')
+    }
+    void queryClient.invalidateQueries(['comment', pathname])
+    pushSuccessNotice('删除观测记录成功')
   })
 }
 

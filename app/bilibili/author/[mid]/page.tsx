@@ -124,7 +124,7 @@ function FansAmountLineChart ({ mid }: { mid: string }) {
   const { data: historyData } = useBiliAuthorHistoryQuery(mid)
   const [start] = useState(0)
 
-  const sortedHistoryData = historyData?.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  const sortedHistoryData = historyData?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   const marginX = 0
   const marginY = 18
   const timeFormater = useMemo(() => d3.timeFormat('%Y-%m-%d'), [])
@@ -137,7 +137,7 @@ function FansAmountLineChart ({ mid }: { mid: string }) {
     if (!sortedHistoryData || !svg) return
     const width = svg.clientWidth ?? 400
     const height = svg.clientHeight ?? 300
-    const x = d3.scaleBand().domain(currentSlice.map((d) => d.created_at).reverse()).range([marginX, width - marginX * 2]).paddingOuter(0).paddingInner(0.2)
+    const x = d3.scaleBand().domain(currentSlice.map((d) => d.date).reverse()).range([marginX, width - marginX * 2]).paddingOuter(0).paddingInner(0.2)
     const y = d3.scaleLinear()
       .domain([Math.min(...currentSlice.map((d) => d.fans)), Math.max(...currentSlice.map((d) => d.fans))])
       .range([marginY + offset, height - marginY * 2])
@@ -150,7 +150,7 @@ function FansAmountLineChart ({ mid }: { mid: string }) {
         enter => enter.append('rect')
           .attr('rx', 4)
           .attr('fill', 'hsl(var(--r-primary-2))')
-          .attr('x', (d) => x(d.created_at) ?? 0)
+          .attr('x', (d) => x(d.date) ?? 0)
           .attr('y', (d) => height - y(d.fans) - marginY + offset)
           .attr('width', x.bandwidth())
           .attr('height', (d) => y(d.fans) - offset).attr('class', 'cursor-pointer'),

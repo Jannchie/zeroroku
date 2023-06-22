@@ -50,6 +50,7 @@ export default function Settings () {
               }
               { threeDimensionalTransform ? '开启' : '关闭' }
             </Btn>
+            <div className="text-[hsl(var(--r-frontground-3))] text-sm">Windows 下，并没有抗锯齿机制，所以会变得模糊，慎用。</div>
           </div>
         </div>
       </Panel>
