@@ -5,7 +5,7 @@ import { useCommentQuery, useSendCommentMutation, useSponsorQuery } from '@/data
 import { FriendlyLink } from './FriendlyLink'
 import Image from 'next/image'
 import { toSvg } from 'jdenticon'
-import { TablerNotebook, TablerSend } from '@roku-ui/icons-tabler'
+import { TablerNotebook, TablerPigMoney, TablerSend } from '@roku-ui/icons-tabler'
 import { useCallback, useEffect, useState } from 'react'
 import { useSettings } from './Provider'
 import Link from 'next/link'
@@ -72,19 +72,23 @@ export function LeftPanels () {
   })
   return (
     <div
-      className="w-full xl:w-96 xl:max-h-screen overflow-hidden h-full top-4 xl:fixed xl:translate-x-[-384px] flex flex-col gap-4"
+      className="w-full xl:w-96 xl:max-h-screen overflow-hidden h-full top-4 xl:fixed xl:translate-x-[-384px] flex flex-col gap-4 transition-transform"
       style={threeDimensionalTransform && isXL
         ? {
-          transition: '',
-          transform: 'perspective(600px) translateX(-384px) rotateY(1deg)',
+          fontSmooth: 'subpixel',
+          WebkitFontSmoothing: 'subpixel-antialiased',
+          transform: 'perspective(600px) translateZ(0) translateX(-384px) rotateY(1deg)',
           transformStyle: 'preserve-3d',
           backfaceVisibility: 'hidden',
+          WebkitBackfaceVisibility: 'hidden',
+          willChange: 'transform',
+          WebkitTransformStyle: 'preserve-3d',
         }
         : {}}
     >
       <T.H2 className="flex gap-1 items-center">
         <Icon size={30}>
-          <TablerNotebook />
+          <TablerPigMoney />
         </Icon>
         赞助者
       </T.H2>
@@ -99,33 +103,37 @@ export function LeftPanels () {
         </Link>
         。
       </div>
-      {
-        sponsors?.map((sponsor) => {
-          return (
-            <div
-              key={sponsor.order_id}
-              className="flex items-center gap-2 opacity-50"
-            >
-              <Avatar
-                src={sponsor.user_avatar}
-                size={24}
-                className="flex-shrink-0"
-              />
-              <div className="flex flex-col flex-grow">
-                <div className="flex items-center gap-1">
-                  <T.H4 className="!font-normal">{ sponsor.user_name }</T.H4>
+      <Panel
+        padding
+      >
+        {
+          sponsors?.map((sponsor) => {
+            return (
+              <div
+                key={sponsor.order_id}
+                className="flex items-center gap-2 opacity-50 hover:opacity-100 transition-[opacity,scale]"
+              >
+                <Avatar
+                  src={sponsor.user_avatar}
+                  size={24}
+                  className="flex-shrink-0"
+                />
+                <div className="flex flex-col flex-grow">
+                  <div className="flex items-center gap-1">
+                    <T.H4 className="!font-normal">{ sponsor.user_name }</T.H4>
+                  </div>
+                  <div className="text-[hsl(var(--r-frontground-3))] text-xs">
+                    { sponsor.create_date }
+                  </div>
                 </div>
-                <div className="text-[hsl(var(--r-frontground-3))] text-xs">
-                  { sponsor.create_date }
-                </div>
+                <T.P className="text-[hsl(var(--r-frontground-3))]">
+                  { moneyFormater.format(sponsor.order_price / 100) }
+                </T.P>
               </div>
-              <T.P className="text-[hsl(var(--r-frontground-3))]">
-                { moneyFormater.format(sponsor.order_price / 100) }
-              </T.P>
-            </div>
-          )
-        })
-      }
+            )
+          })
+        }
+      </Panel>
     </div>
   )
 }
@@ -160,12 +168,13 @@ export function RightPanels () {
   }
   return (
     <div
-      className="w-full xl:w-96 xl:max-h-screen overflow-auto h-full top-4 xl:fixed flex flex-col gap-4"
+      className="w-full xl:w-96 xl:max-h-screen overflow-auto h-full top-4 xl:fixed flex flex-col gap-4 transition-transform"
       style={threeDimensionalTransform && isXL
         ? {
           transform: 'perspective(600px) rotateY(-3deg)',
           transformStyle: 'preserve-3d',
           backfaceVisibility: 'hidden',
+          WebkitFontSmoothing: 'subpixel-antialiased',
         }
         : {}}
     >
@@ -270,6 +279,23 @@ export function RightPanels () {
         }
       </Panel>
       { isBilibili && <FriendlyLink /> }
+      <div className="text-xs text-[hsl(var(--r-frontground-3))]">
+        <p>
+          联系邮箱：admin@zeroroku.com
+        </p>
+        <p>
+          法务邮箱/律师函投递/咨询：legal@zeroroku.com
+        </p>
+        <p>
+          永久免费，数据来自于互联网上公开可访问的信息。
+        </p>
+        <p>
+          但愿这个网站能够帮助到你。
+        </p>
+        <p>
+          { `@${new Date().getFullYear()} Zeroroku` }
+        </p>
+      </div>
     </div>
   )
 }
