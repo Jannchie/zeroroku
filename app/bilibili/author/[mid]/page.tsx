@@ -122,19 +122,18 @@ function FansAmountLineChart ({ mid }: { mid: string }) {
   const svgRef = useRef<SVGSVGElement>(null)
 
   const { data: historyData } = useBiliAuthorHistoryQuery(mid)
+  const historyDataReversed = historyData?.reverse()
   const [start] = useState(0)
-
-  const sortedHistoryData = historyData?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   const marginX = 0
   const marginY = 18
   const timeFormater = useMemo(() => d3.timeFormat('%Y-%m-%d'), [])
   const end = start + 7
   const offset = 0
-  const [currentData, setCurrentData] = useState(sortedHistoryData?.[sortedHistoryData.length - 1])
-  const currentSlice = useMemo(() => sortedHistoryData?.reverse().slice(start, end) ?? [], [end, sortedHistoryData, start])
+  const [currentData, setCurrentData] = useState(historyDataReversed?.[historyDataReversed.length - 1])
+  const currentSlice = useMemo(() => historyDataReversed?.slice(start, end) ?? [], [end, historyDataReversed, start])
   useEffect(() => {
     const svg = svgRef.current
-    if (!sortedHistoryData || !svg) return
+    if (!historyDataReversed || !svg) return
     const width = svg.clientWidth ?? 400
     const height = svg.clientHeight ?? 300
     const x = d3.scaleBand().domain(currentSlice.map((d) => d.date).reverse()).range([marginX, width - marginX * 2]).paddingOuter(0).paddingInner(0.2)
@@ -183,8 +182,8 @@ function FansAmountLineChart ({ mid }: { mid: string }) {
     return () => {
       d3.select(svg).on('mousemove', null)
     }
-  }, [end, sortedHistoryData, start, timeFormater, currentSlice])
-  if (!sortedHistoryData) return null
+  }, [end, historyDataReversed, start, timeFormater, currentSlice])
+  if (!historyDataReversed) return null
   const numberFormater = new Intl.NumberFormat('zh-CN', {
     compactDisplay: 'short',
   })
@@ -198,7 +197,7 @@ function FansAmountLineChart ({ mid }: { mid: string }) {
           </span>
         </span>
         <span className="ml-2 text-base text-[hsl(var(--r-frontground-3))]">
-          { timeFormater(new Date(currentData?.created_at ?? 0)) }
+          { timeFormater(new Date(currentData?.date ?? 0)) }
         </span>
       </div>
       <div className="text-xl md:text-2xl lg:text-3xl">

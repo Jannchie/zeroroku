@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { Btn, Panel, Tabs, TextField } from 'roku-ui'
 import HCaptcha from '@hcaptcha/react-hcaptcha'
-import { useLoginMutation } from '@/data'
+import { useLoginMutation, useSignInMutation } from '@/data'
 
 function Login ({
   account, setAccount, password, setPassword,
@@ -58,6 +58,7 @@ const Sign = ({
   const [password2, setPassword2] = useState('')
   const [mail, setMail] = useState('')
   const [hcaptcha, setHcaptcha] = useState('')
+  const signInMutation = useSignInMutation()
   return (
     <div className="flex flex-col gap-2 items-center p-10">
       <div className="font-black text-2xl">ZEROROKU</div>
@@ -101,8 +102,15 @@ const Sign = ({
       />
       <Btn
         style={{ width: '302px' }}
-        disabled={hcaptcha === ''}
-        // onClick={run}
+        disabled={hcaptcha === '' || password !== password2}
+        onClick={() => {
+          signInMutation.mutate({
+            username: account,
+            password,
+            mail,
+            hcaptcha,
+          })
+        }}
       >
         注册
       </Btn>

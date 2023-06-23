@@ -80,16 +80,16 @@ function UserInfoDetail (userInfo: User) {
   return (
     <div className="text-sm flex flex-col gap-1 p-2">
       { !userInfo.active && (
-        <p className="flex items-center justify-center">
+        <p className="flex items-center justify-center flex-wrap">
           你的状态为
           <Tag
             size="sm"
             color="warning"
-            className="mx-1"
+            className="mx-1 inline-flex"
           >
             未激活
           </Tag>
-          。因此你无法获得积分。你可以在注册时录入的电子邮箱中找到激活链接。
+          因此你无法获得积分。你可以在注册时录入的电子邮箱中找到激活链接。
         </p>
       ) }
       <p className="flex items-center justify-center">

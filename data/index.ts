@@ -23,6 +23,13 @@ interface LoginRequest {
   hcaptcha: string
 }
 
+interface SignInRequest {
+  username: string
+  mail: string
+  password: string
+  hcaptcha: string
+}
+
 export interface SimpleAuthorData {
   mid: number
   name: string
@@ -261,6 +268,66 @@ export function useBiliPopQuery () {
       const resp = await apiFetch('/bilibili/author/pop')
       return await resp.json()
     },
+  })
+}
+
+export function useSignInMutation () {
+  const router = useRouter()
+  const client = useQueryClient()
+  return useMutation<User, unknown, SignInRequest>(
+    async (data: SignInRequest) => {
+      const path = '/signin'
+      const resp = await apiFetch(path, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      })
+      if (resp.status !== 200) {
+        throw new Error('注册失败')
+      }
+      return await resp.json()
+    }, {
+      onError: (err) => {
+        if (err instanceof Error) {
+          pushErrorNotice(err.message)
+        }
+      },
+      onSuccess: (data) => {
+        client.setQueryData(['self'], data)
+        router.push('/')
+      },
+    },
+  )
+}
+
+interface PostActiveRequest {
+  code: string
+}
+
+interface MessageResponse {
+  msg: string
+}
+
+export function usePostActiveQuery (code: string = '') {
+  const client = useQueryClient()
+  return useQuery<MessageResponse>({
+    queryKey: ['active', code],
+    queryFn: async () => {
+      const path = '/user/activate'
+      const resp = await apiFetch(path, {
+        method: 'POST',
+        body: JSON.stringify({
+          code,
+        }),
+      })
+      if (resp.status !== 200) {
+        throw new Error('激活失败')
+      }
+      return await resp.json()
+    },
+    onSuccess: () => {
+      void client.invalidateQueries(['self'])
+    },
+    enabled: code.length !== 0,
   })
 }
 

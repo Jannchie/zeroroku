@@ -181,9 +181,12 @@ export function RightPanels () {
                     >
                       { parseContent(c.content).map(d => {
                         return typeof d === 'string'
-                          ? <span>{ d }</span>
+                          ? <span key={d}>{ d }</span>
                           : (
-                            <Tag color="primary">
+                            <Tag
+                              key={d}
+                              color="primary"
+                            >
                               { ' ' }
                               UID:
                               { ' ' }
