@@ -1,11 +1,11 @@
 'use client'
-import { useBiliAuthorSearchQuery, useBiliFansRankQuery, useBiliPopQuery } from '@/data'
+import { useBiliAuthorSearchQuery, useBiliFansRankQuery, useBiliPopQuery, useNewAuthorGazerMutation } from '@/data'
 import { type AuthorInfo } from '@/data/model/AuthorInfo'
 import Link from 'next/link'
 import { useState } from 'react'
 import { Avatar, Btn, Flex, Icon, Panel, T, TextField } from 'roku-ui'
 import { getBiliImageSrc } from './getBiliImageSrc'
-import { TablerSearch } from '@roku-ui/icons-tabler'
+import { TablerSearch, TablerUserPlus } from '@roku-ui/icons-tabler'
 import { useDebounce } from 'usehooks-ts'
 import { SvgSpinners90RingWithBg } from '@roku-ui/icons-svg-spinners'
 import { BiliRankListItem } from './BiliRankListItem'
@@ -86,6 +86,7 @@ export default function Page () {
           }
         </Panel>
       }
+      <AddAuthorPanel />
       <Panel
         padding
         border
@@ -204,6 +205,32 @@ function FansRankPanel ({ name, data, moreLink }: { name: string, data?: AuthorI
           查看完整列表
         </Btn>
       </div>
+    </Panel>
+  )
+}
+
+function AddAuthorPanel () {
+  const [mid, setMid] = useState('')
+  const newAuthorGazerMutation = useNewAuthorGazerMutation()
+  return (
+    <Panel
+      padding
+      border
+      className="flex gap-2"
+    >
+      <TextField
+        prefix={<span className="pl-4">UID</span>}
+        className="h-[34px] flex-grow"
+        value={mid}
+        setValue={setMid}
+      />
+      <Btn onClick={() => { newAuthorGazerMutation.mutate(mid) }}>
+        <TablerUserPlus
+          height="1em"
+          className="mr-2"
+        />
+        添加新的 UP 主追踪 [20 CP]
+      </Btn>
     </Panel>
   )
 }

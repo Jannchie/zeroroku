@@ -299,12 +299,30 @@ export function useSignInMutation () {
   )
 }
 
-interface PostActiveRequest {
-  code: string
-}
-
 interface MessageResponse {
   msg: string
+}
+
+export function useNewAuthorGazerMutation () {
+  const client = useQueryClient()
+  return useMutation<MessageResponse, unknown, string>(
+    async (mid: string) => {
+      const path = '/gazer/bilibili/author?mid=' + mid
+      const resp = await apiFetch(path, {
+        method: 'POST',
+      })
+      if (resp.status !== 200) {
+        pushErrorNotice('添加失败')
+        throw new Error('添加失败')
+      }
+      return await resp.json()
+    }, {
+      onSuccess: () => {
+        pushSuccessNotice('添加成功')
+        void client.invalidateQueries(['self'])
+      },
+    },
+  )
 }
 
 export function usePostActiveQuery (code: string = '') {
