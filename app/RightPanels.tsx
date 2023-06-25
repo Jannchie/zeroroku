@@ -28,7 +28,7 @@ function AuthorSimpleTag ({ data }: { data: SimpleAuthorData | number }) {
       text
       color="primary"
       as={Link}
-      href={`/author/${data.mid}`}
+      href={`bilibili/author/${data.mid}`}
     >
       <Avatar
         size={16}
