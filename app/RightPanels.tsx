@@ -292,7 +292,7 @@ export function RightPanels () {
           }) }
         </Panel>
         { isBilibili && <FriendlyLink /> }
-        <div className="text-xs text-[hsl(var(--r-frontground-3))]">
+        <div className="text-xs text-[hsl(var(--r-frontground-3))] pb-56">
           <p>
             联系邮箱：admin@zeroroku.com
           </p>

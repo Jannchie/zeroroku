@@ -80,6 +80,9 @@ export function LeftPanels () {
             )
           }) }
         </Panel>
+        { sponsors && <div className="pb-56 text-xs text-frontground-3 pt-2">
+          真的没有了！
+        </div> }
       </MyScrollArea>
     </div>
   )
