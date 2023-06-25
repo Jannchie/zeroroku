@@ -57,6 +57,8 @@ export function LeftPanels () {
               className="flex items-center gap-2 opacity-50 hover:opacity-100 transition-[opacity,scale]"
             >
               <Avatar
+                referrerPolicy="no-referrer"
+                crossOrigin="anonymous"
                 src={sponsor.user_avatar}
                 size={24}
                 className="flex-shrink-0"

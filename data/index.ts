@@ -75,6 +75,21 @@ export interface SponsorData {
   create_date: string
 }
 
+export function useBiliAuthorSimpeInfoQuery (mids: number[]) {
+  return useQuery<SimpleAuthorData[]>({
+    queryKey: ['bili', 'author', 'simple-info', mids],
+    queryFn: async () => {
+      const resp = await apiFetch(`/bilibili/author/simple-info?mids=${mids.join(',')}`)
+      if (resp.status !== 200) {
+        pushErrorNotice('获取信息失败')
+        throw new Error('获取信息失败')
+      }
+      return await resp.json()
+    },
+    enabled: mids.length > 0,
+  })
+}
+
 export function useSponsorQuery () {
   return useQuery<SponsorData[]>({
     queryKey: ['sponsor'],

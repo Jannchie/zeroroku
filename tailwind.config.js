@@ -1,3 +1,13 @@
+const colors = ['primary', 'secondary', 'tertiary', 'success', 'warning', 'danger', 'info', 'border', 'frontground', 'background'].reduce((prev, color) => {
+  return {
+    ...prev,
+    [color]: {
+      1: `hsl(var(--r-${color}-1))`,
+      2: `hsl(var(--r-${color}-2))`,
+      3: `hsl(var(--r-${color}-3))`,
+    },
+  }
+}, {})
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -9,6 +19,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        ...colors,
       },
     },
   },

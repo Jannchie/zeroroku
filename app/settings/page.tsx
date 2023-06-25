@@ -21,13 +21,13 @@ export default function Settings () {
               主题
             </div>
             <ThemeToggle />
+            <div className="text-frontground-3 text-sm">如果你使用的是比较先进的浏览器，能够应用炫酷的特效。</div>
           </div>
           <div className="py-2">
             <div className="pb-1">
               3D 变换
             </div>
             <Btn
-              className="w-12"
               color={threeDimensionalTransform ? 'primary' : 'default'}
               onClick={() => {
                 setThreeDimensionalTransform(!threeDimensionalTransform)
@@ -50,7 +50,7 @@ export default function Settings () {
               }
               { threeDimensionalTransform ? '开启' : '关闭' }
             </Btn>
-            <div className="text-[hsl(var(--r-frontground-3))] text-sm">Windows 下，并没有抗锯齿机制，所以会变得模糊，慎用。</div>
+            <div className="text-frontground-3 text-sm">手机端无效。Windows 下，并没有抗锯齿机制，所以会变得模糊，慎用。</div>
           </div>
         </div>
       </Panel>

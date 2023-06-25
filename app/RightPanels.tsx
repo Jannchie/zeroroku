@@ -1,16 +1,47 @@
 'use client'
 import { Avatar, Panel, T, Icon, Btn, Tag, Flex } from 'roku-ui'
 import { usePathname } from 'next/navigation'
-import { useCommentAttituteMutation, useCommentQuery, useDeleteCommentMutation, useSelfQuery } from '@/data'
+import { type SimpleAuthorData, useBiliAuthorSimpeInfoQuery, useCommentAttituteMutation, useCommentQuery, useDeleteCommentMutation, useSelfQuery } from '@/data'
 import { FriendlyLink } from './FriendlyLink'
 import Image from 'next/image'
 import { type JdenticonConfig, toSvg } from 'jdenticon'
 import { TablerHeart, TablerHeartFilled, TablerNotebook, TablerShare3, TablerTrash } from '@roku-ui/icons-tabler'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSettings } from './Provider'
 import { CommentTextarea } from './CommentTextarea'
 import { useMediaQuery } from './useMediaQuery'
 import { getDurationFormated } from './getDurationFormated'
+import { getBiliImageSrc } from './bilibili/getBiliImageSrc'
+import Link from 'next/link'
+
+function AuthorSimpleTag ({ data }: { data: SimpleAuthorData | number }) {
+  if (typeof data === 'number') {
+    return (
+      <Tag color="primary">
+        UID:
+        { data }
+      </Tag>
+    )
+  }
+  return (
+    <Btn
+      text
+      color="primary"
+      as={Link}
+      href={`/author/${data.mid}`}
+    >
+      <Avatar
+        size={16}
+        src={getBiliImageSrc(data.face)}
+        referrerPolicy="no-referrer"
+        crossOrigin="anonymous"
+      />
+      <span className="ml-1">
+        { data.name }
+      </span>
+    </Btn>
+  )
+}
 
 function SubComment (props: {
   subc: {
@@ -99,6 +130,20 @@ export function RightPanels () {
     return result
   }
 
+  const mids = useMemo(() => {
+    if (!comments) return []
+    return comments.map(c => {
+      return parseContent(c.content)
+    }).map(c => {
+      return c.filter(i => typeof i === 'number')
+    }).flat() as number[]
+  }, [comments])
+
+  const { data: authorSimpleData } = useBiliAuthorSimpeInfoQuery(mids)
+  const authorSimpleDataMap = useMemo(() => {
+    if (!authorSimpleData) return new Map()
+    return new Map(authorSimpleData.map(i => [i.mid, i]))
+  }, [authorSimpleData])
   if (pathname === '/login' || pathname === '/settings') return null
   return (
     <div
@@ -183,15 +228,7 @@ export function RightPanels () {
                         return typeof d === 'string'
                           ? <span key={d}>{ d }</span>
                           : (
-                            <Tag
-                              key={d}
-                              color="primary"
-                            >
-                              { ' ' }
-                              UID:
-                              { ' ' }
-                              { d }
-                            </Tag>
+                            <AuthorSimpleTag data={authorSimpleDataMap.get(d) ?? d} />
                           )
                       }) }
                     </Flex>
