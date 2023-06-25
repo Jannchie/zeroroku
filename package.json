@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@hcaptcha/react-hcaptcha": "^1.8.1",
+    "@radix-ui/react-scroll-area": "^1.0.4",
     "@roku-ui/icons-svg-spinners": "^0.0.1673787445",
     "@roku-ui/icons-tabler": "^2.17.0",
     "@tanstack/react-query": "^4.29.15",

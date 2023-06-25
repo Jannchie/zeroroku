@@ -13,6 +13,7 @@ import { useMediaQuery } from './useMediaQuery'
 import { getDurationFormated } from './getDurationFormated'
 import { getBiliImageSrc } from './bilibili/getBiliImageSrc'
 import Link from 'next/link'
+import { MyScrollArea } from './MyScrollArea'
 
 function AuthorSimpleTag ({ data }: { data: SimpleAuthorData | number }) {
   if (typeof data === 'number') {
@@ -146,8 +147,9 @@ export function RightPanels () {
   }, [authorSimpleData])
   if (pathname === '/login' || pathname === '/settings') return null
   return (
+
     <div
-      className="w-full xl:w-96 xl:max-h-screen overflow-auto h-full top-4 xl:fixed flex flex-col gap-4 transition-transform"
+      className="w-full xl:w-96 h-full top-4 xl:fixed flex flex-col gap-4 transition-transform"
       style={threeDimensionalTransform && isXL
         ? {
           transform: 'perspective(600px) rotateY(-3deg)',
@@ -157,155 +159,158 @@ export function RightPanels () {
         }
         : {}}
     >
-      <T.H2 className="flex gap-1 items-center">
-        <Icon size={30}>
-          <TablerNotebook />
-        </Icon>
-        观测记录
-      </T.H2>
-      <Panel
-        border
-        padding
-        className="border"
-      >
-        { <CommentTextarea /> }
-        { !isFetched && (
-          <div className="text-gray-500 text-xs">
-            加载中...
-          </div>
-        ) }
-        { (!comments || comments?.length === 0) && isFetched && (
-          <div className="text-gray-500 text-xs">
-            成为第一个写下观测记录的人吧！
-          </div>
-        ) }
-        { comments?.filter(c => !c.parent_id).map((c) => {
-          const svgStr = toSvg(c.user.mail, 24, avatarConfig)
-          return (
-            <Panel
-              key={c.id}
-              border={false}
-              className="p-1 flex gap-2"
-            >
-              <div>
-                <Avatar
-                  square
-                  size={24}
-                >
-                  <Image
-                    alt={c.user.mail}
-                    src={`data:image/svg+xml;base64,${btoa(svgStr)}`}
-                    width={24}
-                    height={24}
-                  />
-                </Avatar>
-              </div>
-              <div
-                className="flex-grow"
+      <MyScrollArea>
+        <T.H2 className="flex gap-1 items-center">
+          <Icon size={30}>
+            <TablerNotebook />
+          </Icon>
+          观测记录
+        </T.H2>
+        <Panel
+          border
+          padding
+          className="border"
+        >
+          { <CommentTextarea /> }
+          { !isFetched && (
+            <div className="text-gray-500 text-xs">
+              加载中...
+            </div>
+          ) }
+          { (!comments || comments?.length === 0) && isFetched && (
+            <div className="text-gray-500 text-xs">
+              成为第一个写下观测记录的人吧！
+            </div>
+          ) }
+          { comments?.filter(c => !c.parent_id).map((c) => {
+            const svgStr = toSvg(c.user.mail, 24, avatarConfig)
+            return (
+              <Panel
+                key={c.id}
+                border={false}
+                className="p-1 flex gap-2"
               >
-                <div className="text-sm mb-1 flex justify-between">
-                  <div>
-                    <span>
-                      { c.user.name }
-                    </span>
+                <div>
+                  <Avatar
+                    square
+                    size={24}
+                  >
+                    <Image
+                      alt={c.user.mail}
+                      src={`data:image/svg+xml;base64,${btoa(svgStr)}`}
+                      width={24}
+                      height={24}
+                    />
+                  </Avatar>
+                </div>
+                <div
+                  className="flex-grow"
+                >
+                  <div className="text-sm mb-1 flex justify-between">
+                    <div>
+                      <span>
+                        { c.user.name }
+                      </span>
+                      <span className="text-gray-500 px-2">
+                        (#
+                        { c.user.id }
+                        )
+                      </span>
+                    </div>
                     <span className="text-gray-500 px-2">
-                      (#
-                      { c.user.id }
-                      )
+                      { getDurationFormated(new Date(c.created_at).getTime() - now) }
                     </span>
                   </div>
-                  <span className="text-gray-500 px-2">
-                    { getDurationFormated(new Date(c.created_at).getTime() - now) }
-                  </span>
-                </div>
-                <div className="text-base">
-                  { (
-                    <Flex
-                      align="center"
-                      className="flex-wrap"
-                    >
-                      { parseContent(c.content).map(d => {
-                        return typeof d === 'string'
-                          ? <span key={d}>{ d }</span>
-                          : (
-                            <AuthorSimpleTag data={authorSimpleDataMap.get(d) ?? d} />
-                          )
-                      }) }
-                    </Flex>
-                  )
-                  }
-                </div>
-
-                <div className="flex justify-between">
-                  <div>
-                    <Btn.Counter
-                      color="danger"
-                      icon={c.liked ? <TablerHeartFilled /> : <TablerHeart />}
-                      value={c.like}
-                      onClick={() => {
-                        attituteMutation.mutate({
-                          id: c.id,
-                          attitude: c.liked ? 0 : 1,
-                        })
-                      }}
-                    />
-                    <Btn.Counter
-                      color="success"
-                      icon={<TablerShare3 />}
-                      value={comments.filter((subc) => subc.parent_id === c.id).length}
-                    />
-                  </div>
-                  {
-                    c.uid === self?.id && (
-                      <Btn
-                        icon
-                        text
-                        className="!w-6 !h-6 !p-1 !m-2 hover:text-[hsl(var(--r-danger-2))]"
-                        size="xs"
+                  <div className="text-base">
+                    { (
+                      <Flex
+                        align="center"
+                        className="flex-wrap"
                       >
-                        <TablerTrash
-                          width="1.3em"
-                          onClick={() => {
-                            deleteCommentMutation.mutate(c.id)
-                          }}
-                        />
-                      </Btn>
+                        { parseContent(c.content).map(d => {
+                          return typeof d === 'string'
+                            ? <span key={d}>{ d }</span>
+                            : (
+                              <AuthorSimpleTag data={authorSimpleDataMap.get(d) ?? d} />
+                            )
+                        }) }
+                      </Flex>
                     )
-                  }
-                </div>
+                    }
+                  </div>
 
-                { comments.filter((subc) => subc.parent_id === c.id).map((subc) => {
-                  return (
-                    <SubComment
-                      key={subc.id}
-                      avatarConfig={avatarConfig}
-                      subc={subc}
-                    />
-                  )
-                }) }
-              </div>
-            </Panel>
-          )
-        }) }
-      </Panel>
-      { isBilibili && <FriendlyLink /> }
-      <div className="text-xs text-[hsl(var(--r-frontground-3))]">
-        <p>
-          联系邮箱：admin@zeroroku.com
-        </p>
-        <p>
-          法务邮箱/律师函投递/咨询：legal@zeroroku.com
-        </p>
-        <p>
-          永久免费，数据来自于互联网上公开可访问的信息。
-        </p>
-        <p>
-          但愿这个网站能够帮助到你。
-        </p>
-        <p>
-          { `@${new Date().getFullYear()} Zeroroku` }
-        </p>
-      </div>
+                  <div className="flex justify-between">
+                    <div>
+                      <Btn.Counter
+                        color="danger"
+                        icon={c.liked ? <TablerHeartFilled /> : <TablerHeart />}
+                        value={c.like}
+                        onClick={() => {
+                          attituteMutation.mutate({
+                            id: c.id,
+                            attitude: c.liked ? 0 : 1,
+                          })
+                        }}
+                      />
+                      <Btn.Counter
+                        color="success"
+                        icon={<TablerShare3 />}
+                        value={comments.filter((subc) => subc.parent_id === c.id).length}
+                      />
+                    </div>
+                    {
+                      c.uid === self?.id && (
+                        <Btn
+                          icon
+                          text
+                          className="!w-6 !h-6 !p-1 !m-2 hover:text-[hsl(var(--r-danger-2))]"
+                          size="xs"
+                        >
+                          <TablerTrash
+                            width="1.3em"
+                            onClick={() => {
+                              deleteCommentMutation.mutate(c.id)
+                            }}
+                          />
+                        </Btn>
+                      )
+                    }
+                  </div>
+
+                  { comments.filter((subc) => subc.parent_id === c.id).map((subc) => {
+                    return (
+                      <SubComment
+                        key={subc.id}
+                        avatarConfig={avatarConfig}
+                        subc={subc}
+                      />
+                    )
+                  }) }
+                </div>
+              </Panel>
+            )
+          }) }
+        </Panel>
+        { isBilibili && <FriendlyLink /> }
+        <div className="text-xs text-[hsl(var(--r-frontground-3))]">
+          <p>
+            联系邮箱：admin@zeroroku.com
+          </p>
+          <p>
+            法务邮箱/律师函投递/咨询：legal@zeroroku.com
+          </p>
+          <p>
+            永久免费，数据来自于互联网上公开可访问的信息。
+          </p>
+          <p>
+            但愿这个网站能够帮助到你。
+          </p>
+          <p>
+            { `@${new Date().getFullYear()} Zeroroku` }
+          </p>
+        </div>
+      </MyScrollArea>
     </div>
+
   )
 }
