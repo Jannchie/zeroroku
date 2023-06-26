@@ -23,11 +23,9 @@ export function LeftPanels () {
           fontSmooth: 'subpixel',
           WebkitFontSmoothing: 'subpixel-antialiased',
           transform: 'perspective(600px) translateZ(0) translateX(-384px) rotateY(3deg)',
-          transformStyle: 'preserve-3d',
           backfaceVisibility: 'hidden',
           WebkitBackfaceVisibility: 'hidden',
           willChange: 'transform',
-          WebkitTransformStyle: 'preserve-3d',
         }
         : {}}
     >

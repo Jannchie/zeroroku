@@ -1,6 +1,6 @@
 import { type User } from './User'
 
-export interface Comment {
+export interface CommentData {
   id: number
   path: string
   parent_id: number

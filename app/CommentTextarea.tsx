@@ -1,21 +1,25 @@
 'use client'
 import { Textarea, Btn } from 'roku-ui'
 import { usePathname } from 'next/navigation'
-import { useSendCommentMutation } from '@/data'
+import { useSendCommentMutation, type CommentData } from '@/data'
 import { TablerSend } from '@roku-ui/icons-tabler'
 import { useCallback, useState } from 'react'
-
-export function CommentTextarea () {
+export function CommentTextarea ({ parentID, onSuccess }: { parentID?: number, onSuccess?: (c: CommentData) => void }) {
   const [inputValue, setInputValue] = useState('')
-  const sendCommentMutation = useSendCommentMutation()
+  const sendCommentMutation = useSendCommentMutation({
+    onSuccess: (res) => {
+      setInputValue('')
+      onSuccess?.(res)
+    },
+  })
   const pathname = usePathname()
   const onSendCallback = useCallback(() => {
     sendCommentMutation.mutate({
       content: inputValue,
       path: pathname,
+      parent_id: parentID,
     })
-    setInputValue('')
-  }, [inputValue, pathname, sendCommentMutation])
+  }, [inputValue, parentID, pathname, sendCommentMutation])
   return (
     <div className="flex gap-1">
       <Textarea

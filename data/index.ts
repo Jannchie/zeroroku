@@ -1,7 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { type UseMutationOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type User } from './model/User'
 import { usePathname, useRouter } from 'next/navigation'
-import { type Comment } from './model/Comment'
+import { type CommentData } from './model/Comment'
 import { type AuthorInfo } from './model/AuthorInfo'
 import { type VideoInfo } from './model/VideoInfo'
 import { pushErrorNotice, pushSuccessNotice } from '@/app/Provider'
@@ -104,7 +104,7 @@ export function useSponsorQuery () {
   })
 }
 
-export function useSendCommentMutation () {
+export function useSendCommentMutation (options: UseMutationOptions<CommentData, unknown, PostCommentBody> = {}) {
   const queryClient = useQueryClient()
   return useMutation(async (body: PostCommentBody) => {
     const resp = await apiFetch('/comment', {
@@ -117,12 +117,24 @@ export function useSendCommentMutation () {
     }
     void queryClient.invalidateQueries(['comment', body.path])
     pushSuccessNotice('添加观测记录成功')
-  })
+    const res = await resp.json()
+    const { user } = res
+    return {
+      id: Math.random(),
+      content: body.content,
+      parent_id: body.parent_id ?? 0,
+      path: body.path,
+      created_at: new Date(),
+      user,
+      uid: user.id,
+      like: 0,
+      liked: false,
+      dislike: 0,
+    } satisfies CommentData
+  }, options)
 }
 
 export function useCommentAttituteMutation () {
-  const queryClient = useQueryClient()
-  const pathname = usePathname()
   return useMutation(async ({ id, attitude }: { id: number, attitude: number }) => {
     const resp = await apiFetch('/comment/attitude', {
       method: 'POST',
@@ -132,7 +144,6 @@ export function useCommentAttituteMutation () {
       pushErrorNotice('操作失败')
       throw new Error('操作失败')
     }
-    void queryClient.invalidateQueries(['comment', pathname])
     pushSuccessNotice('操作成功')
   })
 }
@@ -252,7 +263,7 @@ export function useCommentQuery ({ path, page, pageSize }: {
   page: number
   pageSize: number
 }) {
-  return useQuery<Comment[]>({
+  return useQuery<CommentData[]>({
     queryKey: ['comment', path, page, pageSize],
     queryFn: async () => {
       const resp = await apiFetch(`/comment?path=${path}&p=${page}&s=${pageSize}`)
@@ -423,3 +434,4 @@ async function apiFetch (path: string, option: RequestInit = {}) {
   }
   return await fetch(`${baseURL}${path}`, option)
 }
+export type { CommentData }
