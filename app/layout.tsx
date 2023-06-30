@@ -67,10 +67,10 @@ export default function RootLayout ({
       <body className={inter.className}>
         <Provider>
           <div className="flex flex-col xl:flex-row h-full relative gap-4">
-            <div className="relative order-3 xl:order-1">
+            <div className="relative order-3 xl:order-1 p-1">
               <LeftPanels />
             </div>
-            <div className="flex-grow order-1 xl:order-2">
+            <div className="flex-grow order-1 xl:order-2 p-1">
               <div className={`${fonts.className} text-center text-4xl`}>
                 ZeroRoku
               </div>
@@ -78,7 +78,7 @@ export default function RootLayout ({
               <LoginBtn />
               { children }
             </div>
-            <div className="relative order-2 xl:order-3">
+            <div className="relative order-2 xl:order-3 p-1">
               <RightPanels />
             </div>
           </div>
