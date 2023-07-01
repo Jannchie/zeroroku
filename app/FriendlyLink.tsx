@@ -8,6 +8,9 @@ export function FriendlyLink () {
       name: 'Danmakus',
       href: 'https://danmakus.com/',
     }, {
+      name: 'ericlamm',
+      href: 'https://ddstats.ericlamm.xyz/records',
+    }, {
       name: 'VTBS',
       href: 'https://vtbs.moe/',
     }, {
