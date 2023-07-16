@@ -33,22 +33,24 @@ export default function Settings () {
                 setThreeDimensionalTransform(!threeDimensionalTransform)
               }}
             >
-              {
-                threeDimensionalTransform
-                  ? (
-                    <TablerPerspective
-                      height="1em"
-                      className="mr-2"
-                    />
-                  )
-                  : (
-                    <TablerPerspectiveOff
-                      height="1em"
-                      className="mr-2"
-                    />
-                  )
-              }
-              { threeDimensionalTransform ? '开启' : '关闭' }
+              <div className="flex items-center">
+                {
+                  threeDimensionalTransform
+                    ? (
+                      <TablerPerspective
+                        height="1em"
+                        className="mr-2"
+                      />
+                    )
+                    : (
+                      <TablerPerspectiveOff
+                        height="1em"
+                        className="mr-2"
+                      />
+                    )
+                }
+                { threeDimensionalTransform ? '开启' : '关闭' }
+              </div>
             </Btn>
             <div className="text-frontground-3 text-sm">手机端无效。Windows 下，并没有抗锯齿机制，所以会变得模糊，慎用。</div>
           </div>

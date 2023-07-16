@@ -3,7 +3,6 @@
     "project": "./tsconfig.json"
   },
   "extends": [
-    "@jannchie",
-    "next/core-web-vitals"
+    "@jannchie"
   ]
 }

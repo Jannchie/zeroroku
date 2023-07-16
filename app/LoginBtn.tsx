@@ -2,7 +2,7 @@
 import { useSelfQuery } from '@/data'
 import { TablerLogin } from '@roku-ui/icons-tabler'
 import Link from 'next/link'
-import { Btn, Icon } from 'roku-ui'
+import { Btn } from 'roku-ui'
 
 export function LoginBtn () {
   const { data: self, isLoading } = useSelfQuery()
@@ -12,13 +12,8 @@ export function LoginBtn () {
       <Btn
         as={Link}
         href={'/login'}
+        leadingIcon={<TablerLogin />}
       >
-        <Icon
-          size="sm"
-          className="mr-2"
-        >
-          <TablerLogin />
-        </Icon>
         登录
       </Btn>
     </div>

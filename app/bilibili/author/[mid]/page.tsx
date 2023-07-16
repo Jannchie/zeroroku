@@ -5,6 +5,7 @@ import { Avatar, DynamicValue, Icon, Panel, T, Tag } from 'roku-ui'
 import { TablerGift, TablerHeartFilled, TablerSquareRoundedNumber1Filled, TablerSquareRoundedNumber7Filled, TablerUser } from '@roku-ui/icons-tabler'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as d3 from 'd3'
+import { RokuBar } from 'roku-charts'
 export default function Page ({ params: { mid } }: {
   params: {
     mid: string
@@ -122,67 +123,32 @@ function FansAmountLineChart ({ mid }: { mid: string }) {
   const svgRef = useRef<SVGSVGElement>(null)
 
   const { data: historyData } = useBiliAuthorHistoryQuery(mid)
-  const historyDataReversed = historyData?.reverse()
-  const [start] = useState(0)
-  const marginX = 0
-  const marginY = 18
+  const historyDataReversed = historyData?.sort((a, b) => a.date > b.date ? 1 : -1)
   const timeFormater = useMemo(() => d3.timeFormat('%Y-%m-%d'), [])
-  const end = start + 7
-  const offset = 0
   const [currentData, setCurrentData] = useState(historyDataReversed?.[historyDataReversed.length - 1])
-  const currentSlice = useMemo(() => historyDataReversed?.slice(start, end) ?? [], [end, historyDataReversed, start])
+  const [range] = useState(30)
+  const bar = useRef<RokuBar>()
   useEffect(() => {
-    const svg = svgRef.current
-    if (!historyDataReversed || !svg) return
-    const width = svg.clientWidth ?? 400
-    const height = svg.clientHeight ?? 300
-    const x = d3.scaleBand().domain(currentSlice.map((d) => d.date).reverse()).range([marginX, width - marginX * 2]).paddingOuter(0).paddingInner(0.2)
-    const y = d3.scaleLinear()
-      .domain([Math.min(...currentSlice.map((d) => d.fans)), Math.max(...currentSlice.map((d) => d.fans))])
-      .range([marginY + offset, height - marginY * 2])
-
-    d3
-      .select(svg)
-      .selectAll('rect')
-      .data(currentSlice)
-      .join(
-        enter => enter.append('rect')
-          .attr('rx', 4)
-          .attr('fill', 'hsl(var(--r-primary-2))')
-          .attr('x', (d) => x(d.date) ?? 0)
-          .attr('y', (d) => height - y(d.fans) - marginY + offset)
-          .attr('width', x.bandwidth())
-          .attr('height', (d) => y(d.fans) - offset).attr('class', 'cursor-pointer'),
-      )
-
-    // append the x Axis
-    // if not exist, append axis
-    if (d3.select(svg).selectAll('g.x-axis').empty()) {
-      d3.select(svg)
-        .append('g')
-        .attr('class', 'x-axis')
-        .append('g')
-        .attr('transform', `translate(0,${height - marginY})`)
-        .call(d3.axisBottom(x).tickFormat(d => timeFormater(new Date(d))))
-    }
-
-    // append the y Axis
-    // d3.select(svgRef.current).append('g').attr('transform', `translate(${margin},0)`).call(d3.axisLeft(y))
-
-    // add axis hover event
-    d3.select(svg).on('mousemove', function (event) {
-      event.preventDefault()
-      const [px] = d3.pointer(event)
-      const index = Math.floor((px - marginX) / (x.step()))
-      if (index < 0 || index >= currentSlice.length) return
-      const data = currentSlice[currentSlice.length - index - 1]
-      setCurrentData(data)
-    })
-    setCurrentData(currentSlice[0])
-    return () => {
-      d3.select(svg).on('mousemove', null)
-    }
-  }, [end, historyDataReversed, start, timeFormater, currentSlice])
+    if (!historyDataReversed) return
+    bar.current = RokuBar
+      .new('#fans-amount-chart')
+      .setTheme({
+        fillColor: 'hsl(var(--r-primary-2))',
+        textColor: 'hsl(var(--r-frontground-2))',
+        valueFormat: d3.format('~s'),
+      })
+      .setData(historyDataReversed)
+      .setConfig({
+        idKey: (d) => d3.timeParse('%Y-%m-%d')(d.date)!,
+        valueKey: (d) => d.fans,
+        itemCount: range,
+        padding: 36,
+        onHover: (d) => {
+          setCurrentData(d as never)
+        },
+      }).draw()
+    setCurrentData(historyDataReversed[historyDataReversed.length - 1])
+  }, [historyDataReversed, range])
   if (!historyDataReversed) return null
   const numberFormater = new Intl.NumberFormat('zh-CN', {
     compactDisplay: 'short',
@@ -191,7 +157,7 @@ function FansAmountLineChart ({ mid }: { mid: string }) {
     <Panel padding>
       <div className="flex justify-between">
         <span className="text-base flex text-[hsl(var(--r-primary-2))]">
-          <TablerUser width="1em"/>
+          <TablerUser width="1em" />
           <span>
             粉丝总数
           </span>
@@ -205,6 +171,7 @@ function FansAmountLineChart ({ mid }: { mid: string }) {
       </div>
       <svg
         ref={svgRef}
+        id="fans-amount-chart"
         className="w-full h-48"
       />
     </Panel>

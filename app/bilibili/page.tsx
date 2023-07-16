@@ -220,16 +220,18 @@ function AddAuthorPanel () {
     >
       <TextField
         prefix={<span className="pl-4">UID</span>}
-        className="h-[34px] flex-grow"
+        className="h-[34px] w-16 flex-grow"
         value={mid}
         setValue={setMid}
       />
       <Btn onClick={() => { newAuthorGazerMutation.mutate(mid) }}>
-        <TablerUserPlus
-          height="1em"
-          className="mr-2"
-        />
-        添加新的 UP 主追踪 [20 CP]
+        <div className="flex items-center">
+          <TablerUserPlus
+            height="1em"
+            className="mr-2"
+          />
+          发起数据更新追踪 [20CP]
+        </div>
       </Btn>
     </Panel>
   )
