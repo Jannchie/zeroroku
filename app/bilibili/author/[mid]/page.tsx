@@ -1,11 +1,12 @@
 'use client'
 import { useBiliAuthorHistoryQuery, useBiliAuthorInfoQuery, useBiliAuthorLiveGiftQuery } from '@/data'
 import { getBiliImageSrc } from '../../getBiliImageSrc'
-import { Avatar, DynamicValue, Icon, Panel, T, Tag, ToggleGroup } from 'roku-ui'
+import { Avatar, Btn, DynamicValue, Icon, Panel, T, Tag, ToggleGroup } from 'roku-ui'
 import { TablerGift, TablerHeartFilled, TablerSquareRoundedNumber1Filled, TablerSquareRoundedNumber7Filled, TablerUser } from '@roku-ui/icons-tabler'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as d3 from 'd3'
 import { RokuBar } from 'roku-charts'
+import Link from 'next/link'
 export default function Page ({ params: { mid } }: {
   params: {
     mid: string
@@ -19,6 +20,32 @@ export default function Page ({ params: { mid } }: {
   return (
     <div className="flex flex-col items-stretch gap-2 md:4">
       <AuthorInfoPanel mid={mid} />
+      <Panel
+        padding
+        className="flex gap-2"
+      >
+        <Btn
+          target="_blank"
+          as={Link}
+          href={`https://space.bilibili.com/${mid}`}
+        >
+          去主页
+        </Btn>
+        <Btn
+          target="_blank"
+          as={Link}
+          href={`https://live.bilibili.com/${authorInfo.live_room.roomid}`}
+        >
+          去直播间
+        </Btn>
+        <Btn
+          target="_blank"
+          as={Link}
+          href={`https://space.bilibili.com/${mid}/dynamic`}
+        >
+          去动态页
+        </Btn>
+      </Panel>
       <LiveStatisticPanels mid={mid} />
       <FansStatisticPanels mid={mid} />
       <RangeSelector
