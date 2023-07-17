@@ -31,13 +31,16 @@ export default function Page ({ params: { mid } }: {
         >
           去主页
         </Btn>
-        <Btn
-          target="_blank"
-          as={Link}
-          href={`https://live.bilibili.com/${authorInfo.live_room.roomid}`}
-        >
-          去直播间
-        </Btn>
+        {
+          authorInfo.live_room && authorInfo.live_room.roomid &&
+          <Btn
+            target="_blank"
+            as={Link}
+            href={`https://live.bilibili.com/${authorInfo.live_room.roomid}`}
+          >
+            去直播间
+          </Btn>
+        }
         <Btn
           target="_blank"
           as={Link}
@@ -60,7 +63,7 @@ export default function Page ({ params: { mid } }: {
         mid={mid}
         range={range}
       />
-    </div>
+    </div >
   )
 }
 

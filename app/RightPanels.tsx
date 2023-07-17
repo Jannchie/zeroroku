@@ -98,7 +98,7 @@ function SubComment (props: {
 }
 
 function parseContent (text: string): Array<string | number> {
-  const regex = /(uid[:：])\s*(\d+)/gi
+  const regex = /(uid[:：]?)\s*(\d+)/gi
   const result: Array<string | number> = []
   let lastEnd = 0
   let match
