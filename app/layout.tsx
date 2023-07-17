@@ -48,6 +48,9 @@ export default function RootLayout ({
           href="/favicon.ico"
         />
         <Script
+          src="/live2dcubismcore.min.js"
+        />
+        <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-BKT69PTJLE"
           strategy="afterInteractive"
         />

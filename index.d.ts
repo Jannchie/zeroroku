@@ -1,0 +1,1 @@
+declare module 'pixi-live2d-display/cubism4';

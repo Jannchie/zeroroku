@@ -1,15 +1,21 @@
 'use client'
-import { type ReactNode } from 'react'
-import { T } from 'roku-ui'
-
+import { useEffect, type ReactNode, useState } from 'react'
+import { ZerorokuGirl } from './ZerorokuGirl';
 export default function Home ({ children }: { children: ReactNode } & any) {
+  const [loaded, setLoaded] = useState(false)
+  useEffect(() => {
+    const int = setInterval(() => {
+      if ((window as any).Live2DCubismCore) {
+        setLoaded(true)
+        clearInterval(int)
+      }
+    }, 100)
+  }, [])
+
+
   return (
     <>
-      <T.H1
-        className="text-center text-3xl md:text-5xl lg:text-7xl from-cyan-600 to-blue-800 gradient-text font-extrabold text-transparent bg-clip-text bg-gradient-to-r "
-      >
-        zeroroku.com
-      </T.H1>
+      { loaded && <ZerorokuGirl /> }
       { children }
     </>
   )
