@@ -21,7 +21,7 @@ export function Nav () {
       gap=".25rem"
     >
       {
-        buttonsData.map((button, _index) =>
+        buttonsData.map((button) =>
           button.condition !== true
             ? button.condition && (
               <motion.div

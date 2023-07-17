@@ -17,7 +17,9 @@ const ThemeSettings = () => {
 
 const SettingsContext = createContext({
   threeDimensionalTransform: false,
-  setThreeDimensionalTransform: (_value: boolean) => {},
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  setThreeDimensionalTransform: (_value: boolean) => {
+  },
 })
 
 export const useSettings = () => {
