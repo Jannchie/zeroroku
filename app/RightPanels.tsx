@@ -32,15 +32,17 @@ function AuthorSimpleTag ({ data }: { data: SimpleAuthorData | number }) {
       as={Link}
       href={`bilibili/author/${data.mid}`}
     >
-      <Avatar
-        size={16}
-        src={getBiliImageSrc(data.face)}
-        referrerPolicy="no-referrer"
-        crossOrigin="anonymous"
-      />
-      <span className="ml-1">
-        { data.name }
-      </span>
+      <div className="flex items-center">
+        <Avatar
+          size={16}
+          src={getBiliImageSrc(data.face)}
+          referrerPolicy="no-referrer"
+          crossOrigin="anonymous"
+        />
+        <span className="ml-1">
+          { data.name }
+        </span>
+      </div>
     </Btn>
   )
 }
@@ -60,9 +62,10 @@ function SubComment (props: {
   const { data: self } = useSelfQuery()
   const deleteCommentMutation = useDeleteCommentMutation()
   return (
-    <div className="text-xs flex gap-2 py-2">
-      <div className="flex gap-2">
+    <div className="text-xs flex items-start gap-2 py-2">
+      <div className="flex gap-2 min-w-fit">
         <Image
+          className="inline-block"
           alt={props.subc.user.mail}
           width={16}
           height={16}
@@ -193,63 +196,65 @@ export function RightPanels () {
         : {}}
     >
       <MyScrollArea>
-        <T.H2 className="flex gap-1 items-center">
-          <Icon size={30}>
-            <TablerNotebook />
-          </Icon>
-          观测记录
-        </T.H2>
-        <Panel
-          border
-          padding
-          className="border"
-        >
-          { <CommentTextarea /> }
-          { !isFetched && (
-            <div className="text-gray-500 text-xs">
-              加载中...
-            </div>
-          ) }
-          { (!comments || comments?.length === 0) && isFetched && (
-            <div className="text-gray-500 text-xs">
-              成为第一个写下观测记录的人吧！
-            </div>
-          ) }
-          { nestedComments?.map(c => {
-            return (
-              <Testtest
-                key={c.id}
-                c={c}
-                avatarConfig={avatarConfig}
-                authorSimpleDataMap={authorSimpleDataMap}
-              />
-            )
-          }) }
-        </Panel>
-        { isBilibili && <FriendlyLink /> }
-        <div className="text-xs text-[hsl(var(--r-frontground-3))] pb-56">
-          <p>
-            联系邮箱：admin@zeroroku.com
-          </p>
-          <p>
-            法务邮箱/律师函投递/咨询：legal@zeroroku.com
-          </p>
-          <p>
-            永久免费，数据来自于互联网上公开可访问的信息。
-          </p>
-          <p>
-            但愿这个网站能够帮助到你。
-          </p>
-          <p>
-            { `@${new Date().getFullYear()} Zeroroku` }
-          </p>
+        <div className="flex flex-col gap-4">
+          <T.H2 className="flex gap-1 items-center">
+            <Icon size={30}>
+              <TablerNotebook />
+            </Icon>
+            观测记录
+          </T.H2>
+          <Panel
+            border
+            padding
+            className="border"
+          >
+            { <CommentTextarea /> }
+            { !isFetched && (
+              <div className="text-gray-500 text-xs">
+                加载中...
+              </div>
+            ) }
+            { (!comments || comments?.length === 0) && isFetched && (
+              <div className="text-gray-500 text-xs">
+                成为第一个写下观测记录的人吧！
+              </div>
+            ) }
+            { nestedComments?.map((c, i) => {
+              return (
+                <CommentWithComponent
+                  key={i}
+                  c={c}
+                  avatarConfig={avatarConfig}
+                  authorSimpleDataMap={authorSimpleDataMap}
+                />
+              )
+            }) }
+          </Panel>
+          { isBilibili && <FriendlyLink /> }
+          <div className="text-xs text-[hsl(var(--r-frontground-3))] pb-56">
+            <p>
+              联系邮箱：admin@zeroroku.com
+            </p>
+            <p>
+              法务邮箱/律师函投递/咨询：legal@zeroroku.com
+            </p>
+            <p>
+              永久免费，数据来自于互联网上公开可访问的信息。
+            </p>
+            <p>
+              但愿这个网站能够帮助到你。
+            </p>
+            <p>
+              { `@${new Date().getFullYear()} Zeroroku` }
+            </p>
+          </div>
         </div>
       </MyScrollArea>
     </div>
 
   )
 }
-export function Testtest ({ c, authorSimpleDataMap, avatarConfig }: { c: NestedComment, avatarConfig: JdenticonConfig, authorSimpleDataMap: Map<any, any> }) {
+export function CommentWithComponent ({ c, authorSimpleDataMap, avatarConfig }: { c: NestedComment, avatarConfig: JdenticonConfig, authorSimpleDataMap: Map<any, any> }) {
   const deleteCommentMutation = useDeleteCommentMutation()
   const attituteMutation = useCommentAttituteMutation()
   const { data: self } = useSelfQuery()
@@ -311,7 +316,10 @@ export function Testtest ({ c, authorSimpleDataMap, avatarConfig }: { c: NestedC
                 return typeof d === 'string'
                   ? <span key={d}>{ d }</span>
                   : (
-                    <AuthorSimpleTag data={authorSimpleDataMap.get(d) ?? d} />
+                    <AuthorSimpleTag
+                      key={d}
+                      data={authorSimpleDataMap.get(d) ?? d}
+                    />
                   )
               }) }
             </Flex>

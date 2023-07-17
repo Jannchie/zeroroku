@@ -1,7 +1,7 @@
 'use client'
 import { useBiliAuthorHistoryQuery, useBiliAuthorInfoQuery, useBiliAuthorLiveGiftQuery } from '@/data'
 import { getBiliImageSrc } from '../../getBiliImageSrc'
-import { Avatar, DynamicValue, Icon, Panel, T, Tag } from 'roku-ui'
+import { Avatar, DynamicValue, Icon, Panel, T, Tag, ToggleGroup } from 'roku-ui'
 import { TablerGift, TablerHeartFilled, TablerSquareRoundedNumber1Filled, TablerSquareRoundedNumber7Filled, TablerUser } from '@roku-ui/icons-tabler'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as d3 from 'd3'
@@ -12,6 +12,7 @@ export default function Page ({ params: { mid } }: {
   }
 }) {
   const { data: authorInfo } = useBiliAuthorInfoQuery(mid)
+  const [range, setRange] = useState<7 | 30 | 365>(7)
 
   if (!authorInfo) return null
 
@@ -20,75 +21,72 @@ export default function Page ({ params: { mid } }: {
       <AuthorInfoPanel mid={mid} />
       <LiveStatisticPanels mid={mid} />
       <FansStatisticPanels mid={mid} />
-      <GiftBarChartPanel mid={mid} />
-      <FansAmountLineChart mid={mid} />
+      <RangeSelector
+        range={range}
+        setRange={setRange}
+      />
+      <GiftBarChartPanel
+        mid={mid}
+        range={range}
+      />
+      <FansAmountLineChart
+        mid={mid}
+        range={range}
+      />
     </div>
   )
 }
 
-function GiftBarChartPanel ({ mid }: { mid: string }) {
+function RangeSelector ({
+  range,
+  setRange,
+}: {
+  range: 7 | 30 | 365
+  setRange: (range: 7 | 30 | 365) => void
+}) {
+  return (
+    <ToggleGroup
+      value={range}
+      setValue={setRange}
+      data={[7, 30, 365]}
+      body={(value) => '近' + value + '天'}
+    />
+  )
+}
+
+function GiftBarChartPanel ({ mid, range }: { mid: string, range: number }) {
   const svgRef = useRef<SVGSVGElement>(null)
-
   const { data: giftData } = useBiliAuthorLiveGiftQuery(mid)
-  const [start] = useState(0)
-
-  const margin = 18
-  const marginX = 0
   const timeFormater = useMemo(() => d3.timeFormat('%Y-%m-%d'), [])
-  const end = start + 7
-  const offset = 0
+  const bar = useRef<RokuBar>()
   const [currentData, setCurrentData] = useState(giftData?.[giftData.length - 1])
   useEffect(() => {
-    const svg = svgRef.current
-    if (!giftData || !svg) return
-    const width = svg.clientWidth ?? 400
-    const height = svg.clientHeight ?? 300
-    const x = d3.scaleBand().domain(giftData.slice(start, end).map((d) => d.date).reverse()).range([marginX, width - marginX * 2]).paddingOuter(0).paddingInner(0.2)
-    const y = d3.scaleLinear().domain([0, Math.max(...giftData.slice(start, end).map((d) => d.currency))]).range([margin + offset, height - margin * 2])
-
-    d3
-      .select(svg)
-      .selectAll('rect')
-      .data(giftData.slice(start, end))
-      .join(
-        enter => enter.append('rect')
-          .attr('rx', '4px')
-          .attr('fill', 'hsl(var(--r-primary-2))')
-          .attr('x', (d) => x(d.date) ?? 0)
-          .attr('y', (d) => height - y(d.currency) - margin + offset)
-          .attr('width', x.bandwidth())
-          .attr('height', (d) => y(d.currency) - offset).attr('class', 'cursor-pointer'),
-      )
-
-    // append the x Axis
-    // if not exist, append axis
-    if (d3.select(svg).selectAll('g.x-axis').empty()) {
-      d3.select(svg)
-        .append('g')
-        .attr('class', 'x-axis')
-        .append('g')
-        .attr('transform', `translate(0,${height - margin})`)
-        .call(d3.axisBottom(x).tickFormat(d => timeFormater(new Date(d))))
-    }
-
-    // append the y Axis
-    // d3.select(svgRef.current).append('g').attr('transform', `translate(${margin},0)`).call(d3.axisLeft(y))
-
-    // add axis hover event
-    d3.select(svg).on('mousemove', function (event) {
-      event.preventDefault()
-      const [px] = d3.pointer(event)
-      const index = Math.floor((px - margin) / (x.step()))
-      if (index < 0 || index >= giftData.slice(start, end).length) return
-      const filtedData = giftData.slice(start, end)
-      const data = filtedData[filtedData.length - index - 1]
-      setCurrentData(data)
-    })
-    setCurrentData(giftData[start])
-    return () => {
-      d3.select(svg).on('mousemove', null)
-    }
-  }, [end, giftData, start, timeFormater])
+    if (!giftData) return
+    // get copy giftData
+    const giftDataCopy = giftData.slice()
+    bar.current = RokuBar
+      .new('#gift-chart')
+      .setTheme({
+        fillColor: 'hsl(var(--r-primary-2))',
+        textColor: 'hsl(var(--r-frontground-2))',
+        valueFormat: d3.format('~s'),
+      })
+      .setData(giftDataCopy.reverse())
+      .setConfig({
+        idKey: (d) => d3.timeParse('%Y-%m-%dT00:00:00Z')(d.date)!,
+        valueKey: (d) => d.currency / 1000,
+        itemCount: 30,
+        onHover: (d) => {
+          setCurrentData(d as never)
+        },
+      }).draw()
+  }, [giftData])
+  useEffect(() => {
+    if (!giftData) return
+    bar.current?.setConfig({
+      itemCount: range,
+    }).draw()
+  }, [giftData, range])
   if (!giftData) return null
   const currencyFormater = new Intl.NumberFormat('zh-CN', {
     style: 'currency',
@@ -113,20 +111,26 @@ function GiftBarChartPanel ({ mid }: { mid: string }) {
       </div>
       <svg
         ref={svgRef}
-        className="w-full h-48"
+        id="gift-chart"
+        className="w-full h-48 fill-transparent"
       />
     </Panel>
   )
 }
 
-function FansAmountLineChart ({ mid }: { mid: string }) {
+function FansAmountLineChart ({ mid, range }: { mid: string, range: number }) {
   const svgRef = useRef<SVGSVGElement>(null)
 
   const { data: historyData } = useBiliAuthorHistoryQuery(mid)
   const historyDataReversed = historyData?.sort((a, b) => a.date > b.date ? 1 : -1)
   const timeFormater = useMemo(() => d3.timeFormat('%Y-%m-%d'), [])
   const [currentData, setCurrentData] = useState(historyDataReversed?.[historyDataReversed.length - 1])
-  const [range] = useState(30)
+  useEffect(() => {
+    if (!historyData) return
+    bar.current?.setConfig({
+      itemCount: range,
+    }).draw()
+  }, [historyData, range])
   const bar = useRef<RokuBar>()
   useEffect(() => {
     if (!historyDataReversed) return
@@ -141,14 +145,13 @@ function FansAmountLineChart ({ mid }: { mid: string }) {
       .setConfig({
         idKey: (d) => d3.timeParse('%Y-%m-%d')(d.date)!,
         valueKey: (d) => d.fans,
-        itemCount: range,
-        padding: 36,
+        itemCount: 7,
         onHover: (d) => {
           setCurrentData(d as never)
         },
       }).draw()
     setCurrentData(historyDataReversed[historyDataReversed.length - 1])
-  }, [historyDataReversed, range])
+  }, [historyDataReversed])
   if (!historyDataReversed) return null
   const numberFormater = new Intl.NumberFormat('zh-CN', {
     compactDisplay: 'short',

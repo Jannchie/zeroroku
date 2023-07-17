@@ -30,57 +30,60 @@ export function LeftPanels () {
         : {}}
     >
       <MyScrollArea>
-        <T.H2 className="flex gap-1 items-center">
-          <Icon size={30}>
-            <TablerPigMoney />
-          </Icon>
-          赞助者
-        </T.H2>
-        <div className="text-[hsl(var(--r-frontground-3))] text-sm">
-          他们无私地给予了支持，没有要求任何回报。
-          <Link
-            passHref
-            className="text-[hsl(var(--r-frontground-3))] underline"
-            href="https://azz.ee/jannchie"
+        <div className="flex flex-col gap-4">
+
+          <T.H2 className="flex gap-1 items-center">
+            <Icon size={30}>
+              <TablerPigMoney />
+            </Icon>
+            赞助者
+          </T.H2>
+          <div className="text-[hsl(var(--r-frontground-3))] text-sm">
+            他们无私地给予了支持，没有要求任何回报。
+            <Link
+              passHref
+              className="text-[hsl(var(--r-frontground-3))] underline"
+              href="https://azz.ee/jannchie"
+            >
+              加入他们
+            </Link>
+            。
+          </div>
+          <Panel
+            padding
           >
-            加入他们
-          </Link>
-          。
-        </div>
-        <Panel
-          padding
-        >
-          { sponsors?.map((sponsor) => {
-            return (
-              <div
-                key={sponsor.order_id}
-                className="flex items-center gap-2 opacity-50 hover:opacity-100 transition-[opacity,scale]"
-              >
-                <Avatar
-                  referrerPolicy="no-referrer"
-                  crossOrigin="anonymous"
-                  src={sponsor.user_avatar}
-                  size={24}
-                  className="flex-shrink-0"
-                />
-                <div className="flex flex-col flex-grow">
-                  <div className="flex items-center gap-1">
-                    <T.H4 className="!font-normal">{ sponsor.user_name }</T.H4>
+            { sponsors?.map((sponsor) => {
+              return (
+                <div
+                  key={sponsor.order_id}
+                  className="flex items-center gap-2 opacity-50 hover:opacity-100 transition-[opacity,scale]"
+                >
+                  <Avatar
+                    referrerPolicy="no-referrer"
+                    crossOrigin="anonymous"
+                    src={sponsor.user_avatar}
+                    size={24}
+                    className="flex-shrink-0"
+                  />
+                  <div className="flex flex-col flex-grow">
+                    <div className="flex items-center gap-1">
+                      <T.H4 className="!font-normal">{ sponsor.user_name }</T.H4>
+                    </div>
+                    <div className="text-[hsl(var(--r-frontground-3))] text-xs">
+                      { sponsor.create_date }
+                    </div>
                   </div>
-                  <div className="text-[hsl(var(--r-frontground-3))] text-xs">
-                    { sponsor.create_date }
-                  </div>
+                  <T.P className="text-[hsl(var(--r-frontground-3))]">
+                    { moneyFormater.format(sponsor.order_price / 100) }
+                  </T.P>
                 </div>
-                <T.P className="text-[hsl(var(--r-frontground-3))]">
-                  { moneyFormater.format(sponsor.order_price / 100) }
-                </T.P>
-              </div>
-            )
-          }) }
-        </Panel>
-        { sponsors && <div className="pb-56 text-xs text-frontground-3 pt-2">
-          真的没有了！
-        </div> }
+              )
+            }) }
+          </Panel>
+          { sponsors && <div className="pb-56 text-xs text-frontground-3 pt-2">
+            真的没有了！
+          </div> }
+        </div>
       </MyScrollArea>
     </div>
   )
