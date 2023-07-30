@@ -17,7 +17,7 @@ export function LeftPanels () {
   })
   return (
     <div
-      className="w-full xl:w-96 xl:max-h-screen overflow-hidden h-full top-4 xl:fixed xl:translate-x-[-384px] flex flex-col gap-4 transition-transform"
+      className="antialiased w-full xl:w-96 xl:max-h-screen overflow-hidden h-full top-4 xl:fixed xl:translate-x-[-384px] flex flex-col gap-4 transition-transform"
       style={threeDimensionalTransform && isXL
         ? {
           fontSmooth: 'subpixel',
