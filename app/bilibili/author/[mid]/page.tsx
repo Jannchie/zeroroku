@@ -62,6 +62,12 @@ export default function Page ({ params: { mid } }: {
       <FansAmountLineChart
         mid={mid}
         range={range}
+        field="fans"
+      />
+      <FansAmountLineChart
+        mid={mid}
+        range={range}
+        field="rate1"
       />
     </div >
   )
@@ -148,7 +154,7 @@ function GiftBarChartPanel ({ mid, range }: { mid: string, range: number }) {
   )
 }
 
-function FansAmountLineChart ({ mid, range }: { mid: string, range: number }) {
+function FansAmountLineChart ({ mid, range, field }: { mid: string, range: number, field: keyof BiliAuthorHistory }) {
   const svgRef = useRef<SVGSVGElement>(null)
 
   const { data: historyData } = useBiliAuthorHistoryQuery(mid)
@@ -162,10 +168,19 @@ function FansAmountLineChart ({ mid, range }: { mid: string, range: number }) {
     }).draw()
   }, [historyData, range])
   const bar = useRef<RokuBar>()
+  const title = useMemo(() => {
+    switch (field) {
+      case 'fans':
+        return '粉丝总数'
+      default:
+        return '粉丝变化'
+        break;
+    }
+  }, [field])
   useEffect(() => {
     if (!historyDataReversed) return
     bar.current = RokuBar
-      .new('#fans-amount-chart')
+      .new(`#fans-amount-chart-${field}`)
       .setTheme({
         fillColor: 'hsl(var(--r-primary-2))',
         textColor: 'hsl(var(--r-frontground-2))',
@@ -174,14 +189,14 @@ function FansAmountLineChart ({ mid, range }: { mid: string, range: number }) {
       .setData(historyDataReversed)
       .setConfig({
         idKey: (d) => d3.timeParse('%Y-%m-%d')(d.date)!,
-        valueKey: (d) => d.fans,
+        valueKey: (d) => d[field],
         itemCount: 7,
         onHover: (d) => {
           setCurrentData(d as never)
         },
       }).draw()
     setCurrentData(historyDataReversed[historyDataReversed.length - 1])
-  }, [historyDataReversed])
+  }, [field, historyDataReversed])
   if (!historyDataReversed) return null
   const numberFormater = new Intl.NumberFormat('zh-CN', {
     compactDisplay: 'short',
@@ -192,7 +207,7 @@ function FansAmountLineChart ({ mid, range }: { mid: string, range: number }) {
         <span className="text-base flex text-[hsl(var(--r-primary-2))]">
           <TablerUser width="1em" />
           <span>
-            粉丝总数
+            { title }
           </span>
         </span>
         <span className="ml-2 text-base text-[hsl(var(--r-frontground-3))]">
@@ -200,11 +215,11 @@ function FansAmountLineChart ({ mid, range }: { mid: string, range: number }) {
         </span>
       </div>
       <div className="text-xl md:text-2xl lg:text-3xl">
-        { numberFormater.format(currentData?.fans ?? 0) }
+        { numberFormater.format(currentData?.[field] ?? 0) }
       </div>
       <svg
         ref={svgRef}
-        id="fans-amount-chart"
+        id={`fans-amount-chart-${field}`}
         className="w-full h-48"
       />
     </Panel>
@@ -219,7 +234,7 @@ function LiveStatisticPanels ({ mid }: { mid: string }) {
       label: '30日礼物',
       icon: <TablerHeartFilled />,
       value: giftData.filter(
-        (d) => new Date(d.date).getTime() > Date.now() - 30 * 24 * 60 * 60 * 1000
+        (d) => new Date(d.date).getTime() > Date.now() - 30 * 24 * 60 * 60 * 1000,
       ).reduce((acc, cur) => acc + cur.currency / 1000, 0),
     }, {
       label: '最高礼物',
@@ -229,7 +244,7 @@ function LiveStatisticPanels ({ mid }: { mid: string }) {
       label: '七日礼物',
       icon: <TablerSquareRoundedNumber7Filled />,
       value: giftData.filter(
-        (d) => new Date(d.date).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000
+        (d) => new Date(d.date).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000,
       ).reduce((acc, cur) => acc + cur.currency / 1000, 0),
     },
   ]
