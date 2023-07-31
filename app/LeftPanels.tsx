@@ -15,6 +15,38 @@ export function LeftPanels () {
     style: 'currency',
     currency: 'CNY',
   })
+  const currentMonthSponsors = sponsors?.filter((sponsor) => {
+    const createDate = new Date(sponsor.create_date);
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+
+    // Extract the year and month from the sponsor's create_date
+    const sponsorYear = createDate.getFullYear();
+    const sponsorMonth = createDate.getMonth() + 1;
+
+    // Check if the sponsor's create_date is in the current month and year
+    return sponsorYear === currentYear && sponsorMonth === currentMonth;
+  });
+
+  const cost = 576.99 / 0.94
+  const previousMonthData = sponsors?.filter((entry) => {
+    // Extract the month and year from the entry's date
+    const entryDate = new Date(entry.create_date);
+    const entryYear = entryDate.getFullYear();
+    const entryMonth = entryDate.getMonth() + 1;
+    const previousYear = new Date().getFullYear();
+    const previousMonth = new Date().getMonth();
+    // Check if the entry's month and year match the previous month and year
+    return entryYear === previousYear && entryMonth === previousMonth;
+  });
+
+  const currentMonthSponsorsTotal = currentMonthSponsors?.reduce((acc, sponsor) => {
+    return acc + Number(sponsor.order_price) / 100
+  }, 0)
+
+  const previousMonthSponsorsTotal = previousMonthData?.reduce((acc, sponsor) => {
+    return acc + Number(sponsor.order_price) / 100
+  }, 0)
   return (
     <div
       className="antialiased w-full xl:w-96 xl:max-h-screen overflow-hidden h-full top-4 xl:fixed xl:translate-x-[-384px] flex flex-col gap-4 transition-transform"
@@ -31,7 +63,6 @@ export function LeftPanels () {
     >
       <MyScrollArea>
         <div className="flex flex-col gap-4">
-
           <T.H2 className="flex gap-1 items-center">
             <Icon size={30}>
               <TablerPigMoney />
@@ -49,6 +80,46 @@ export function LeftPanels () {
             </Link>
             。
           </div>
+          { previousMonthSponsorsTotal && <div>
+            <div className="text-sm flex justify-between">
+              <div>
+                { '上月收支：' }
+                { moneyFormater.format(previousMonthSponsorsTotal - cost) }
+              </div>
+              <div>
+                { `${Math.round(previousMonthSponsorsTotal / cost * 100)}%` }
+              </div>
+            </div>
+            <div className="h-1 rounded-full overflow-hidden bg-background-1">
+              <div
+                className="h-full bg-[hsl(var(--r-primary-2))]"
+                style={{
+                  width: `${previousMonthSponsorsTotal / cost * 100}%`,
+                }}
+              />
+            </div>
+          </div>
+          }
+          { currentMonthSponsorsTotal && <div>
+            <div className="text-sm flex justify-between">
+              <div>
+                { '本月收支：' }
+                { moneyFormater.format(currentMonthSponsorsTotal - cost) }
+              </div>
+              <div>
+                { `${Math.round(currentMonthSponsorsTotal / cost * 100)}%` }
+              </div>
+            </div>
+            <div className="h-1 rounded-full overflow-hidden bg-background-1">
+              <div
+                className="h-full bg-[hsl(var(--r-primary-2))]"
+                style={{
+                  width: `${currentMonthSponsorsTotal / cost * 100}%`,
+                }}
+              />
+            </div>
+          </div>
+          }
           <Panel
             padding
           >
