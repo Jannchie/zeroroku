@@ -218,7 +218,9 @@ function LiveStatisticPanels ({ mid }: { mid: string }) {
     {
       label: '30日礼物',
       icon: <TablerHeartFilled />,
-      value: giftData.slice(0, 30).reduce((acc, cur) => acc + cur.currency / 1000, 0),
+      value: giftData.filter(
+        (d) => new Date(d.date).getTime() > Date.now() - 30 * 24 * 60 * 60 * 1000
+      ).reduce((acc, cur) => acc + cur.currency / 1000, 0),
     }, {
       label: '最高礼物',
       icon: <TablerSquareRoundedNumber1Filled />,
@@ -226,7 +228,9 @@ function LiveStatisticPanels ({ mid }: { mid: string }) {
     }, {
       label: '七日礼物',
       icon: <TablerSquareRoundedNumber7Filled />,
-      value: giftData.slice(0, 7).reduce((acc, cur) => acc + cur.currency / 1000, 0),
+      value: giftData.filter(
+        (d) => new Date(d.date).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000
+      ).reduce((acc, cur) => acc + cur.currency / 1000, 0),
     },
   ]
   const currencyFormater = new Intl.NumberFormat('zh-CN', {
