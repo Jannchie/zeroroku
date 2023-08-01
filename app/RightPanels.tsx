@@ -158,7 +158,7 @@ export function RightPanels () {
   }
 
   const mids = useMemo(() => {
-    if (!comments) return []
+    if (!comments || typeof comments.length === 'undefined') return []
     return comments.map(c => {
       return parseContent(c.content)
     }).map(c => {
@@ -173,7 +173,7 @@ export function RightPanels () {
   }, [authorSimpleData])
 
   const nestedComments = useMemo(() => {
-    if (!comments) return []
+    if (!comments || typeof comments.length === 'undefined') return []
     return comments.filter(c => !c.parent_id).map(c => {
       return {
         ...c,

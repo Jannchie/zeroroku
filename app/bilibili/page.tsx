@@ -118,7 +118,7 @@ export default function Page () {
             className="flex-wrap text-sm py-2"
           >
             {
-              biliPop?.map((d) => (
+              biliPop?.length && biliPop.map((d) => (
                 <Btn
                   key={d.mid}
                   text
