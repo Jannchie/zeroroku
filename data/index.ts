@@ -16,6 +16,7 @@ export interface AuthorHistoryData {
   fans: number
   created_at: string
   date: string
+  rate1: number
 }
 interface LoginRequest {
   account: string

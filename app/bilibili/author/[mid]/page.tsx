@@ -1,5 +1,5 @@
 'use client'
-import { useBiliAuthorHistoryQuery, useBiliAuthorInfoQuery, useBiliAuthorLiveGiftQuery } from '@/data'
+import { AuthorHistoryData, useBiliAuthorHistoryQuery, useBiliAuthorInfoQuery, useBiliAuthorLiveGiftQuery } from '@/data'
 import { getBiliImageSrc } from '../../getBiliImageSrc'
 import { Avatar, Btn, DynamicValue, Icon, Panel, T, Tag, ToggleGroup } from 'roku-ui'
 import { TablerGift, TablerHeartFilled, TablerSquareRoundedNumber1Filled, TablerSquareRoundedNumber7Filled, TablerUser } from '@roku-ui/icons-tabler'
@@ -154,7 +154,7 @@ function GiftBarChartPanel ({ mid, range }: { mid: string, range: number }) {
   )
 }
 
-function FansAmountLineChart ({ mid, range, field }: { mid: string, range: number, field: keyof BiliAuthorHistory }) {
+function FansAmountLineChart ({ mid, range, field }: { mid: string, range: number, field: keyof AuthorHistoryData }) {
   const svgRef = useRef<SVGSVGElement>(null)
 
   const { data: historyData } = useBiliAuthorHistoryQuery(mid)
@@ -174,7 +174,6 @@ function FansAmountLineChart ({ mid, range, field }: { mid: string, range: numbe
         return '粉丝总数'
       default:
         return '粉丝变化'
-        break;
     }
   }, [field])
   useEffect(() => {
@@ -214,9 +213,11 @@ function FansAmountLineChart ({ mid, range, field }: { mid: string, range: numbe
           { timeFormater(new Date(currentData?.date ?? 0)) }
         </span>
       </div>
-      <div className="text-xl md:text-2xl lg:text-3xl">
-        { numberFormater.format(currentData?.[field] ?? 0) }
-      </div>
+      {
+        <div className="text-xl md:text-2xl lg:text-3xl">
+          { numberFormater.format(Number(currentData?.[field]) ?? 0) }
+        </div>
+      }
       <svg
         ref={svgRef}
         id={`fans-amount-chart-${field}`}
