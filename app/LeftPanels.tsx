@@ -80,7 +80,7 @@ export function LeftPanels () {
             </Link>
             。
           </div>
-          { previousMonthSponsorsTotal && <div>
+          { typeof previousMonthSponsorsTotal === 'number' &&  <div>
             <div className="text-sm flex justify-between">
               <div>
                 { '上月收支：' }
@@ -100,7 +100,7 @@ export function LeftPanels () {
             </div>
           </div>
           }
-          { currentMonthSponsorsTotal && <div>
+          { typeof currentMonthSponsorsTotal === 'number' && <div>
             <div className="text-sm flex justify-between">
               <div>
                 { '本月收支：' }
