@@ -16,29 +16,29 @@ export function LeftPanels () {
     currency: 'CNY',
   })
   const currentMonthSponsors = sponsors?.filter((sponsor) => {
-    const createDate = new Date(sponsor.create_date);
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1;
+    const createDate = new Date(sponsor.create_date)
+    const currentYear = new Date().getFullYear()
+    const currentMonth = new Date().getMonth() + 1
 
     // Extract the year and month from the sponsor's create_date
-    const sponsorYear = createDate.getFullYear();
-    const sponsorMonth = createDate.getMonth() + 1;
+    const sponsorYear = createDate.getFullYear()
+    const sponsorMonth = createDate.getMonth() + 1
 
     // Check if the sponsor's create_date is in the current month and year
-    return sponsorYear === currentYear && sponsorMonth === currentMonth;
-  });
+    return sponsorYear === currentYear && sponsorMonth === currentMonth
+  })
 
   const cost = 576.99 / 0.94
   const previousMonthData = sponsors?.filter((entry) => {
     // Extract the month and year from the entry's date
-    const entryDate = new Date(entry.create_date);
-    const entryYear = entryDate.getFullYear();
-    const entryMonth = entryDate.getMonth() + 1;
-    const previousYear = new Date().getFullYear();
-    const previousMonth = new Date().getMonth();
+    const entryDate = new Date(entry.create_date)
+    const entryYear = entryDate.getFullYear()
+    const entryMonth = entryDate.getMonth() + 1
+    const previousYear = new Date().getFullYear()
+    const previousMonth = new Date().getMonth()
     // Check if the entry's month and year match the previous month and year
-    return entryYear === previousYear && entryMonth === previousMonth;
-  });
+    return entryYear === previousYear && entryMonth === previousMonth
+  })
 
   const currentMonthSponsorsTotal = currentMonthSponsors?.reduce((acc, sponsor) => {
     return acc + Number(sponsor.order_price) / 100

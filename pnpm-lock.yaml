@@ -102,8 +102,8 @@ dependencies:
     specifier: 18.2.0
     version: 18.2.0(react@18.2.0)
   roku-charts:
-    specifier: ^0.4.7
-    version: 0.4.7(d3@7.8.5)
+    specifier: ^0.4.8
+    version: 0.4.8(d3@7.8.5)
   roku-ui:
     specifier: ^0.15.2
     version: 0.15.2(@types/react-dom@18.2.7)(@types/react@18.2.18)(react-dom@18.2.0)(react@18.2.0)
@@ -3847,8 +3847,8 @@ packages:
     resolution: {integrity: sha512-IXgzBWvWQwE6PrDI05OvmXUIruQTcoMDzRsOd5CDvHCVLcLHMTSYvOK5Cm46kWqlV3yAbuSpBZdJ5oP5OUoStg==}
     dev: false
 
-  /roku-charts@0.4.7(d3@7.8.5):
-    resolution: {integrity: sha512-UglrIYkcVYKifFiTZHwH0TRauupCWdUCkjiij35mP3ntSpKJ6qMcbsaJe5ISSyJ5ANDqeAyia1PeYhwXQDi0aQ==}
+  /roku-charts@0.4.8(d3@7.8.5):
+    resolution: {integrity: sha512-VVI5mxXFrARtaoEkH/l4WrXPp09sdqBMe+o0cKzKk6MrbpE5LIRNONXM7c6zG/TbEiHVVlbXmj4ziw4eB0X7jg==}
     peerDependencies:
       d3: ^7.8.2
     dependencies:

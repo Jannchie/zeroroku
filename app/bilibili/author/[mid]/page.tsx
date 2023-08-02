@@ -221,7 +221,7 @@ function FansAmountLineChart ({ mid, range, field }: { mid: string, range: numbe
       <svg
         ref={svgRef}
         id={`fans-amount-chart-${field}`}
-        className="w-full h-48"
+        className="w-full h-48 relative"
       />
     </Panel>
   )

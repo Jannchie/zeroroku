@@ -6,7 +6,7 @@ import { type AuthorInfo } from './model/AuthorInfo'
 import { type VideoInfo } from './model/VideoInfo'
 import { pushErrorNotice, pushSuccessNotice } from '@/app/Provider'
 
-const baseURL = process.env.NODE_ENV === 'production' ? 'https://api.zeroroku.com' : 'http://localhost:8080'
+const baseURL = process.env.NODE_ENV === 'production' ? 'https://api.zeroroku.com' : 'http://192.168.31.200:8081'
 
 export type UserRank = User[]
 
