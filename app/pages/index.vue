@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Btn, SchemeSwitch } from '@roku-ui/vue'
 import { authClient } from '~~/lib/client'
 
 const session = authClient.useSession()
@@ -6,18 +7,18 @@ const session = authClient.useSession()
 
 <template>
   <div>
-    <button
+    <Btn
       v-if="!session?.data" @click="() => authClient.signIn.social({
         provider: 'github',
       })"
     >
       Continue with GitHub
-    </button>
+    </Btn>
     <div>
-      <pre>{{ session.data }}</pre>
-      <button v-if="session.data" @click="authClient.signOut()">
+      <Btn v-if="session.data" @click="authClient.signOut()">
         Sign out
-      </button>
+      </Btn>
+      <pre>{{ session.data }}</pre>
     </div>
   </div>
 </template>
