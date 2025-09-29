@@ -7,6 +7,7 @@ const session = authClient.useSession()
 
 <template>
   <div>
+    <SchemeSwitch />
     <Btn
       v-if="!session?.data" @click="() => authClient.signIn.social({
         provider: 'github',
