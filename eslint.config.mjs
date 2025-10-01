@@ -1,4 +1,4 @@
-import jannchie from '@antfu/eslint-config'
+import jannchie from '@jannchie/eslint-config'
 // @ts-check
 import withNuxt from './.nuxt/eslint.config.mjs'
 

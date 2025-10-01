@@ -28,7 +28,6 @@
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^5.4.1",
     "@jannchie/eslint-config": "^3.7.1",
     "@types/node": "^24.5.2",
     "@types/pg": "^8.15.5",
