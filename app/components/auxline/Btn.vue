@@ -7,11 +7,13 @@ const props = withDefaults(defineProps<{
   size?: AuxlineBtnSize
   type?: 'button' | 'submit' | 'reset'
   disabled?: boolean
+  loading?: boolean
 }>(), {
   variant: 'solid',
   size: 'md',
   type: 'button',
   disabled: false,
+  loading: false,
 })
 
 const baseClass = 'auxline-btn inline-flex items-center justify-center gap-2 whitespace-nowrap border-[var(--auxline-line)] font-mono uppercase tracking-[0.12em] text-[0.75rem] leading-none transition-colors focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)] disabled:cursor-not-allowed disabled:opacity-60'
@@ -31,9 +33,47 @@ const sizeClasses: Record<AuxlineBtnSize, string> = {
 <template>
   <button
     :type="props.type"
-    :disabled="props.disabled"
-    :class="[baseClass, variantClasses[props.variant], sizeClasses[props.size]]"
+    :disabled="props.disabled || props.loading"
+    :aria-busy="props.loading ? 'true' : undefined"
+    :class="[
+      baseClass,
+      variantClasses[props.variant],
+      sizeClasses[props.size],
+      props.loading ? 'auxline-btn-loading' : null,
+    ]"
   >
     <slot />
   </button>
 </template>
+
+<style>
+@keyframes auxline-btn-flash {
+  0%,
+  49% {
+    background-color: var(--auxline-bg-emphasis);
+    color: var(--auxline-fg);
+  }
+  50%,
+  100% {
+    background-color: var(--auxline-bg-contrast);
+    color: var(--auxline-fg-contrast);
+  }
+}
+
+.auxline-btn-loading {
+  animation: auxline-btn-flash 0.9s steps(1, end) infinite;
+  opacity: 1;
+  cursor: progress;
+}
+
+.auxline-btn-loading:disabled {
+  opacity: 1;
+  cursor: progress;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auxline-btn-loading {
+    animation: none;
+  }
+}
+</style>
