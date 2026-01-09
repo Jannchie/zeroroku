@@ -93,9 +93,28 @@ async function signInWithGithub() {
         </div>
       </template>
       <template #main>
-        <h1 class="text-3xl pt-12 pb-12 font-bold text-center">
-          ZeroRoku
-        </h1>
+        <section class="flex flex-col items-center gap-6 pt-12 pb-12">
+          <h1 class="text-3xl font-bold text-center">
+            ZeroRoku
+          </h1>
+        </section>
+        <div class="flex flex-wrap justify-center children:border-r first:children:border-l">
+          <AuxlineBtn size="sm" to="/">
+            首页
+          </AuxlineBtn>
+          <AuxlineBtn size="sm" to="/rank">
+            排行榜
+          </AuxlineBtn>
+          <AuxlineBtn size="sm" to="/profile">
+            个人
+          </AuxlineBtn>
+          <AuxlineBtn size="sm" to="/bilibili">
+            B站
+          </AuxlineBtn>
+          <AuxlineBtn size="sm" to="/settings">
+            设置
+          </AuxlineBtn>
+        </div>
         <div v-if="session?.data">
           <button @click="authClient.signOut()">
             Sign out
