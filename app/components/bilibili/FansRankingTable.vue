@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 interface FansRankingItem {
   mid: string
   name: string | null
@@ -34,6 +36,7 @@ const percentFormatter = new Intl.NumberFormat('zh-CN', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 })
+const stripeBackground = 'repeating-linear-gradient(45deg, var(--auxline-line) 0 1px, transparent 1px 4px)'
 
 function formatValue(value: string | number | null | undefined): string {
   if (value === null || value === undefined) {
@@ -85,6 +88,31 @@ function formatPercent(delta: string | number | null | undefined, total: string 
   return `${percentFormatter.format(percent)}%`
 }
 
+const topValue = computed(() => {
+  const items = data.value?.items
+  if (!items || items.length === 0) {
+    return 0
+  }
+  const value = parseNumber(items[0]?.[props.valueKey])
+  if (value === null) {
+    return 0
+  }
+  return Math.abs(value)
+})
+
+function barWidth(item: FansRankingItem): string {
+  const base = topValue.value
+  if (base <= 0) {
+    return '0%'
+  }
+  const value = parseNumber(item[props.valueKey])
+  if (value === null) {
+    return '0%'
+  }
+  const ratio = Math.min(Math.abs(value) / base, 1)
+  return `${Math.max(ratio, 0) * 100}%`
+}
+
 function displayName(item: FansRankingItem): string {
   if (item.name && item.name.trim().length > 0) {
     return item.name
@@ -117,26 +145,28 @@ const skeletonRows = Array.from({ length: 50 }, (_, index) => index)
           <div
             v-for="index in skeletonRows"
             :key="index"
-            class="flex items-center justify-between border-b border-[var(--auxline-line)] last:border-b-0 sm:border-x"
+            class="relative overflow-hidden border-b border-[var(--auxline-line)] last:border-b-0 sm:border-x"
           >
-            <span class="w-10 px-1 text-sm font-mono text-transparent">
-              00
-            </span>
-            <div class="flex flex-1 items-center gap-3 pl-4">
-              <div
-                class="h-9 w-9 bg-[var(--auxline-bg-emphasis)]"
-                aria-hidden="true"
-              />
-              <div class="flex flex-col">
-                <span class="h-4 w-32 bg-[var(--auxline-bg-emphasis)]" />
-                <span class="mt-1 h-3 w-20 bg-[var(--auxline-bg-emphasis)]" />
+            <div class="relative z-10 flex w-full items-center justify-between">
+              <span class="w-10 px-1 text-sm font-mono text-transparent">
+                00
+              </span>
+              <div class="flex flex-1 items-center gap-3 pl-4">
+                <div
+                  class="h-9 w-9 bg-[var(--auxline-bg-emphasis)]"
+                  aria-hidden="true"
+                />
+                <div class="flex flex-col">
+                  <span class="h-4 w-32 bg-[var(--auxline-bg-emphasis)]" />
+                  <span class="mt-1 h-3 w-20 bg-[var(--auxline-bg-emphasis)]" />
+                </div>
               </div>
-            </div>
-            <div class="flex flex-col items-end gap-1 px-1">
-              <span class="block h-4 w-16 bg-[var(--auxline-bg-emphasis)]" />
-              <template v-if="props.showTrendMeta">
-                <span class="block h-3 w-24 bg-[var(--auxline-bg-emphasis)]" />
-              </template>
+              <div class="flex flex-col items-end gap-1 px-1">
+                <span class="block h-4 w-16 bg-[var(--auxline-bg-emphasis)]" />
+                <template v-if="props.showTrendMeta">
+                  <span class="block h-3 w-24 bg-[var(--auxline-bg-emphasis)]" />
+                </template>
+              </div>
             </div>
           </div>
         </template>
@@ -144,46 +174,53 @@ const skeletonRows = Array.from({ length: 50 }, (_, index) => index)
           <div
             v-for="(item, index) in data?.items ?? []"
             :key="item.mid"
-            class="flex items-center justify-between border-b border-[var(--auxline-line)] last:border-b-0 sm:border-x"
+            class="relative overflow-hidden border-b border-[var(--auxline-line)] last:border-b-0 sm:border-x"
           >
-            <span class="w-10 px-1 text-sm font-mono">
-              {{ String(index + 1).padStart(2, '0') }}
-            </span>
-            <div class="flex flex-1 items-center gap-3 pl-4">
-              <div
-                class="flex h-9 w-9 items-center justify-center overflow-hidden border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)] text-[0.6rem] font-mono uppercase tracking-[0.12em]"
-                aria-hidden="true"
-              >
-                <NuxtImg
-                  v-if="item.face"
-                  :src="item.face"
-                  alt=""
-                  class="h-full w-full object-cover"
-                  width="36"
-                  height="36"
-                />
-                <span v-else>
-                  {{ displayName(item).slice(0, 1) }}
-                </span>
-              </div>
-              <div class="flex flex-col">
-                <span class="text-sm font-semibold">
-                  {{ displayName(item) }}
-                </span>
-                <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                  {{ item.mid }}
-                </span>
-              </div>
-            </div>
-            <div class="flex flex-col items-end gap-1 px-1">
-              <span class="text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                {{ formatValue(item[props.valueKey]) }}
+            <span
+              class="absolute inset-y-0 left-0 z-0 pointer-events-none"
+              :style="{ width: barWidth(item), backgroundImage: stripeBackground }"
+              aria-hidden="true"
+            />
+            <div class="relative z-10 flex w-full items-center justify-between">
+              <span class="w-10 px-1 text-sm font-mono">
+                {{ String(index + 1).padStart(2, '0') }}
               </span>
-              <template v-if="props.showTrendMeta">
+              <div class="flex flex-1 items-center gap-3 pl-4">
+                <div
+                  class="flex h-9 w-9 items-center justify-center overflow-hidden border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)] text-[0.6rem] font-mono uppercase tracking-[0.12em]"
+                  aria-hidden="true"
+                >
+                  <NuxtImg
+                    v-if="item.face"
+                    :src="item.face"
+                    alt=""
+                    class="h-full w-full object-cover"
+                    width="36"
+                    height="36"
+                  />
+                  <span v-else>
+                    {{ displayName(item).slice(0, 1) }}
+                  </span>
+                </div>
+                <div class="flex flex-col">
+                  <span class="text-sm font-semibold">
+                    {{ displayName(item) }}
+                  </span>
+                  <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                    {{ item.mid }}
+                  </span>
+                </div>
+              </div>
+              <div class="flex flex-col items-end gap-1 px-1">
                 <span class="text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                  {{ formatCount(item.fans) }} · {{ formatPercent(item.delta, item.fans) }}
+                  {{ formatValue(item[props.valueKey]) }}
                 </span>
-              </template>
+                <template v-if="props.showTrendMeta">
+                  <span class="text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                    {{ formatCount(item.fans) }} · {{ formatPercent(item.delta, item.fans) }}
+                  </span>
+                </template>
+              </div>
             </div>
           </div>
           <div

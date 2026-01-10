@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 interface UserExpRankItem {
   id: string
   name: string | null
@@ -14,6 +16,7 @@ const { data, pending, error } = useFetch<UserExpRankResponse>('/api/rank', {
 })
 
 const formatter = new Intl.NumberFormat('zh-CN')
+const stripeBackground = 'repeating-linear-gradient(45deg, var(--auxline-line) 0 1px, transparent 1px 4px)'
 const skeletonRows = Array.from({ length: 12 }, (_, index) => index)
 
 function formatExp(value: number | null | undefined): string {
@@ -21,6 +24,25 @@ function formatExp(value: number | null | undefined): string {
     return '--'
   }
   return formatter.format(Number.isFinite(value) ? value : 0)
+}
+
+const topExp = computed(() => {
+  const items = data.value?.items
+  if (!items || items.length === 0) {
+    return 0
+  }
+  const value = items[0]?.exp ?? 0
+  return Math.abs(Number.isFinite(value) ? value : 0)
+})
+
+function barWidth(item: UserExpRankItem): string {
+  const base = topExp.value
+  if (base <= 0) {
+    return '0%'
+  }
+  const value = Number.isFinite(item.exp) ? Math.abs(item.exp) : 0
+  const ratio = Math.min(value / base, 1)
+  return `${Math.max(ratio, 0) * 100}%`
 }
 
 function displayName(item: UserExpRankItem): string {
@@ -50,54 +72,63 @@ function displayName(item: UserExpRankItem): string {
           <div
             v-for="index in skeletonRows"
             :key="index"
-            class="flex items-center justify-between border-b border-l border-r border-[var(--auxline-line)] last:border-b-0"
+            class="relative overflow-hidden border-b border-l border-r border-[var(--auxline-line)] last:border-b-0"
           >
-            <span class="w-10 px-1 text-sm font-mono text-transparent">
-              00
-            </span>
-            <div class="flex flex-1 items-center gap-3 pl-4">
-              <div
-                class="h-9 w-9 bg-[var(--auxline-bg-emphasis)]"
-                aria-hidden="true"
-              />
-              <div class="flex flex-col">
-                <span class="h-4 w-32 bg-[var(--auxline-bg-emphasis)]" />
-                <span class="mt-1 h-3 w-20 bg-[var(--auxline-bg-emphasis)]" />
+            <div class="relative z-10 flex w-full items-center justify-between">
+              <span class="w-10 px-1 text-sm font-mono text-transparent">
+                00
+              </span>
+              <div class="flex flex-1 items-center gap-3 pl-4">
+                <div
+                  class="h-9 w-9 bg-[var(--auxline-bg-emphasis)]"
+                  aria-hidden="true"
+                />
+                <div class="flex flex-col">
+                  <span class="h-4 w-32 bg-[var(--auxline-bg-emphasis)]" />
+                  <span class="mt-1 h-3 w-20 bg-[var(--auxline-bg-emphasis)]" />
+                </div>
               </div>
+              <span class="px-1">
+                <span class="block h-4 w-16 bg-[var(--auxline-bg-emphasis)]" />
+              </span>
             </div>
-            <span class="px-1">
-              <span class="block h-4 w-16 bg-[var(--auxline-bg-emphasis)]" />
-            </span>
           </div>
         </template>
         <template v-else>
           <div
             v-for="(item, index) in data?.items ?? []"
             :key="item.id"
-            class="flex items-center justify-between border-b border-l border-r border-[var(--auxline-line)] last:border-b-0"
+            class="relative overflow-hidden border-b border-l border-r border-[var(--auxline-line)] last:border-b-0"
           >
-            <span class="w-10 px-1 text-sm font-mono">
-              {{ String(index + 1).padStart(2, '0') }}
-            </span>
-            <div class="flex flex-1 items-center gap-3 pl-4">
-              <div
-                class="flex h-9 w-9 items-center justify-center overflow-hidden border border-[var(--auxline-line)]
-                  bg-[var(--auxline-bg-emphasis)] text-[0.6rem] font-mono uppercase tracking-[0.12em]"
-                aria-hidden="true"
-              >
-                <span>
-                  {{ displayName(item).slice(0, 1) }}
-                </span>
+            <span
+              class="absolute inset-y-0 left-0 z-0 pointer-events-none"
+              :style="{ width: barWidth(item), backgroundImage: stripeBackground }"
+              aria-hidden="true"
+            />
+            <div class="relative z-10 flex w-full items-center justify-between">
+              <span class="w-10 px-1 text-sm font-mono">
+                {{ String(index + 1).padStart(2, '0') }}
+              </span>
+              <div class="flex flex-1 items-center gap-3 pl-4">
+                <div
+                  class="flex h-9 w-9 items-center justify-center overflow-hidden border border-[var(--auxline-line)]
+                    bg-[var(--auxline-bg-emphasis)] text-[0.6rem] font-mono uppercase tracking-[0.12em]"
+                  aria-hidden="true"
+                >
+                  <span>
+                    {{ displayName(item).slice(0, 1) }}
+                  </span>
+                </div>
+                <div class="flex flex-col">
+                  <span class="text-sm font-semibold">
+                    {{ displayName(item) }}
+                  </span>
+                </div>
               </div>
-              <div class="flex flex-col">
-                <span class="text-sm font-semibold">
-                  {{ displayName(item) }}
-                </span>
-              </div>
+              <span class="text-sm px-1 font-mono">
+                {{ formatExp(item.exp) }}
+              </span>
             </div>
-            <span class="text-sm px-1 font-mono">
-              {{ formatExp(item.exp) }}
-            </span>
           </div>
           <div
             v-if="data && data.items.length === 0"
