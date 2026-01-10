@@ -36,7 +36,10 @@ const percentFormatter = new Intl.NumberFormat('zh-CN', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 })
-const stripeBackground = 'repeating-linear-gradient(45deg, var(--auxline-line) 0 1px, transparent 1px 4px)'
+const stripeMaskSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="4" height="4" viewBox="0 0 4 4" shape-rendering="crispEdges"><path d="M0 4L4 0" stroke="white" stroke-width="1"/></svg>'
+const stripeMask = `url("data:image/svg+xml,${encodeURIComponent(stripeMaskSvg)}")`
+const stripeMaskSize = '4px 4px'
+const stripeOffsetRem = 5.75
 
 function formatValue(value: string | number | null | undefined): string {
   if (value === null || value === undefined) {
@@ -100,17 +103,33 @@ const topValue = computed(() => {
   return Math.abs(value)
 })
 
-function barWidth(item: FansRankingItem): string {
+function barRatio(item: FansRankingItem): number {
   const base = topValue.value
   if (base <= 0) {
-    return '0%'
+    return 0
   }
   const value = parseNumber(item[props.valueKey])
   if (value === null) {
-    return '0%'
+    return 0
   }
-  const ratio = Math.min(Math.abs(value) / base, 1)
-  return `${Math.max(ratio, 0) * 100}%`
+  return Math.min(Math.abs(value) / base, 1)
+}
+
+function barStyle(item: FansRankingItem): Record<string, string> {
+  const ratio = Math.max(barRatio(item), 0)
+  return {
+    left: `${stripeOffsetRem}rem`,
+    width: ratio <= 0
+      ? '0%'
+      : `calc(${ratio * 100}% - ${ratio * stripeOffsetRem}rem)`,
+    backgroundColor: 'var(--auxline-line)',
+    maskImage: stripeMask,
+    maskSize: stripeMaskSize,
+    maskRepeat: 'repeat',
+    WebkitMaskImage: stripeMask,
+    WebkitMaskSize: stripeMaskSize,
+    WebkitMaskRepeat: 'repeat',
+  }
 }
 
 function displayName(item: FansRankingItem): string {
@@ -177,8 +196,8 @@ const skeletonRows = Array.from({ length: 50 }, (_, index) => index)
             class="relative overflow-hidden border-b border-[var(--auxline-line)] last:border-b-0 sm:border-x"
           >
             <span
-              class="absolute inset-y-0 left-0 z-0 pointer-events-none"
-              :style="{ width: barWidth(item), backgroundImage: stripeBackground }"
+              class="absolute inset-y-0 z-0 pointer-events-none"
+              :style="barStyle(item)"
               aria-hidden="true"
             />
             <div class="relative z-10 flex w-full items-center justify-between">
