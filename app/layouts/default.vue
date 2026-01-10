@@ -9,13 +9,19 @@ const avatarUrl = computed(() => session.value?.data?.user?.image || null)
 const avatarInitial = computed(() => displayName.value.slice(0, 1).toUpperCase())
 const route = useRoute()
 
-const navItems = [
-  { label: '首页', to: '/' },
-  { label: '排行榜', to: '/rank' },
-  { label: '个人', to: '/profile' },
-  { label: '哔哩哔哩', to: '/bilibili' },
-  { label: '设置', to: '/settings' },
-]
+const navItems = computed(() => {
+  const items = [
+    { label: '首页', to: '/' },
+    { label: '排行榜', to: '/rank' },
+    { label: '个人', to: '/profile' },
+    { label: '哔哩哔哩', to: '/bilibili' },
+    { label: '设置', to: '/settings' },
+  ]
+  if (!session.value?.data) {
+    return items.filter((item) => item.to !== '/profile')
+  }
+  return items
+})
 
 function isActiveRoute(to: string): boolean {
   if (to === '/') {

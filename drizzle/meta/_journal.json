@@ -8,6 +8,13 @@
       "when": 1759163175743,
       "tag": "0000_milky_hellion",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1768039602779,
+      "tag": "0001_add-user-stats",
+      "breakpoints": true
     }
   ]
 }

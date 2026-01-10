@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { authClient } from '~~/lib/client'
 
 const identifier = ref('')
@@ -8,6 +9,15 @@ const credentialError = ref<string | null>(null)
 const socialError = ref<string | null>(null)
 const isCredentialSigningIn = ref(false)
 const isSocialSigningIn = ref(false)
+const route = useRoute()
+const router = useRouter()
+const redirectTarget = computed(() => {
+  const redirect = route.query.redirect ?? route.query.next
+  if (typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//')) {
+    return redirect
+  }
+  return '/profile'
+})
 const { execute: executeIdentifierSignIn, error: identifierSignInError } = useFetch(
   '/api/auth/sign-in-identifier',
   {
@@ -26,7 +36,10 @@ async function signInWithGithub() {
   isSocialSigningIn.value = true
 
   try {
-    const callbackURL = globalThis.window === undefined ? '/' : globalThis.location.origin
+    const baseOrigin = globalThis.window === undefined ? '' : globalThis.location.origin
+    const callbackURL = baseOrigin
+      ? new URL(redirectTarget.value, baseOrigin).toString()
+      : redirectTarget.value
     const { data, error } = await authClient.signIn.social({
       provider: 'github',
       callbackURL,
@@ -47,6 +60,9 @@ async function signInWithGithub() {
 }
 
 async function signInWithPassword() {
+  if (isCredentialSigningIn.value) {
+    return
+  }
   credentialError.value = null
   isCredentialSigningIn.value = true
 
@@ -63,13 +79,15 @@ async function signInWithPassword() {
 
     if (trimmed.includes('@')) {
       const { error } = await authClient.signIn.email({
-        email: trimmed,
+        email: trimmed.toLowerCase(),
         password: password.value,
       })
 
       if (error) {
         credentialError.value = error.message ?? '登录失败。'
+        return
       }
+      await router.replace(redirectTarget.value)
       return
     }
 
@@ -81,7 +99,9 @@ async function signInWithPassword() {
         return
       }
       credentialError.value = '登录失败。'
+      return
     }
+    await router.replace(redirectTarget.value)
   }
   catch (error) {
     if (error && typeof error === 'object' && 'data' in error) {
@@ -123,6 +143,7 @@ async function signInWithPassword() {
           v-model="password"
           type="password"
           autocomplete="current-password"
+          @keydown.enter.exact.prevent="signInWithPassword"
           class="h-9 px-3 border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
             text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
             focus-visible:outline-[var(--auxline-line)]"

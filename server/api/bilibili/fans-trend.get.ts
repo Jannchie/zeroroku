@@ -10,6 +10,7 @@ interface FansTrendItem {
   mid: string
   name: string | null
   face: string | null
+  fans: number
   delta: number
 }
 
@@ -21,6 +22,7 @@ interface FansTrendRow extends Record<string, unknown> {
   mid: string | number | null
   name: string | null
   face: string | null
+  fans: string | number | null
   delta: string | number | null
 }
 
@@ -125,15 +127,18 @@ async function loadTrend(period: TrendPeriod, direction: TrendDirection): Promis
     with top as (
       select
         f.mid,
+        f.fans,
         ${metricColumn} as delta
       from ${fansTable} as f
       where ${metricColumn} is not null
+        and f.fans is not null
         and ${signClause}
       ${orderClause}
       limit ${RANKING_LIMIT}
     )
     select
       t.mid::text as mid,
+      t.fans::bigint as fans,
       t.delta::bigint as delta,
       i.name as name,
       i.face as face
@@ -146,6 +151,7 @@ async function loadTrend(period: TrendPeriod, direction: TrendDirection): Promis
     mid: toText(row.mid),
     name: row.name,
     face: row.face,
+    fans: parseNumber(row.fans),
     delta: parseNumber(row.delta),
   }))
 

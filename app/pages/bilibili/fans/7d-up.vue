@@ -6,5 +6,6 @@
     value-key="delta"
     api-url="/api/bilibili/fans-trend?period=7&direction=up"
     show-sign
+    show-trend-meta
   />
 </template>

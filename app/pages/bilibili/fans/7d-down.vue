@@ -5,5 +5,6 @@
     value-label="7日减少"
     value-key="delta"
     api-url="/api/bilibili/fans-trend?period=7&direction=down"
+    show-trend-meta
   />
 </template>
