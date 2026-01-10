@@ -1,15 +1,25 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useNuxtApp } from '#app'
+import { computed, ref } from 'vue'
 import { authClient } from '~~/lib/client'
 
-const { $fetch } = useNuxtApp()
 const identifier = ref('')
 const password = ref('')
 const credentialError = ref<string | null>(null)
 const socialError = ref<string | null>(null)
 const isCredentialSigningIn = ref(false)
 const isSocialSigningIn = ref(false)
+const { execute: executeIdentifierSignIn, error: identifierSignInError } = useFetch(
+  '/api/auth/sign-in-identifier',
+  {
+    method: 'POST',
+    immediate: false,
+    watch: false,
+    body: computed(() => ({
+      identifier: identifier.value.trim(),
+      password: password.value,
+    })),
+  },
+)
 
 async function signInWithGithub() {
   socialError.value = null
@@ -23,7 +33,7 @@ async function signInWithGithub() {
     })
 
     if (error) {
-      socialError.value = error.message ?? 'Sign in failed.'
+      socialError.value = error.message ?? '登录失败。'
       return
     }
 
@@ -58,26 +68,28 @@ async function signInWithPassword() {
       })
 
       if (error) {
-        credentialError.value = error.message ?? 'Sign in failed.'
+        credentialError.value = error.message ?? '登录失败。'
       }
       return
     }
 
-    await $fetch('/api/auth/sign-in-identifier', {
-      method: 'POST',
-      body: {
-        identifier: trimmed,
-        password: password.value,
-      },
-    })
+    await executeIdentifierSignIn()
+    if (identifierSignInError.value) {
+      if (typeof identifierSignInError.value === 'object' && 'data' in identifierSignInError.value) {
+        const maybeData = identifierSignInError.value.data as { message?: string, statusMessage?: string }
+        credentialError.value = maybeData.message ?? maybeData.statusMessage ?? '登录失败。'
+        return
+      }
+      credentialError.value = '登录失败。'
+    }
   }
   catch (error) {
     if (error && typeof error === 'object' && 'data' in error) {
-      const maybeData = error.data as { message?: string; statusMessage?: string }
-      credentialError.value = maybeData.message ?? maybeData.statusMessage ?? 'Sign in failed.'
+      const maybeData = error.data as { message?: string, statusMessage?: string }
+      credentialError.value = maybeData.message ?? maybeData.statusMessage ?? '登录失败。'
       return
     }
-    credentialError.value = 'Sign in failed.'
+    credentialError.value = '登录失败。'
   }
   finally {
     isCredentialSigningIn.value = false
@@ -118,6 +130,7 @@ async function signInWithPassword() {
       </label>
       <AuxlineBtn
         type="submit"
+        variant="contrast"
         :loading="isCredentialSigningIn"
         :disabled="!identifier || !password"
       >
@@ -136,7 +149,7 @@ async function signInWithPassword() {
       :loading="isSocialSigningIn"
       @click="signInWithGithub"
     >
-      GitHub 登录
+      第三方登录
     </AuxlineBtn>
     <span v-if="socialError" class="text-xs text-red-600">
       {{ socialError }}

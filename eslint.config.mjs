@@ -7,6 +7,9 @@ export default withNuxt(
   // Your custom configs here
   jannchie(),
   {
+    ignores: ['drizzle/**'],
+  },
+  {
     files: ['**/*.vue'],
     languageOptions: {
       parserOptions: {

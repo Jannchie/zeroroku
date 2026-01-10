@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import { authClient } from '~~/lib/client'
 
 const session = authClient.useSession()
-const displayName = computed(() => session.value?.data?.user?.name ?? session.value?.data?.user?.email ?? 'User')
+const displayName = computed(() => session.value?.data?.user?.name ?? session.value?.data?.user?.email ?? '用户')
 const avatarUrl = computed(() => session.value?.data?.user?.image || null)
 const avatarInitial = computed(() => displayName.value.slice(0, 1).toUpperCase())
 const route = useRoute()
@@ -13,7 +13,7 @@ const navItems = [
   { label: '首页', to: '/' },
   { label: '排行榜', to: '/rank' },
   { label: '个人', to: '/profile' },
-  { label: 'B站', to: '/bilibili' },
+  { label: '哔哩哔哩', to: '/bilibili' },
   { label: '设置', to: '/settings' },
 ]
 
@@ -23,7 +23,6 @@ function isActiveRoute(to: string): boolean {
   }
   return route.path.startsWith(to)
 }
-
 </script>
 
 <template>
@@ -43,12 +42,14 @@ function isActiveRoute(to: string): boolean {
                     bg-[var(--auxline-bg-emphasis)] text-[0.6rem] font-mono uppercase tracking-[0.12em]"
                   aria-hidden="true"
                 >
-                  <img
+                  <NuxtImg
                     v-if="avatarUrl"
                     :src="avatarUrl"
                     alt=""
                     class="h-full w-full object-cover"
-                  >
+                    width="36"
+                    height="36"
+                  />
                   <span v-else>
                     {{ avatarInitial }}
                   </span>
@@ -64,7 +65,7 @@ function isActiveRoute(to: string): boolean {
                 class="h-9 w-full px-3 text-left text-xs font-mono uppercase tracking-[0.12em] hover:bg-[var(--auxline-bg-hover)]"
                 @click="authClient.signOut()"
               >
-                Sign out
+                退出登录
               </button>
             </div>
           </AuxlineMenu>
@@ -98,7 +99,7 @@ function isActiveRoute(to: string): boolean {
     </template>
     <template #footer>
       <p class="text-sm py-2 text-center">
-        © {{ new Date().getFullYear() }} Jannchie Studio. All rights reserved.
+        {{ new Date().getFullYear() }}
       </p>
     </template>
   </AuxlineRoot>

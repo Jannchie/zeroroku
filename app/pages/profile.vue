@@ -1,10 +1,10 @@
 <template>
   <section class="flex flex-col items-center gap-2 pt-12 pb-12">
     <h1 class="text-3xl font-bold text-center">
-      Profile
+      个人资料
     </h1>
     <p class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-      In progress
+      建设中
     </p>
   </section>
 </template>

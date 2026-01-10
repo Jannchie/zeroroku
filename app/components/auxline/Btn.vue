@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+
 type AuxlineBtnVariant = 'solid' | 'contrast'
 type AuxlineBtnSize = 'sm' | 'md' | 'lg'
 

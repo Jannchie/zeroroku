@@ -11,6 +11,17 @@ export default defineNuxtConfig({
     '@nuxtjs/seo',
     '@unocss/nuxt',
   ],
+  image: {
+    provider: 'ipx',
+    domains: [
+      'i0.hdslb.com',
+      'i1.hdslb.com',
+      'i2.hdslb.com',
+      'i3.hdslb.com',
+      'avatars.githubusercontent.com',
+      'lh3.googleusercontent.com',
+    ],
+  },
   app: {
     head: {
       title: 'ZeroRoku',

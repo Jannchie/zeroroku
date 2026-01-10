@@ -10,4 +10,10 @@ export default defineConfig({
   content: {
     inline: [file],
   },
+  theme: {
+    fontFamily: {
+      sans: '"Berkeley Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+      mono: '"Berkeley Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+    },
+  },
 })

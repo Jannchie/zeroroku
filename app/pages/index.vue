@@ -7,7 +7,7 @@ const session = authClient.useSession()
 <template>
   <div v-if="session?.data" class="flex flex-col items-center gap-4 pb-12">
     <button @click="authClient.signOut()">
-      Sign out
+      退出登录
     </button>
     <pre>{{ session.data }}</pre>
   </div>

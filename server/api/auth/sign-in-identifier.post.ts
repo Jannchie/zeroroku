@@ -3,9 +3,16 @@ import { auth } from '~~/lib/auth'
 import { user } from '~~/lib/database/auth-schema'
 import { db } from '~~/server/index'
 
-type SignInIdentifierBody = {
+interface SignInIdentifierBody {
   identifier?: string
   password?: string
+}
+
+interface SignInError {
+  statusCode?: number
+  body?: {
+    message?: string
+  }
 }
 
 export default defineEventHandler(async (event) => {
@@ -64,7 +71,7 @@ export default defineEventHandler(async (event) => {
   }
   catch (error) {
     if (error && typeof error === 'object' && 'statusCode' in error) {
-      const typedError = error as { statusCode?: number; body?: { message?: string } }
+      const typedError = error as SignInError
       const statusCode = typeof typedError.statusCode === 'number' ? typedError.statusCode : 500
       const message = typedError.body?.message ?? 'Sign in failed.'
 
