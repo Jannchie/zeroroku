@@ -1,9 +1,9 @@
-import 'dotenv/config'
 import { randomBytes } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import path from 'node:path'
 import { hash } from 'bcryptjs'
 import { Client } from 'pg'
+import 'dotenv/config'
 
 const BCRYPT_ROUNDS = 10
 const BATCH_SIZE = 500
@@ -13,7 +13,7 @@ const MIGRATIONS = [
   'drizzle/0001_add-user-stats.sql',
 ]
 
-type OldUserRow = {
+interface OldUserRow {
   id: string
   username: string
   mail: string
@@ -25,7 +25,7 @@ type OldUserRow = {
   updated_at: Date | null
 }
 
-type UserInsert = {
+interface UserInsert {
   id: string
   name: string
   email: string
@@ -37,7 +37,7 @@ type UserInsert = {
   updatedAt: Date
 }
 
-type AccountInsert = {
+interface AccountInsert {
   id: string
   accountId: string
   providerId: string
@@ -55,22 +55,23 @@ type AccountInsert = {
 
 const isBcryptHash = (value: string): boolean => value.startsWith('$2')
 
-const splitStatements = (content: string): string[] =>
-  content
+function splitStatements(content: string): string[] {
+  return content
     .split('--> statement-breakpoint')
-    .map((statement) => statement.trim())
-    .filter((statement) => statement.length > 0)
+    .map(statement => statement.trim())
+    .filter(statement => statement.length > 0)
+}
 
-const runSqlFile = async (client: Client, filePath: string): Promise<void> => {
-  const fullPath = resolve(filePath)
-  const content = await readFile(fullPath, 'utf-8')
+async function runSqlFile(client: Client, filePath: string): Promise<void> {
+  const fullPath = path.resolve(filePath)
+  const content = await readFile(fullPath, 'utf8')
   const statements = splitStatements(content)
   for (const statement of statements) {
     await client.query(statement)
   }
 }
 
-const tableExists = async (client: Client, tableName: string): Promise<boolean> => {
+async function tableExists(client: Client, tableName: string): Promise<boolean> {
   const res = await client.query(
     `
     select 1
@@ -83,7 +84,7 @@ const tableExists = async (client: Client, tableName: string): Promise<boolean> 
   return res.rowCount > 0
 }
 
-const listTables = async (client: Client, tableNames: string[]): Promise<Set<string>> => {
+async function listTables(client: Client, tableNames: string[]): Promise<Set<string>> {
   const res = await client.query<{ table_name: string }>(
     `
     select table_name
@@ -92,14 +93,10 @@ const listTables = async (client: Client, tableNames: string[]): Promise<Set<str
     `,
     [tableNames],
   )
-  return new Set(res.rows.map((row) => row.table_name))
+  return new Set(res.rows.map(row => row.table_name))
 }
 
-const columnExists = async (
-  client: Client,
-  tableName: string,
-  columnName: string,
-): Promise<boolean> => {
+async function columnExists(client: Client, tableName: string, columnName: string): Promise<boolean> {
   const res = await client.query(
     `
     select 1
@@ -114,12 +111,12 @@ const columnExists = async (
   return res.rowCount > 0
 }
 
-const countRows = async (client: Client, tableName: string): Promise<number> => {
+async function countRows(client: Client, tableName: string): Promise<number> {
   const res = await client.query(`select count(*)::int as count from "${tableName}"`)
   return res.rows[0]?.count ?? 0
 }
 
-const chunk = <T>(items: T[], size: number): T[][] => {
+function chunk<T>(items: T[], size: number): T[][] {
   const batches: T[][] = []
   for (let i = 0; i < items.length; i += size) {
     batches.push(items.slice(i, i + size))
@@ -127,11 +124,7 @@ const chunk = <T>(items: T[], size: number): T[][] => {
   return batches
 }
 
-const buildInsert = <T extends Record<string, unknown>>(
-  table: string,
-  columns: { key: keyof T; column: string }[],
-  rows: T[],
-) => {
+function buildInsert<T extends Record<string, unknown>>(table: string, columns: { key: keyof T, column: string }[], rows: T[]) {
   const values: unknown[] = []
   const placeholders = rows.map((row, rowIndex) => {
     const rowPlaceholders = columns.map((column, columnIndex) => {
@@ -144,13 +137,13 @@ const buildInsert = <T extends Record<string, unknown>>(
 
   return {
     text: `insert into "${table}" (${columns
-      .map((col) => `"${col.column}"`)
+      .map(col => `"${col.column}"`)
       .join(', ')}) values ${placeholders.join(', ')}`,
     values,
   }
 }
 
-const fetchDedupedUsers = async (client: Client): Promise<OldUserRow[]> => {
+async function fetchDedupedUsers(client: Client): Promise<OldUserRow[]> {
   const res = await client.query<OldUserRow>(
     `
     select
@@ -180,7 +173,7 @@ const fetchDedupedUsers = async (client: Client): Promise<OldUserRow[]> => {
   return res.rows
 }
 
-const main = async () => {
+async function main() {
   const url = process.env.DATABASE_URL
   if (!url) {
     throw new Error('DATABASE_URL is missing')
@@ -198,7 +191,8 @@ const main = async () => {
   const existingAuthTables = await listTables(client, authTables)
   if (existingAuthTables.size === 0) {
     await runSqlFile(client, MIGRATIONS[0])
-  } else if (existingAuthTables.size !== authTables.length) {
+  }
+  else if (existingAuthTables.size !== authTables.length) {
     throw new Error('auth tables are partially created, aborting migration')
   }
 
@@ -314,10 +308,12 @@ const main = async () => {
     }
 
     await client.query('commit')
-  } catch (error) {
+  }
+  catch (error) {
     await client.query('rollback')
     throw error
-  } finally {
+  }
+  finally {
     await client.end()
   }
 
@@ -332,7 +328,10 @@ const main = async () => {
   }
 }
 
-main().catch((error) => {
+try {
+  await main()
+}
+catch (error) {
   console.error(error)
   process.exitCode = 1
-})
+}

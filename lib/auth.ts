@@ -1,8 +1,8 @@
 import * as process from 'node:process'
+import { compare, hash } from 'bcryptjs'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { createFieldAttribute } from 'better-auth/db'
-import { compare, hash } from 'bcryptjs'
 import { db } from '../server/index'
 import * as schema from './database/schema'
 
@@ -21,7 +21,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     password: {
-      hash: async (password) => hash(password, 10),
+      hash: async password => hash(password, 10),
       verify: async ({ hash: hashValue, password }) => compare(password, hashValue),
     },
   },

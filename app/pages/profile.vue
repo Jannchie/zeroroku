@@ -307,9 +307,6 @@ async function updateName() {
     </div>
 
     <div v-if="user" class="flex flex-wrap items-center justify-center gap-3">
-      <AuxlineBtn to="/settings" variant="contrast">
-        编辑资料
-      </AuxlineBtn>
       <AuxlineBtn @click="authClient.signOut()">
         退出登录
       </AuxlineBtn>

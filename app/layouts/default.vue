@@ -10,16 +10,14 @@ const avatarInitial = computed(() => displayName.value.slice(0, 1).toUpperCase()
 const route = useRoute()
 
 const navItems = computed(() => {
+  const isLoggedIn = Boolean(session.value?.data)
   const items = [
-    { label: '首页', to: '/' },
-    { label: '排行榜', to: '/rank' },
-    { label: '个人', to: '/profile' },
-    { label: '哔哩哔哩', to: '/bilibili' },
-    { label: '设置', to: '/settings' },
+    { label: '首页', to: '/', disabled: false },
+    { label: '排行榜', to: '/rank', disabled: false },
+    { label: '个人', to: '/profile', disabled: !isLoggedIn },
+    { label: '哔哩哔哩', to: '/bilibili', disabled: false },
+    { label: '设置', to: '/settings', disabled: false },
   ]
-  if (!session.value?.data) {
-    return items.filter((item) => item.to !== '/profile')
-  }
   return items
 })
 
@@ -34,17 +32,17 @@ function isActiveRoute(to: string): boolean {
 <template>
   <AuxlineRoot>
     <template #headerActions>
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 border-l-0">
         <template v-if="session?.data">
           <AuxlineMenu align="right">
             <template #trigger>
               <button
                 type="button"
-                class="flex h-9 items-center gap-2 px-1 text-left hover:bg-[var(--auxline-bg-hover)] cursor-pointer
+                class="flex h-9 items-center gap-2 text-left hover:bg-[var(--auxline-bg-hover)] cursor-pointer
                   focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)]"
               >
                 <div
-                  class="flex h-9 w-9 items-center justify-center overflow-hidden border border-[var(--auxline-line)]
+                  class="flex h-9 w-9 items-center justify-center overflow-hidden border-x border-[var(--auxline-line)]
                     bg-[var(--auxline-bg-emphasis)] text-[0.6rem] font-mono uppercase tracking-[0.12em]"
                   aria-hidden="true"
                 >
@@ -95,6 +93,7 @@ function isActiveRoute(to: string): boolean {
           :key="item.to"
           size="sm"
           :to="item.to"
+          :disabled="item.disabled"
           :variant="isActiveRoute(item.to) ? 'contrast' : 'solid'"
           :aria-current="isActiveRoute(item.to) ? 'page' : undefined"
         >

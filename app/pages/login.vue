@@ -143,10 +143,10 @@ async function signInWithPassword() {
           v-model="password"
           type="password"
           autocomplete="current-password"
-          @keydown.enter.exact.prevent="signInWithPassword"
           class="h-9 px-3 border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
             text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
             focus-visible:outline-[var(--auxline-line)]"
+          @keydown.enter.exact.prevent="signInWithPassword"
         >
       </label>
       <AuxlineBtn
