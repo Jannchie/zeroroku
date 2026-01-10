@@ -1,0 +1,9 @@
+<template>
+  <BilibiliFansRankingTable
+    title="1日减少排行榜"
+    subtitle="近1日粉丝减少"
+    value-label="1日减少"
+    value-key="delta"
+    api-url="/api/bilibili/fans-trend?period=1&direction=down"
+  />
+</template>

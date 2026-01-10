@@ -16,7 +16,7 @@ interface FansRankingResponse {
   items: FansRankingItem[]
 }
 
-interface FansRankingRow {
+interface FansRankingRow extends Record<string, unknown> {
   mid: string | number | null
   name: string | null
   face: string | null

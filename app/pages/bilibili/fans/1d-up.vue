@@ -1,0 +1,10 @@
+<template>
+  <BilibiliFansRankingTable
+    title="1日增加排行榜"
+    subtitle="近1日粉丝增长"
+    value-label="1日增加"
+    value-key="delta"
+    api-url="/api/bilibili/fans-trend?period=1&direction=up"
+    show-sign
+  />
+</template>

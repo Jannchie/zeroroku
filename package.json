@@ -37,6 +37,7 @@
     "@unocss/nuxt": "^66.5.12",
     "drizzle-kit": "^0.31.8",
     "eslint-plugin-format": "^1.2.0",
-    "tsx": "^4.21.0"
+    "tsx": "^4.21.0",
+    "vue-tsc": "^3.2.2"
   }
 }
