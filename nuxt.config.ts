@@ -8,8 +8,20 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     '@nuxt/fonts',
     '@nuxt/eslint',
+    '@nuxtjs/seo',
     '@unocss/nuxt',
   ],
+  app: {
+    head: {
+      title: 'ZeroRoku',
+      titleTemplate: '%s | ZeroRoku',
+    },
+  },
+  site: {
+    url: process.env.NUXT_PUBLIC_SITE_URL ?? 'http://localhost:6066',
+    name: 'ZeroRoku',
+    description: 'ZeroRoku',
+  },
   eslint: {
     config: {
       standalone: false,

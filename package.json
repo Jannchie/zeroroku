@@ -15,6 +15,7 @@
     "@nuxt/fonts": "0.12.1",
     "@nuxt/icon": "2.2.0",
     "@nuxt/image": "2.0.0",
+    "@nuxtjs/seo": "^3.3.0",
     "@roku-ui/nuxt": "^0.30.0",
     "@roku-ui/preset": "^0.30.0",
     "@roku-ui/vue": "^0.30.0",

@@ -16,6 +16,9 @@ export const auth = betterAuth({
     provider: 'pg',
     schema,
   }),
+  emailAndPassword: {
+    enabled: true,
+  },
   socialProviders: {
     github: {
       clientId: githubClientId,
