@@ -87,7 +87,8 @@ export default defineEventHandler(async (event): Promise<AuthorSearchResponse> =
   const isNumeric = /^\d+$/.test(keyword)
   const infoTable = getTableIdentifier(authorInfoMaster)
   const fansTable = getTableIdentifier(authorLatestFans)
-  const maxMid = 9_223_372_036_854_775_807n
+  const maxMid = BigInt('9223372036854775807')
+  const minMid = BigInt(0)
   let numericMid: bigint | null = null
   if (isNumeric) {
     try {
@@ -96,7 +97,7 @@ export default defineEventHandler(async (event): Promise<AuthorSearchResponse> =
     catch {
       return { items: [] }
     }
-    if (numericMid < 0n || numericMid > maxMid) {
+    if (numericMid < minMid || numericMid > maxMid) {
       return { items: [] }
     }
   }
