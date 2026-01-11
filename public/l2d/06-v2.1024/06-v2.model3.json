@@ -1,0 +1,9 @@
+{
+  "Version": 3,
+  "FileReferences": {
+    "Moc": "06-v2.moc3",
+    "Textures": [
+      "texture_00.png"
+    ]
+  }
+}

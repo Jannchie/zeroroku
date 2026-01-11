@@ -36,15 +36,13 @@ body {
   color: #fff;
 }
 
-@media (prefers-color-scheme: dark) {
-  ::selection {
-    background: #fff;
-    color: #000;
-  }
+:root[data-scheme='dark'] ::selection {
+  background: #fff;
+  color: #000;
+}
 
-  ::-moz-selection {
-    background: #fff;
-    color: #000;
-  }
+:root[data-scheme='dark'] ::-moz-selection {
+  background: #fff;
+  color: #000;
 }
 </style>

@@ -17,6 +17,8 @@ interface AuthorDetailItem {
   level: number | null
   topPhoto: string | null
   fans: number | null
+  rate7: number | null
+  rate1: number | null
 }
 
 interface AuthorDetailResponse {
@@ -32,6 +34,8 @@ interface AuthorDetailRow extends Record<string, unknown> {
   level: string | number | null
   top_photo: string | null
   fans: string | number | null
+  rate7: string | number | null
+  rate1: string | number | null
 }
 
 const MIN_MID = BigInt(0)
@@ -135,7 +139,9 @@ export default defineEventHandler(async (event): Promise<AuthorDetailResponse> =
       i.sex as sex,
       i.level::bigint as level,
       i.top_photo as top_photo,
-      f.fans::bigint as fans
+      f.fans::bigint as fans,
+      f.rate7::bigint as rate7,
+      f.rate1::bigint as rate1
     from ${infoTable} as i
     left join ${fansTable} as f on f.mid = i.mid
     where i.mid = ${numericMid}
@@ -159,6 +165,8 @@ export default defineEventHandler(async (event): Promise<AuthorDetailResponse> =
       level: parseNumber(row.level),
       topPhoto: row.top_photo,
       fans: parseNumber(row.fans),
+      rate7: parseNumber(row.rate7),
+      rate1: parseNumber(row.rate1),
     },
   }
 })

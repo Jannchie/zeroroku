@@ -162,11 +162,10 @@ const skeletonRows = Array.from({ length: 50 }, (_, index) => index)
 </script>
 
 <template>
-  <section class="flex flex-col items-center pt-12 pb-12">
+  <section class="flex flex-col items-center pb-12">
     <AuxlinePageHeader
       :title="props.title"
       :subtitle="props.subtitle"
-      variant="underline"
     />
     <div class="w-full">
       <BilibiliFansRankingNav />
@@ -213,7 +212,7 @@ const skeletonRows = Array.from({ length: 50 }, (_, index) => index)
               v-if="isAuthorLinkable(item.mid)"
               :to="authorLink(item.mid)"
               class="relative block overflow-hidden border-b border-[var(--auxline-line)] last:border-b-0 sm:border-x hover:bg-[var(--auxline-bg-hover)]
-                focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)] transition-colors"
+                focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)]"
             >
               <span
                 class="absolute inset-y-0 z-0 pointer-events-none"
@@ -226,7 +225,7 @@ const skeletonRows = Array.from({ length: 50 }, (_, index) => index)
                 </span>
                 <div class="flex flex-1 items-center gap-3 pl-4 min-w-0">
                   <div
-                    class="flex h-9 w-9 items-center justify-center overflow-hidden border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)] text-[0.6rem] font-mono uppercase tracking-[0.12em]"
+                    class="flex h-9 w-9 items-center justify-center overflow-hidden border-x border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)] text-[0.6rem] font-mono uppercase tracking-[0.12em]"
                     aria-hidden="true"
                   >
                     <NuxtImg
@@ -279,7 +278,7 @@ const skeletonRows = Array.from({ length: 50 }, (_, index) => index)
                 </span>
                 <div class="flex flex-1 items-center gap-3 pl-4 min-w-0">
                   <div
-                    class="flex h-9 w-9 items-center justify-center overflow-hidden border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)] text-[0.6rem] font-mono uppercase tracking-[0.12em]"
+                    class="flex h-9 w-9 items-center justify-center overflow-hidden border-x border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)] text-[0.6rem] font-mono uppercase tracking-[0.12em]"
                     aria-hidden="true"
                   >
                     <NuxtImg

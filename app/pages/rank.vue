@@ -73,11 +73,10 @@ function displayName(item: UserExpRankItem): string {
 </script>
 
 <template>
-  <section class="flex flex-col items-center pt-12 pb-12">
+  <section class="flex flex-col items-center pb-12">
     <AuxlinePageHeader
       title="经验排行榜"
       subtitle="TOP 100"
-      variant="underline"
     />
     <div class="w-full border-b border-[var(--auxline-line)]">
       <div class="max-w-3xl mx-auto">

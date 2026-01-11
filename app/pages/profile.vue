@@ -153,13 +153,13 @@ async function updateName() {
 </script>
 
 <template>
-  <section class="flex flex-col items-center pt-12 pb-12">
+  <section class="flex flex-col items-center">
     <AuxlinePageHeader
       title="个人资料"
       subtitle="基础信息与账户概览"
     />
 
-    <div v-if="!user" class="w-full max-w-md border border-[var(--auxline-line)] px-4 py-6 text-center">
+    <div v-if="!user" class="w-full max-w-md sm:border-x border-[var(--auxline-line)] px-4 py-6 text-center">
       <p class="text-sm font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
         当前未登录
       </p>
@@ -168,10 +168,10 @@ async function updateName() {
       </AuxlineBtn>
     </div>
 
-    <div v-else class="w-full border-y border-[var(--auxline-line)]">
-      <div class="flex flex-col items-center gap-4 px-4 py-6 sm:flex-row sm:items-start">
+    <div v-else class="w-full border-[var(--auxline-line)] max-w-3xl sm:border-x">
+      <div class="flex flex-col items-center sm:flex-row sm:items-start">
         <div
-          class="flex h-20 w-20 items-center justify-center overflow-hidden border border-[var(--auxline-line)]
+          class="flex h-20 w-20 items-center justify-center overflow-hidden border-r border-[var(--auxline-line)]
             bg-[var(--auxline-bg-emphasis)] text-[0.7rem] font-mono uppercase tracking-[0.12em]"
           aria-hidden="true"
         >
@@ -187,11 +187,11 @@ async function updateName() {
             {{ avatarInitial }}
           </span>
         </div>
-        <div class="flex flex-col items-center gap-2 text-center sm:items-start sm:text-left">
-          <div class="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+        <div class="flex flex-col items-center text-center sm:items-start sm:text-left">
+          <div class="flex flex-wrap items-center justify-center sm:justify-start">
             <form
               v-if="isEditingName"
-              class="flex flex-wrap items-center justify-center gap-2 sm:justify-start"
+              class="flex flex-wrap items-center justify-center sm:justify-start"
               @submit.prevent="updateName"
             >
               <input
@@ -199,7 +199,7 @@ async function updateName() {
                 type="text"
                 autocomplete="username"
                 :disabled="isUpdatingName"
-                class="h-9 w-48 px-3 border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
+                class="h-8 w-48 px-3 bg-[var(--auxline-bg-emphasis)]
                   text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
                   focus-visible:outline-[var(--auxline-line)]"
                 @input="onNameInput"
@@ -223,19 +223,16 @@ async function updateName() {
               </AuxlineBtn>
             </form>
             <template v-else>
-              <span class="text-xl">
+              <span class="text-xl px-2">
                 {{ displayName }}
               </span>
-              <button
+              <AuxlineBtn
                 type="button"
-                class="h-8 px-2 border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
-                  text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg)]
-                  hover:bg-[var(--auxline-bg-hover)] focus-visible:outline focus-visible:outline-1
-                  focus-visible:outline-[var(--auxline-line)]"
+                size="sm"
                 @click="startNameEdit"
               >
-                编辑
-              </button>
+                修改
+              </AuxlineBtn>
             </template>
           </div>
           <p v-if="nameError" class="text-xs text-red-600">
@@ -244,11 +241,11 @@ async function updateName() {
           <p v-else-if="nameSuccess" class="text-xs text-blue-600">
             {{ nameSuccess }}
           </p>
-          <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+          <span class="text-xs px-2 font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
             {{ user.email }}
           </span>
-          <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-            ID {{ user.id }}
+          <span class="text-xs px-2 font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+            #{{ user.id }}
           </span>
         </div>
       </div>
@@ -300,12 +297,6 @@ async function updateName() {
           </span>
         </div>
       </div>
-    </div>
-
-    <div v-if="user" class="flex flex-wrap items-center justify-center gap-3">
-      <AuxlineBtn @click="authClient.signOut()">
-        退出登录
-      </AuxlineBtn>
     </div>
   </section>
 </template>

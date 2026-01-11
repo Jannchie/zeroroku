@@ -36,6 +36,25 @@ function displayAuthorName(item: AuthorSearchItem): string {
   return item.mid ? `UP ${item.mid}` : '未知'
 }
 
+function buildAuthorLink(mid: string | null | undefined): string | null {
+  if (!mid) {
+    return null
+  }
+  const trimmed = mid.trim()
+  if (!trimmed) {
+    return null
+  }
+  return `/bilibili/${encodeURIComponent(trimmed)}`
+}
+
+function isAuthorLinkable(mid: string | null | undefined): boolean {
+  return buildAuthorLink(mid) !== null
+}
+
+function authorLink(mid: string | null | undefined): string {
+  return buildAuthorLink(mid) ?? ''
+}
+
 async function searchAuthors() {
   const keyword = searchQuery.value.trim()
   if (!keyword || searchPending.value) {
@@ -71,9 +90,25 @@ watch(searchQuery, (value) => {
 
 <template>
   <section class="flex flex-col items-center">
+    <AuxlinePageHeader
+      title="Bilibili"
+      subtitle="数据观测站"
+    />
     <div class="border-b border-[var(--auxline-line)] flex justify-center w-full">
       <AuxlineBtn to="/bilibili/fans" size="sm">
-        粉丝排行榜
+        总排行
+      </AuxlineBtn>
+      <AuxlineBtn to="/bilibili/fans/7d-up" size="sm">
+        7日涨粉榜
+      </AuxlineBtn>
+      <AuxlineBtn to="/bilibili/fans/1d-up" size="sm">
+        1日涨粉榜
+      </AuxlineBtn>
+      <AuxlineBtn to="/bilibili/fans/7d-down" size="sm">
+        7日掉粉榜
+      </AuxlineBtn>
+      <AuxlineBtn to="/bilibili/fans/1d-down" size="sm">
+        1日掉粉榜
       </AuxlineBtn>
     </div>
 
@@ -138,45 +173,86 @@ watch(searchQuery, (value) => {
             </div>
           </template>
           <template v-else-if="hasSearched">
-            <div
-              v-for="item in searchResults"
-              :key="item.mid"
-              class="flex items-center justify-between border-b border-[var(--auxline-line)] last:border-b-0"
-            >
-              <span class="w-10 px-1 text-sm font-mono text-[var(--auxline-fg-muted)]">
-                UP
-              </span>
-              <div class="flex flex-1 items-center gap-3 pl-4 min-w-0">
-                <div
-                  class="flex h-9 w-9 items-center justify-center overflow-hidden border border-[var(--auxline-line)]
-                    bg-[var(--auxline-bg-emphasis)] text-[0.6rem] font-mono uppercase tracking-[0.12em]"
-                  aria-hidden="true"
-                >
-                  <NuxtImg
-                    v-if="item.face"
-                    :src="item.face"
-                    alt=""
-                    class="h-full w-full object-cover"
-                    width="36"
-                    height="36"
-                  />
-                  <span v-else>
-                    {{ displayAuthorName(item).slice(0, 1) }}
-                  </span>
+            <template v-for="item in searchResults" :key="item.mid">
+              <NuxtLink
+                v-if="isAuthorLinkable(item.mid)"
+                :to="authorLink(item.mid)"
+                class="flex items-center justify-between border-b border-[var(--auxline-line)] last:border-b-0 hover:bg-[var(--auxline-bg-hover)]
+                  focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)]"
+              >
+                <span class="w-10 px-1 text-sm font-mono text-[var(--auxline-fg-muted)]">
+                  UP
+                </span>
+                <div class="flex flex-1 items-center gap-3 pl-4 min-w-0">
+                  <div
+                    class="flex h-9 w-9 items-center justify-center overflow-hidden border-x border-[var(--auxline-line)]
+                      bg-[var(--auxline-bg-emphasis)] text-[0.6rem] font-mono uppercase tracking-[0.12em]"
+                    aria-hidden="true"
+                  >
+                    <NuxtImg
+                      v-if="item.face"
+                      :src="item.face"
+                      alt=""
+                      class="h-full w-full object-cover"
+                      width="36"
+                      height="36"
+                    />
+                    <span v-else>
+                      {{ displayAuthorName(item).slice(0, 1) }}
+                    </span>
+                  </div>
+                  <div class="flex flex-col min-w-0">
+                    <span class="text-sm truncate">
+                      {{ displayAuthorName(item) }}
+                    </span>
+                    <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                      {{ item.mid }}
+                    </span>
+                  </div>
                 </div>
-                <div class="flex flex-col min-w-0">
-                  <span class="text-sm truncate">
-                    {{ displayAuthorName(item) }}
-                  </span>
-                  <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                    {{ item.mid }}
-                  </span>
+                <span class="text-sm px-1 font-mono">
+                  {{ formatCount(item.fans) }}
+                </span>
+              </NuxtLink>
+              <div
+                v-else
+                class="flex items-center justify-between border-b border-[var(--auxline-line)] last:border-b-0"
+              >
+                <span class="w-10 px-1 text-sm font-mono text-[var(--auxline-fg-muted)]">
+                  UP
+                </span>
+                <div class="flex flex-1 items-center gap-3 pl-4 min-w-0">
+                  <div
+                    class="flex h-9 w-9 items-center justify-center overflow-hidden border-x border-[var(--auxline-line)]
+                      bg-[var(--auxline-bg-emphasis)] text-[0.6rem] font-mono uppercase tracking-[0.12em]"
+                    aria-hidden="true"
+                  >
+                    <NuxtImg
+                      v-if="item.face"
+                      :src="item.face"
+                      alt=""
+                      class="h-full w-full object-cover"
+                      width="36"
+                      height="36"
+                    />
+                    <span v-else>
+                      {{ displayAuthorName(item).slice(0, 1) }}
+                    </span>
+                  </div>
+                  <div class="flex flex-col min-w-0">
+                    <span class="text-sm truncate">
+                      {{ displayAuthorName(item) }}
+                    </span>
+                    <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                      {{ item.mid }}
+                    </span>
+                  </div>
                 </div>
+                <span class="text-sm px-1 font-mono">
+                  {{ formatCount(item.fans) }}
+                </span>
               </div>
-              <span class="text-sm px-1 font-mono">
-                {{ formatCount(item.fans) }}
-              </span>
-            </div>
+            </template>
             <div
               v-if="searchResults.length === 0"
               class="py-6 text-center text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"

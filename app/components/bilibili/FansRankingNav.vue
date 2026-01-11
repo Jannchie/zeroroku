@@ -4,11 +4,11 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 
 const navItems = [
-  { label: '总榜', to: '/bilibili/fans' },
-  { label: '7日增加', to: '/bilibili/fans/7d-up' },
-  { label: '7日减少', to: '/bilibili/fans/7d-down' },
-  { label: '1日增加', to: '/bilibili/fans/1d-up' },
-  { label: '1日减少', to: '/bilibili/fans/1d-down' },
+  { label: '总排行', to: '/bilibili/fans' },
+  { label: '7日涨粉榜', to: '/bilibili/fans/7d-up' },
+  { label: '1日涨粉榜', to: '/bilibili/fans/1d-up' },
+  { label: '7日掉粉榜', to: '/bilibili/fans/7d-down' },
+  { label: '1日掉粉榜', to: '/bilibili/fans/1d-down' },
 ]
 
 function isActiveRoute(to: string): boolean {

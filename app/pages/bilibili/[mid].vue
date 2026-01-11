@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 interface AuthorDetailItem {
@@ -11,10 +11,25 @@ interface AuthorDetailItem {
   level: number | null
   topPhoto: string | null
   fans: number | null
+  rate7: number | null
+  rate1: number | null
 }
 
 interface AuthorDetailResponse {
   item: AuthorDetailItem | null
+}
+
+interface AuthorHistoryItem {
+  id: string
+  mid: string
+  fans: number | null
+  createdAt: string | null
+  rate1: number | null
+  rate7: number | null
+}
+
+interface AuthorHistoryResponse {
+  items: AuthorHistoryItem[]
 }
 
 const route = useRoute()
@@ -28,14 +43,80 @@ const { data, pending, error } = useFetch<AuthorDetailResponse>(
   },
 )
 
+const { data: historyData, pending: historyPending, error: historyError } = useFetch<AuthorHistoryResponse>(
+  () => `/api/bilibili/author/${encodeURIComponent(mid.value)}/history`,
+  {
+    watch: [mid],
+  },
+)
+
 const author = computed(() => data.value?.item ?? null)
+const historyItems = computed(() => historyData.value?.items ?? [])
 const formatter = new Intl.NumberFormat('zh-CN')
+const deltaFormatter = new Intl.NumberFormat('zh-CN', { signDisplay: 'exceptZero' })
+const dateFormatter = new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' })
+
+const pageSize = 100
+const currentPage = ref(1)
+const totalHistory = computed(() => historyItems.value.length)
+const totalPages = computed(() => Math.ceil(totalHistory.value / pageSize))
+const pagedHistory = computed(() => {
+  if (historyItems.value.length === 0) {
+    return []
+  }
+  const start = (currentPage.value - 1) * pageSize
+  return historyItems.value.slice(start, start + pageSize)
+})
+
+watch(historyItems, () => {
+  currentPage.value = 1
+})
+
+watch(totalPages, value => {
+  if (value <= 0) {
+    currentPage.value = 1
+    return
+  }
+  if (currentPage.value > value) {
+    currentPage.value = value
+  }
+})
 
 function formatCount(value: number | null | undefined): string {
   if (value === null || value === undefined) {
     return '--'
   }
   return formatter.format(Number.isFinite(value) ? value : 0)
+}
+
+function formatDelta(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) {
+    return '--'
+  }
+  return deltaFormatter.format(value)
+}
+
+function formatTimestamp(value: string | null | undefined): string {
+  if (!value) {
+    return '--'
+  }
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) {
+    return value
+  }
+  return dateFormatter.format(parsed)
+}
+
+function goPrevPage() {
+  if (currentPage.value > 1) {
+    currentPage.value -= 1
+  }
+}
+
+function goNextPage() {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value += 1
+  }
 }
 
 function displayAuthorName(value: AuthorDetailItem | null): string {
@@ -58,14 +139,23 @@ const infoRows = computed(() => {
   }
   return [
     { label: '粉丝', value: formatCount(item.fans) },
-    { label: '等级', value: item.level === null ? '--' : String(item.level) },
-    { label: '性别', value: item.sex ?? '--' },
+    { label: '7日变化', value: formatDelta(item.rate7) },
+    { label: '1日变化', value: formatDelta(item.rate1) },
   ]
 })
+
+const historyHeaders = [
+  { key: 'createdAt', label: '时间', align: 'text-left' },
+  { key: 'fans', label: '粉丝', align: 'text-right' },
+  { key: 'rate7', label: '7日变化', align: 'text-right' },
+  { key: 'rate1', label: '1日变化', align: 'text-right' },
+]
+
+const historySkeletonRows = Array.from({ length: 8 }, (_, index) => index)
 </script>
 
 <template>
-  <section class="flex flex-col items-center pt-12 pb-12">
+  <section class="flex flex-col items-center pb-12">
     <div class="w-full max-w-3xl border-b border-[var(--auxline-line)]">
       <div class="flex items-center gap-4 px-4 py-6">
         <div
@@ -105,6 +195,14 @@ const infoRows = computed(() => {
         </div>
       </template>
       <template v-else-if="author">
+        <div class="border-b border-[var(--auxline-line)] px-4 py-6">
+          <p class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+            简介
+          </p>
+          <p class="mt-2 text-sm whitespace-pre-line">
+            {{ author.sign || '暂无简介' }}
+          </p>
+        </div>
         <div class="grid grid-cols-1 gap-4 border-b border-[var(--auxline-line)] px-4 py-6 sm:grid-cols-3">
           <div v-for="item in infoRows" :key="item.label" class="flex flex-col gap-1">
             <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
@@ -116,11 +214,109 @@ const infoRows = computed(() => {
           </div>
         </div>
         <div class="px-4 py-6">
-          <p class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-            简介
-          </p>
-          <p class="mt-2 text-sm whitespace-pre-line">
-            {{ author.sign || '暂无简介' }}
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+              历史数据
+            </p>
+            <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+              共 {{ totalHistory }} 条
+            </span>
+          </div>
+          <div class="mt-4 border border-[var(--auxline-line)]">
+            <div class="flex items-center justify-between border-b border-[var(--auxline-line)] px-3 py-2">
+              <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                粉丝总数
+              </span>
+            </div>
+            <BilibiliAuthorFansHistoryChart
+              :items="historyItems"
+              :loading="historyPending"
+              :height="220"
+            />
+          </div>
+          <div class="mt-4 overflow-x-auto border border-[var(--auxline-line)]">
+            <div class="min-w-[560px] divide-y divide-[var(--auxline-line)]">
+              <div class="grid grid-cols-4 gap-3 px-3 py-2 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                <span
+                  v-for="item in historyHeaders"
+                  :key="item.key"
+                  :class="item.align"
+                >
+                  {{ item.label }}
+                </span>
+              </div>
+              <template v-if="historyPending">
+                <div
+                  v-for="index in historySkeletonRows"
+                  :key="index"
+                  class="grid grid-cols-4 gap-3 px-3 py-2"
+                >
+                  <span
+                    v-for="cellIndex in 4"
+                    :key="cellIndex"
+                    class="h-4 w-full bg-[var(--auxline-bg-emphasis)]"
+                    aria-hidden="true"
+                  />
+                </div>
+              </template>
+              <div
+                v-else-if="totalHistory === 0"
+                class="px-3 py-6 text-center text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
+              >
+                暂无历史数据
+              </div>
+              <template v-else>
+                <div
+                  v-for="row in pagedHistory"
+                  :key="row.id"
+                  class="grid grid-cols-4 gap-3 px-3 py-2 text-xs"
+                >
+                  <span class="text-left whitespace-nowrap">
+                    {{ formatTimestamp(row.createdAt) }}
+                  </span>
+                  <span class="text-right tabular-nums">
+                    {{ formatCount(row.fans) }}
+                  </span>
+                  <span class="text-right tabular-nums">
+                    {{ formatDelta(row.rate7) }}
+                  </span>
+                  <span class="text-right tabular-nums">
+                    {{ formatDelta(row.rate1) }}
+                  </span>
+                </div>
+              </template>
+            </div>
+          </div>
+          <div
+            v-if="totalHistory > 0"
+            class="mt-4 flex flex-wrap items-center justify-between gap-3"
+          >
+            <button
+              type="button"
+              class="border border-[var(--auxline-line)] px-3 py-1 text-xs font-mono uppercase tracking-[0.12em]
+                text-[var(--auxline-fg)] transition-colors hover:bg-[var(--auxline-bg-hover)]
+                disabled:cursor-not-allowed disabled:opacity-50"
+              :disabled="currentPage <= 1"
+              @click="goPrevPage"
+            >
+              上一页
+            </button>
+            <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+              第 {{ totalPages === 0 ? 0 : currentPage }} / {{ totalPages }} 页
+            </span>
+            <button
+              type="button"
+              class="border border-[var(--auxline-line)] px-3 py-1 text-xs font-mono uppercase tracking-[0.12em]
+                text-[var(--auxline-fg)] transition-colors hover:bg-[var(--auxline-bg-hover)]
+                disabled:cursor-not-allowed disabled:opacity-50"
+              :disabled="totalPages === 0 || currentPage >= totalPages"
+              @click="goNextPage"
+            >
+              下一页
+            </button>
+          </div>
+          <p v-if="historyError" class="mt-4 text-xs font-mono uppercase tracking-[0.12em] text-red-500">
+            历史数据加载失败
           </p>
         </div>
       </template>

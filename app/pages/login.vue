@@ -118,7 +118,7 @@ async function signInWithPassword() {
 </script>
 
 <template>
-  <section class="flex flex-col items-center gap-4 pt-12 pb-12">
+  <section class="flex flex-col items-center gap-4">
     <AuxlinePageHeader title="登录" variant="plain" />
     <form
       class="w-full max-w-sm flex flex-col gap-3"

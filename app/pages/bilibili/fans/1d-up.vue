@@ -1,8 +1,8 @@
 <template>
   <BilibiliFansRankingTable
-    title="1日增加排行榜"
-    subtitle="近1日粉丝增长"
-    value-label="1日增加"
+    title="1日涨粉榜"
+    subtitle="1-day follower gain"
+    value-label="1日涨粉"
     value-key="delta"
     api-url="/api/bilibili/fans-trend?period=1&direction=up"
     show-sign
