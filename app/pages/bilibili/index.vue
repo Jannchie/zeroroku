@@ -78,35 +78,41 @@ watch(searchQuery, (value) => {
     </div>
 
     <div class="w-full border-b border-[var(--auxline-line)]">
-      <div class="max-w-3xl mx-auto">
-        <form
-          class="flex flex-col gap-3 px-4 py-6 sm:flex-row sm:items-end"
-          @submit.prevent="searchAuthors"
-        >
-          <label class="flex flex-1 flex-col gap-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-            搜索UP
-            <input
-              v-model="searchQuery"
-              type="text"
-              autocomplete="off"
-              placeholder="昵称或 MID"
-              class="h-9 px-3 border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
+      <div class="w-full">
+        <div class="mx-auto">
+          <form
+            class="flex flex-col sm:flex-row sm:items-end"
+            @submit.prevent="searchAuthors"
+          >
+            <label class="flex flex-1 flex-col text-xs tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+              <div class="pl-1 py-1 border-b border-[var(--auxline-line)]">
+                搜索UP
+              </div>
+              <div class="flex">
+                <input
+                  v-model="searchQuery"
+                  type="text"
+                  autocomplete="off"
+                  placeholder="昵称或 MID"
+                  class="h-9 pl-1 grow border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
                 text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
                 focus-visible:outline-[var(--auxline-line)]"
-            >
-          </label>
-          <AuxlineBtn
-            type="submit"
-            variant="contrast"
-            :loading="searchPending"
-            :disabled="!canSearch"
-          >
-            搜索
-          </AuxlineBtn>
-        </form>
+                >
+                <AuxlineBtn
+                  type="submit"
+                  variant="contrast"
+                  :loading="searchPending"
+                  :disabled="!canSearch"
+                >
+                  搜索
+                </AuxlineBtn>
+              </div>
+            </label>
+          </form>
+        </div>
 
         <div class="border-t border-[var(--auxline-line)]">
-          <div class="flex items-center justify-between border-b border-[var(--auxline-line)] py-3 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+          <div class="flex items-center justify-between border-b border-[var(--auxline-line)] py-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
             <span class="px-1">搜索结果</span>
             <span class="px-1">粉丝</span>
           </div>
@@ -159,7 +165,7 @@ watch(searchQuery, (value) => {
                   </span>
                 </div>
                 <div class="flex flex-col min-w-0">
-                  <span class="text-sm font-semibold truncate">
+                  <span class="text-sm truncate">
                     {{ displayAuthorName(item) }}
                   </span>
                   <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">

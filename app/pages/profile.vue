@@ -154,14 +154,10 @@ async function updateName() {
 
 <template>
   <section class="flex flex-col items-center pt-12 pb-12">
-    <header class="text-center space-y-2 border-b w-full pb-12 border-[var(--auxline-line)]">
-      <h1 class="text-3xl font-bold">
-        个人资料
-      </h1>
-      <p class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-        基础信息与账户概览
-      </p>
-    </header>
+    <AuxlinePageHeader
+      title="个人资料"
+      subtitle="基础信息与账户概览"
+    />
 
     <div v-if="!user" class="w-full max-w-md border border-[var(--auxline-line)] px-4 py-6 text-center">
       <p class="text-sm font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
@@ -227,7 +223,7 @@ async function updateName() {
               </AuxlineBtn>
             </form>
             <template v-else>
-              <span class="text-xl font-semibold">
+              <span class="text-xl">
                 {{ displayName }}
               </span>
               <button

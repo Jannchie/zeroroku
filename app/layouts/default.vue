@@ -81,7 +81,7 @@ function isActiveRoute(to: string): boolean {
     </template>
     <template #main>
       <section class="flex flex-col items-center gap-6 pt-12 pb-12">
-        <h1 class="text-3xl font-bold text-center">
+        <h1 class="text-3xl  text-center">
           ZeroRoku
         </h1>
       </section>

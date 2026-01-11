@@ -15,6 +15,13 @@
       "when": 1768039602779,
       "tag": "0001_add-user-stats",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1768112604658,
+      "tag": "0002_auth-user-id-seq",
+      "breakpoints": true
     }
   ]
 }

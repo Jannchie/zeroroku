@@ -139,17 +139,35 @@ function displayName(item: FansRankingItem): string {
   return item.mid ? `UP ${item.mid}` : '未知'
 }
 
+function buildAuthorLink(mid: string | null | undefined): string | null {
+  if (!mid) {
+    return null
+  }
+  const trimmed = mid.trim()
+  if (!trimmed) {
+    return null
+  }
+  return `/bilibili/${encodeURIComponent(trimmed)}`
+}
+
+function isAuthorLinkable(mid: string | null | undefined): boolean {
+  return buildAuthorLink(mid) !== null
+}
+
+function authorLink(mid: string | null | undefined): string {
+  return buildAuthorLink(mid) ?? ''
+}
+
 const skeletonRows = Array.from({ length: 50 }, (_, index) => index)
 </script>
 
 <template>
   <section class="flex flex-col items-center pt-12 pb-12">
-    <h1 class="text-3xl font-bold text-center">
-      {{ props.title }}
-    </h1>
-    <p class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)] w-full border-b text-center border-[var(--auxline-line)] pb-2 mt-2">
-      {{ props.subtitle }}
-    </p>
+    <AuxlinePageHeader
+      :title="props.title"
+      :subtitle="props.subtitle"
+      variant="underline"
+    />
     <div class="w-full">
       <BilibiliFansRankingNav />
     </div>
@@ -190,58 +208,116 @@ const skeletonRows = Array.from({ length: 50 }, (_, index) => index)
           </div>
         </template>
         <template v-else>
-          <div
-            v-for="(item, index) in data?.items ?? []"
-            :key="item.mid"
-            class="relative overflow-hidden border-b border-[var(--auxline-line)] last:border-b-0 sm:border-x"
-          >
-            <span
-              class="absolute inset-y-0 z-0 pointer-events-none"
-              :style="barStyle(item)"
-              aria-hidden="true"
-            />
-            <div class="relative z-10 flex w-full items-center justify-between">
-              <span class="w-10 px-1 text-sm font-mono">
-                {{ String(index + 1).padStart(2, '0') }}
-              </span>
-              <div class="flex flex-1 items-center gap-3 pl-4">
-                <div
-                  class="flex h-9 w-9 items-center justify-center overflow-hidden border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)] text-[0.6rem] font-mono uppercase tracking-[0.12em]"
-                  aria-hidden="true"
-                >
-                  <NuxtImg
-                    v-if="item.face"
-                    :src="item.face"
-                    alt=""
-                    class="h-full w-full object-cover"
-                    width="36"
-                    height="36"
-                  />
-                  <span v-else>
-                    {{ displayName(item).slice(0, 1) }}
-                  </span>
+          <template v-for="(item, index) in data?.items ?? []" :key="item.mid">
+            <NuxtLink
+              v-if="isAuthorLinkable(item.mid)"
+              :to="authorLink(item.mid)"
+              class="relative block overflow-hidden border-b border-[var(--auxline-line)] last:border-b-0 sm:border-x hover:bg-[var(--auxline-bg-hover)]
+                focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)] transition-colors"
+            >
+              <span
+                class="absolute inset-y-0 z-0 pointer-events-none"
+                :style="barStyle(item)"
+                aria-hidden="true"
+              />
+              <div class="relative z-10 flex w-full items-center justify-between">
+                <span class="w-10 px-1 text-sm font-mono">
+                  {{ String(index + 1).padStart(2, '0') }}
+                </span>
+                <div class="flex flex-1 items-center gap-3 pl-4 min-w-0">
+                  <div
+                    class="flex h-9 w-9 items-center justify-center overflow-hidden border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)] text-[0.6rem] font-mono uppercase tracking-[0.12em]"
+                    aria-hidden="true"
+                  >
+                    <NuxtImg
+                      v-if="item.face"
+                      :src="item.face"
+                      alt=""
+                      class="h-full w-full object-cover"
+                      width="36"
+                      height="36"
+                    />
+                    <span v-else>
+                      {{ displayName(item).slice(0, 1) }}
+                    </span>
+                  </div>
+                  <div class="flex flex-col">
+                    <span class="text-sm">
+                      {{ displayName(item) }}
+                    </span>
+                    <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                      {{ item.mid }}
+                    </span>
+                  </div>
                 </div>
-                <div class="flex flex-col">
-                  <span class="text-sm font-semibold">
-                    {{ displayName(item) }}
+                <div class="flex flex-col items-end gap-1 px-1">
+                  <span class="text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                    {{ formatValue(item[props.valueKey]) }}
                   </span>
-                  <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                    {{ item.mid }}
-                  </span>
+                  <template v-if="props.showTrendMeta">
+                    <span class="text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                      <span class="hidden sm:inline">{{ formatCount(item.fans) }}</span>
+                      <span class="hidden sm:inline"> · </span>
+                      <span>{{ formatPercent(item.delta, item.fans) }}</span>
+                    </span>
+                  </template>
                 </div>
               </div>
-              <div class="flex flex-col items-end gap-1 px-1">
-                <span class="text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                  {{ formatValue(item[props.valueKey]) }}
+            </NuxtLink>
+            <div
+              v-else
+              class="relative overflow-hidden border-b border-[var(--auxline-line)] last:border-b-0 sm:border-x"
+            >
+              <span
+                class="absolute inset-y-0 z-0 pointer-events-none"
+                :style="barStyle(item)"
+                aria-hidden="true"
+              />
+              <div class="relative z-10 flex w-full items-center justify-between">
+                <span class="w-10 px-1 text-sm font-mono">
+                  {{ String(index + 1).padStart(2, '0') }}
                 </span>
-                <template v-if="props.showTrendMeta">
+                <div class="flex flex-1 items-center gap-3 pl-4 min-w-0">
+                  <div
+                    class="flex h-9 w-9 items-center justify-center overflow-hidden border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)] text-[0.6rem] font-mono uppercase tracking-[0.12em]"
+                    aria-hidden="true"
+                  >
+                    <NuxtImg
+                      v-if="item.face"
+                      :src="item.face"
+                      alt=""
+                      class="h-full w-full object-cover"
+                      width="36"
+                      height="36"
+                    />
+                    <span v-else>
+                      {{ displayName(item).slice(0, 1) }}
+                    </span>
+                  </div>
+                  <div class="flex flex-col">
+                    <span class="text-sm">
+                      {{ displayName(item) }}
+                    </span>
+                    <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                      {{ item.mid }}
+                    </span>
+                  </div>
+                </div>
+                <div class="flex flex-col items-end gap-1 px-1">
                   <span class="text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                    {{ formatCount(item.fans) }} · {{ formatPercent(item.delta, item.fans) }}
+                    {{ formatValue(item[props.valueKey]) }}
                   </span>
-                </template>
+                  <template v-if="props.showTrendMeta">
+                    <span class="text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                      <span class="hidden sm:inline">{{ formatCount(item.fans) }}</span>
+                      <span class="hidden sm:inline"> · </span>
+                      <span>{{ formatPercent(item.delta, item.fans) }}</span>
+                    </span>
+                  </template>
+                </div>
               </div>
             </div>
-          </div>
+          </template>
           <div
             v-if="data && data.items.length === 0"
             class="py-6 text-center text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)] border-l border-r border-[var(--auxline-line)]"

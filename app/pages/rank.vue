@@ -74,12 +74,11 @@ function displayName(item: UserExpRankItem): string {
 
 <template>
   <section class="flex flex-col items-center pt-12 pb-12">
-    <h1 class="text-3xl font-bold text-center">
-      经验排行榜
-    </h1>
-    <p class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)] w-full border-b text-center border-[var(--auxline-line)] pb-2 mt-2">
-      TOP 100
-    </p>
+    <AuxlinePageHeader
+      title="经验排行榜"
+      subtitle="TOP 100"
+      variant="underline"
+    />
     <div class="w-full border-b border-[var(--auxline-line)]">
       <div class="max-w-3xl mx-auto">
         <div class="flex items-center justify-between border-b border-l border-r border-[var(--auxline-line)] py-3 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
@@ -139,7 +138,7 @@ function displayName(item: UserExpRankItem): string {
                   </span>
                 </div>
                 <div class="flex flex-col">
-                  <span class="text-sm font-semibold">
+                  <span class="text-sm">
                     {{ displayName(item) }}
                   </span>
                 </div>

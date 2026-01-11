@@ -119,9 +119,7 @@ async function signInWithPassword() {
 
 <template>
   <section class="flex flex-col items-center gap-4 pt-12 pb-12">
-    <h1 class="text-3xl font-bold text-center">
-      登录
-    </h1>
+    <AuxlinePageHeader title="登录" variant="plain" />
     <form
       class="w-full max-w-sm flex flex-col gap-3"
       @submit.prevent="signInWithPassword"

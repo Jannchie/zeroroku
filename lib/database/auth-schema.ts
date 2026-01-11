@@ -1,7 +1,7 @@
-import { boolean, numeric, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { bigint, bigserial, boolean, numeric, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 
 export const user = pgTable('user', {
-  id: text('id').primaryKey(),
+  id: bigserial({ mode: 'number' }).primaryKey().notNull(),
   name: text('name').notNull(),
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').default(false).notNull(),
@@ -25,7 +25,7 @@ export const session = pgTable('session', {
     .notNull(),
   ipAddress: text('ip_address'),
   userAgent: text('user_agent'),
-  userId: text('user_id')
+  userId: bigint('user_id', { mode: 'number' })
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
 })
@@ -34,7 +34,7 @@ export const account = pgTable('account', {
   id: text('id').primaryKey(),
   accountId: text('account_id').notNull(),
   providerId: text('provider_id').notNull(),
-  userId: text('user_id')
+  userId: bigint('user_id', { mode: 'number' })
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
   accessToken: text('access_token'),
