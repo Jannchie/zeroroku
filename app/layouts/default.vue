@@ -69,6 +69,17 @@ onMounted(() => {
 
 <template>
   <AuxlineRoot>
+    <template #header>
+      <button
+        type="button"
+        class="flex h-9 w-9 items-center justify-center hover:bg-[var(--auxline-bg-hover)]
+          focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)]"
+        aria-label="说明"
+        title="说明"
+      >
+        <span class="text-base i-heroicons-information-circle-20-solid" aria-hidden="true" />
+      </button>
+    </template>
     <template #headerActions>
       <button
         type="button"

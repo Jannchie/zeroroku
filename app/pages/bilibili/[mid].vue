@@ -284,9 +284,11 @@ const historySkeletonRows = Array.from({ length: 100 }, (_, index) => index)
                 下载
               </AuxlineBtn>
             </div>
-            <span class="px-2 text-sm font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-              共 {{ totalHistory }} 条
-            </span>
+            <div class="flex items-center gap-2 px-2">
+              <span class="text-sm font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                共 {{ totalHistory }} 条
+              </span>
+            </div>
           </div>
           <div class="border-[var(--auxline-line)] border-b">
             <BilibiliAuthorFansHistoryChart

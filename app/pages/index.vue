@@ -2,7 +2,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 type PixiModule = typeof import('pixi.js')
-type PixiAppInit = {
+interface PixiAppInit {
   init: (options: Record<string, unknown>) => Promise<void>
 }
 type PixiRenderer = import('pixi.js').Renderer
@@ -28,11 +28,11 @@ const canvasFadeDelay = 500
 let cubismCorePromise: Promise<void> | null = null
 
 async function loadCubismCore() {
-  if (typeof window === 'undefined') {
+  if (globalThis.window === undefined) {
     return
   }
 
-  const globalWindow = window as unknown as GlobalWindow
+  const globalWindow = globalThis as unknown as GlobalWindow
   if (globalWindow.Live2DCubismCore) {
     return
   }
@@ -124,7 +124,7 @@ onMounted(async () => {
   const { Application, Ticker } = pixiModule
   const { Live2DModel } = live2dModule
 
-  const globalWindow = window as unknown as GlobalWindow
+  const globalWindow = globalThis as unknown as GlobalWindow
   globalWindow.PIXI = pixiModule
   Live2DModel.registerTicker(Ticker)
 
@@ -177,7 +177,7 @@ onMounted(async () => {
   resizeHandler = () => fitModel()
   window.addEventListener('resize', resizeHandler)
 
-  fadeTimer = window.setTimeout(() => {
+  fadeTimer = globalThis.setTimeout(() => {
     if (!disposed) {
       canvasVisible.value = true
     }
@@ -188,7 +188,7 @@ onBeforeUnmount(() => {
   disposed = true
 
   if (fadeTimer) {
-    window.clearTimeout(fadeTimer)
+    globalThis.clearTimeout(fadeTimer)
     fadeTimer = null
   }
 
