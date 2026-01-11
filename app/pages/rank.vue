@@ -11,6 +11,10 @@ interface UserExpRankResponse {
   items: UserExpRankItem[]
 }
 
+useSeoMeta({
+  title: '观测者排行榜',
+})
+
 const { data, pending, error } = useFetch<UserExpRankResponse>('/api/rank', {
   watch: false,
 })

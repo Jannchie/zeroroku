@@ -4,6 +4,10 @@ import { computed } from 'vue'
 const { selectedScheme, activeScheme, setScheme } = useColorScheme()
 
 const activeSchemeLabel = computed(() => (activeScheme.value === 'dark' ? '夜间' : '日间'))
+
+useSeoMeta({
+  title: '设置',
+})
 </script>
 
 <template>

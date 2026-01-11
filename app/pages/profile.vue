@@ -6,6 +6,10 @@ definePageMeta({
   middleware: ['auth'],
 })
 
+useSeoMeta({
+  title: '个人资料',
+})
+
 const session = authClient.useSession()
 const user = computed(() => session.value?.data?.user ?? null)
 const displayName = computed(() => user.value?.name ?? user.value?.email ?? '用户')

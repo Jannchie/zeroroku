@@ -18,6 +18,10 @@ const redirectTarget = computed(() => {
   }
   return '/profile'
 })
+
+useSeoMeta({
+  title: '登录',
+})
 const { execute: executeIdentifierSignIn, error: identifierSignInError } = useFetch(
   '/api/auth/sign-in-identifier',
   {

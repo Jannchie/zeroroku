@@ -60,6 +60,21 @@ const { data: historyData, pending: historyPending, error: historyError } = useF
 )
 
 const author = computed(() => data.value?.item ?? null)
+const pageTitle = computed(() => {
+  const name = author.value?.name?.trim()
+  if (name) {
+    return `${name} · Bilibili`
+  }
+  if (mid.value) {
+    return `UP ${mid.value} · Bilibili`
+  }
+  return 'Bilibili'
+})
+
+useSeoMeta(() => ({
+  title: pageTitle.value,
+}))
+
 const historyItems = computed(() => historyData.value?.items ?? [])
 const formatter = new Intl.NumberFormat('zh-CN')
 const deltaFormatter = new Intl.NumberFormat('zh-CN', { signDisplay: 'exceptZero' })

@@ -70,15 +70,15 @@ onMounted(() => {
 <template>
   <AuxlineRoot>
     <template #header>
-      <button
-        type="button"
+      <NuxtLink
+        to="/open-letter"
         class="flex h-9 w-9 items-center justify-center hover:bg-[var(--auxline-bg-hover)]
           focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)]"
         aria-label="说明"
         title="说明"
       >
         <span class="text-base i-heroicons-information-circle-20-solid" aria-hidden="true" />
-      </button>
+      </NuxtLink>
     </template>
     <template #headerActions>
       <button
@@ -142,10 +142,13 @@ onMounted(() => {
       </template>
     </template>
     <template #main>
-      <section class="flex flex-col items-center gap-6 pt-12 pb-12">
+      <section class="flex flex-col items-center gap-1 pt-12 pb-12">
         <h1 class="text-3xl  text-center">
           ZeroRoku
         </h1>
+        <p class="text-xs text-[var(--auxline-fg-muted)]">
+          06数据观测站
+        </p>
       </section>
       <div class="flex flex-wrap justify-center children:border-r first:children:border-l">
         <AuxlineBtn

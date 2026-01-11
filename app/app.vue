@@ -67,4 +67,10 @@ body {
   background: #fff;
   color: #000;
 }
+
+@supports (text-autospace: normal) {
+  .text-autopsace {
+    text-autospace: ideograph-alpha ideograph-numeric;
+  }
+}
 </style>

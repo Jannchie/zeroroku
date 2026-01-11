@@ -30,6 +30,10 @@ interface ObserveResponse {
   credit: number
 }
 
+useSeoMeta({
+  title: 'Bilibili',
+})
+
 const searchQuery = ref('')
 const searchResults = ref<AuthorSearchItem[]>([])
 const searchError = ref<string | null>(null)

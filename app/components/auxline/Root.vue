@@ -46,7 +46,7 @@ const contentShellClass
 
       <main
         v-if="$slots.main || $slots.default"
-        class="auxline-main flex flex-col children:border-b children:border-[var(--auxline-line)] flex-1 min-h-0" :class="[contentShellClass]"
+        class="auxline-main text-autopsace flex flex-col children:border-b children:border-[var(--auxline-line)] flex-1 min-h-0" :class="[contentShellClass]"
       >
         <slot name="main">
           <slot />

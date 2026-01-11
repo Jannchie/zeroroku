@@ -1,3 +1,9 @@
+<script setup lang="ts">
+useSeoMeta({
+  title: '7日掉粉榜',
+})
+</script>
+
 <template>
   <BilibiliFansRankingTable
     title="7日掉粉榜"

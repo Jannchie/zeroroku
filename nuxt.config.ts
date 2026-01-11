@@ -24,8 +24,8 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      title: 'ZeroRoku',
-      titleTemplate: '%s | ZeroRoku',
+      title: 'ZeroRoku · 06数据观测站',
+      titleTemplate: '%s | ZeroRoku · 06数据观测站',
       link: [
         {
           rel: 'icon',
@@ -42,10 +42,13 @@ export default defineNuxtConfig({
       ],
     },
   },
+  routeRules: {
+    '/open-letter': { prerender: true },
+  },
   site: {
     url: process.env.NUXT_PUBLIC_SITE_URL ?? 'https://zeroroku.com',
-    name: 'ZeroRoku',
-    description: 'ZeroRoku',
+    name: 'ZeroRoku · 06数据观测站',
+    description: 'ZeroRoku 06数据观测站',
   },
   eslint: {
     config: {

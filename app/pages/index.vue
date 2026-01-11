@@ -17,6 +17,10 @@ const canvasRef = ref<HTMLCanvasElement | null>(null)
 const canvasVisible = ref(false)
 const modelPath = '/l2d/06-v2.1024/06-v2.model3.json'
 
+useSeoMeta({
+  title: '首页',
+})
+
 let app: import('pixi.js').Application | null = null
 let live2dModel: import('@jannchie/pixi-live2d-display/cubism4').Live2DModel | null = null
 let resizeHandler: (() => void) | null = null
