@@ -3,11 +3,7 @@ import 'dotenv/config'
 
 const SOURCE_DATABASE = process.env.SOURCE_DATABASE ?? 'postgres'
 const TARGET_DATABASE = process.env.TARGET_DATABASE
-const DATABASE_URL = process.env.DATABASE_URL
-
-if (!DATABASE_URL) {
-  throw new Error('DATABASE_URL is not set.')
-}
+const DATABASE_URL = process.env.DATABASE_URL ?? 'postgres://localhost:5432/postgres'
 
 const targetFromUrl = new URL(DATABASE_URL).pathname.replace(/^\//, '')
 const targetDatabase = TARGET_DATABASE ?? targetFromUrl

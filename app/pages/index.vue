@@ -20,7 +20,7 @@ const modelPath = '/l2d/06-v2.1024/06-v2.model3.json'
 let app: import('pixi.js').Application | null = null
 let live2dModel: import('@jannchie/pixi-live2d-display/cubism4').Live2DModel | null = null
 let resizeHandler: (() => void) | null = null
-let fadeTimer: number | null = null
+let fadeTimer: ReturnType<typeof setTimeout> | null = null
 let disposed = false
 
 const cubismCoreSrc = '/vendor/live2d/live2dcubismcore.min.js'

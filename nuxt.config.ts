@@ -26,6 +26,20 @@ export default defineNuxtConfig({
     head: {
       title: 'ZeroRoku',
       titleTemplate: '%s | ZeroRoku',
+      link: [
+        {
+          rel: 'icon',
+          type: 'image/svg+xml',
+          href: '/light-icon.svg',
+          media: '(prefers-color-scheme: light)',
+        },
+        {
+          rel: 'icon',
+          type: 'image/svg+xml',
+          href: '/dark-icon.svg',
+          media: '(prefers-color-scheme: dark)',
+        },
+      ],
     },
   },
   site: {
