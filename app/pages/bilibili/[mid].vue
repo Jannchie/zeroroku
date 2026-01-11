@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { authClient } from '~~/lib/client'
 
 interface AuthorDetailItem {
   mid: string
@@ -32,9 +33,17 @@ interface AuthorHistoryResponse {
   items: AuthorHistoryItem[]
 }
 
+interface ObserveResponse {
+  ok: boolean
+  cost: number
+  credit: number
+}
+
 const route = useRoute()
 const midParam = computed(() => (Array.isArray(route.params.mid) ? route.params.mid[0] : route.params.mid))
 const mid = computed(() => (typeof midParam.value === 'string' ? midParam.value : ''))
+const session = authClient.useSession()
+const user = computed(() => session.value?.data?.user ?? null)
 
 const { data, pending, error } = useFetch<AuthorDetailResponse>(
   () => `/api/bilibili/author/${encodeURIComponent(mid.value)}`,
@@ -55,6 +64,10 @@ const historyItems = computed(() => historyData.value?.items ?? [])
 const formatter = new Intl.NumberFormat('zh-CN')
 const deltaFormatter = new Intl.NumberFormat('zh-CN', { signDisplay: 'exceptZero' })
 const dateFormatter = new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' })
+const observeCost = 10
+const observePending = ref(false)
+const observeError = ref<string | null>(null)
+const observeSuccess = ref<string | null>(null)
 
 const pageSize = 100
 const currentPage = ref(1)
@@ -69,9 +82,15 @@ const pagedHistory = computed(() => {
   return historyItems.value.slice(start, start + pageSize)
 })
 const historyTableHeaderRef = ref<HTMLDivElement | null>(null)
+const canObserve = computed(() => Boolean(mid.value && author.value) && !observePending.value)
 
 watch(historyItems, () => {
   currentPage.value = 1
+})
+
+watch(mid, () => {
+  observeError.value = null
+  observeSuccess.value = null
 })
 
 watch(totalPages, (value) => {
@@ -188,6 +207,42 @@ function displayAuthorName(value: AuthorDetailItem | null): string {
   return 'UP'
 }
 
+async function observeAuthor(): Promise<void> {
+  if (!canObserve.value || observePending.value) {
+    return
+  }
+  if (!user.value) {
+    observeError.value = '请先登录。'
+    observeSuccess.value = null
+    return
+  }
+
+  observePending.value = true
+  observeError.value = null
+  observeSuccess.value = null
+
+  try {
+    const response = await $fetch<ObserveResponse>(
+      `/api/bilibili/author/${encodeURIComponent(mid.value)}/observe`,
+      {
+        method: 'POST',
+      },
+    )
+    observeSuccess.value = `观测已加入队列，剩余 ${formatCount(response.credit)} 积分。`
+  }
+  catch (error) {
+    if (error && typeof error === 'object' && 'data' in error) {
+      const maybeData = error.data as { message?: string, statusMessage?: string }
+      observeError.value = maybeData.statusMessage ?? maybeData.message ?? '观测失败。'
+      return
+    }
+    observeError.value = '观测失败。'
+  }
+  finally {
+    observePending.value = false
+  }
+}
+
 const infoRows = computed(() => {
   const item = author.value
   if (!item) {
@@ -213,33 +268,74 @@ const historySkeletonRows = Array.from({ length: 100 }, (_, index) => index)
 <template>
   <section class="flex flex-col items-center border-b-0">
     <div class="w-full max-w-3xl border-b border-[var(--auxline-line)]">
-      <div class="flex items-center gap-4 border-x border-[var(--auxline-line)]">
-        <div
-          class="flex h-16 w-16 items-center justify-center overflow-hidden border border-[var(--auxline-line)]
-            bg-[var(--auxline-bg-emphasis)] text-[0.7rem] font-mono uppercase tracking-[0.12em]"
-          aria-hidden="true"
-        >
-          <NuxtImg
-            v-if="author?.face"
-            :src="author.face"
-            alt=""
-            class="h-full w-full object-cover"
-            width="64"
-            height="64"
-          />
-          <span v-else>
-            {{ displayAuthorName(author).slice(0, 1) }}
-          </span>
+      <div class="flex items-center justify-between gap-4 border-x border-[var(--auxline-line)] pr-2">
+        <div class="flex min-w-0 items-center gap-4">
+          <div
+            class="flex h-16 w-16 items-center justify-center overflow-hidden border border-[var(--auxline-line)]
+              bg-[var(--auxline-bg-emphasis)] text-[0.7rem] font-mono uppercase tracking-[0.12em]"
+            aria-hidden="true"
+          >
+            <NuxtImg
+              v-if="author?.face"
+              :src="author.face"
+              alt=""
+              class="h-full w-full object-cover"
+              width="64"
+              height="64"
+            />
+            <span v-else>
+              {{ displayAuthorName(author).slice(0, 1) }}
+            </span>
+          </div>
+          <div class="flex min-w-0 flex-col">
+            <h1 class="text-2xl  truncate">
+              {{ displayAuthorName(author) }}
+            </h1>
+            <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+              UP {{ mid }}
+            </span>
+          </div>
         </div>
-        <div class="flex min-w-0 flex-col">
-          <h1 class="text-2xl  truncate">
-            {{ displayAuthorName(author) }}
-          </h1>
-          <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-            UP {{ mid }}
-          </span>
+        <div class="flex flex-col items-end gap-1">
+          <template v-if="user">
+            <AuxlineBtn
+              type="button"
+              size="sm"
+              :loading="observePending"
+              :disabled="!canObserve"
+              @click="observeAuthor"
+            >
+              观测 -{{ observeCost }}积分
+            </AuxlineBtn>
+            <span class="text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+              当前积分 {{ formatCount(user.credit) }}
+            </span>
+          </template>
+          <template v-else>
+            <AuxlineBtn
+              size="sm"
+              to="/login"
+            >
+              登录后观测
+            </AuxlineBtn>
+            <span class="text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+              观测消耗 {{ observeCost }} 积分
+            </span>
+          </template>
         </div>
       </div>
+      <p
+        v-if="observeError"
+        class="border-x border-[var(--auxline-line)] px-2 py-2 text-xs text-red-600"
+      >
+        {{ observeError }}
+      </p>
+      <p
+        v-else-if="observeSuccess"
+        class="border-x border-[var(--auxline-line)] px-2 py-2 text-xs text-blue-600"
+      >
+        {{ observeSuccess }}
+      </p>
     </div>
 
     <div class="w-full max-w-3xl">
@@ -288,6 +384,15 @@ const historySkeletonRows = Array.from({ length: 100 }, (_, index) => index)
               <span class="text-sm font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
                 共 {{ totalHistory }} 条
               </span>
+              <button
+                type="button"
+                class="flex h-7 w-7 items-center justify-center hover:bg-[var(--auxline-bg-hover)]
+                  focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)]"
+                aria-label="说明"
+                title="历史数据按时间倒序展示，每页 100 条。"
+              >
+                <span class="text-base i-heroicons-information-circle-20-solid" aria-hidden="true" />
+              </button>
             </div>
           </div>
           <div class="border-[var(--auxline-line)] border-b">

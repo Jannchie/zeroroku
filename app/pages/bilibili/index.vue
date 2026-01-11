@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { authClient } from '~~/lib/client'
 
 interface AuthorSearchItem {
   mid: string
@@ -23,11 +24,24 @@ interface VisitTopResponse {
   items: VisitTopItem[]
 }
 
+interface ObserveResponse {
+  ok: boolean
+  cost: number
+  credit: number
+}
+
 const searchQuery = ref('')
 const searchResults = ref<AuthorSearchItem[]>([])
 const searchError = ref<string | null>(null)
 const searchPending = ref(false)
 const hasSearched = ref(false)
+const session = authClient.useSession()
+const user = computed(() => session.value?.data?.user ?? null)
+const observeMid = ref('')
+const observePending = ref(false)
+const observeError = ref<string | null>(null)
+const observeSuccess = ref<string | null>(null)
+const observeCost = 10
 
 const { data: visitTopData, pending: visitTopPending, error: visitTopError } = useFetch<VisitTopResponse>(
   '/api/bilibili/visit-top',
@@ -37,6 +51,8 @@ const { data: visitTopData, pending: visitTopPending, error: visitTopError } = u
 )
 
 const visitTopItems = computed(() => visitTopData.value?.items ?? [])
+const observeTarget = computed(() => observeMid.value.trim())
+const canObserve = computed(() => observeTarget.value.length > 0 && !observePending.value)
 
 const formatter = new Intl.NumberFormat('zh-CN')
 const skeletonRows = Array.from({ length: 6 }, (_, index) => index)
@@ -64,7 +80,14 @@ const visitTopSkeletons = visitTopSkeletonWidths.map((widthClass, index) => ({
 }))
 const canSearch = computed(() => searchQuery.value.trim().length > 0 && !searchPending.value)
 
-function formatCount(value: number | undefined): string {
+function formatCount(value: number | string | undefined | null): string {
+  if (typeof value === 'string') {
+    const parsed = Number.parseFloat(value)
+    if (Number.isNaN(parsed)) {
+      return '--'
+    }
+    return formatter.format(parsed)
+  }
   if (typeof value !== 'number') {
     return '--'
   }
@@ -121,12 +144,59 @@ async function searchAuthors() {
   }
 }
 
+async function observeAuthor() {
+  if (!canObserve.value || observePending.value) {
+    return
+  }
+  if (!user.value) {
+    observeError.value = '请先登录。'
+    observeSuccess.value = null
+    return
+  }
+
+  const trimmed = observeTarget.value
+  if (!/^\d+$/.test(trimmed)) {
+    observeError.value = 'MID 必须是数字。'
+    observeSuccess.value = null
+    return
+  }
+
+  observePending.value = true
+  observeError.value = null
+  observeSuccess.value = null
+
+  try {
+    const response = await $fetch<ObserveResponse>(
+      `/api/bilibili/author/${encodeURIComponent(trimmed)}/observe`,
+      { method: 'POST' },
+    )
+    observeSuccess.value = `观测已加入队列，剩余 ${formatCount(response.credit)} 积分。`
+    observeMid.value = ''
+  }
+  catch (error) {
+    if (error && typeof error === 'object' && 'data' in error) {
+      const maybeData = error.data as { message?: string, statusMessage?: string }
+      observeError.value = maybeData.statusMessage ?? maybeData.message ?? '观测失败。'
+      return
+    }
+    observeError.value = '观测失败。'
+  }
+  finally {
+    observePending.value = false
+  }
+}
+
 watch(searchQuery, (value) => {
   if (!value.trim()) {
     searchResults.value = []
     searchError.value = null
     hasSearched.value = false
   }
+})
+
+watch(observeMid, () => {
+  observeError.value = null
+  observeSuccess.value = null
 })
 </script>
 
@@ -143,12 +213,12 @@ watch(searchQuery, (value) => {
         <div class="flex items-center border-b border-[var(--auxline-line)] p-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
           <span>焦点UP主</span>
         </div>
-        <div class="flex flex-wrap gap-2 p-1">
+        <div class="flex flex-wrap gap-1 p-1">
           <template v-if="visitTopPending">
             <div
               v-for="item in visitTopSkeletons"
               :key="`visit-top-${item.id}`"
-              class="inline-flex items-center gap-2 border border-[var(--auxline-line)] pr-2 pl-0 py-0 text-xs"
+              class="inline-flex items-center gap-1 border border-[var(--auxline-line)] pr-2 pl-0 py-0 text-xs"
               aria-hidden="true"
             >
               <span
@@ -202,8 +272,74 @@ watch(searchQuery, (value) => {
       </div>
     </div>
 
+    <div class="w-full border-b border-[var(--auxline-line)]">
+      <div class="w-full max-w-3xl mx-auto sm:border-x border-[var(--auxline-line)]">
+        <div class="h-8" aria-hidden="true" />
+      </div>
+    </div>
+
     <div class="w-full border-[var(--auxline-line)]">
       <div class="w-full max-w-3xl mx-auto sm:border-x  border-[var(--auxline-line)]">
+        <div class="mx-auto border-[var(--auxline-line)]">
+          <form
+            class="flex flex-col sm:flex-row sm:items-end"
+            @submit.prevent="observeAuthor"
+          >
+            <label class="flex flex-1 flex-col text-xs tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+              <div class="pl-1 py-1 border-b border-[var(--auxline-line)]">
+                输入 MID 观测
+              </div>
+              <div class="flex border-b border-[var(--auxline-line)]">
+                <input
+                  v-model="observeMid"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  autocomplete="off"
+                  placeholder="1850091"
+                  class="h-9 pl-1 grow border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
+                text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
+                focus-visible:outline-[var(--auxline-line)]"
+                >
+                <AuxlineBtn
+                  type="submit"
+                  variant="contrast"
+                  :loading="observePending"
+                  :disabled="!canObserve"
+                >
+                  观测
+                </AuxlineBtn>
+              </div>
+            </label>
+          </form>
+          <div
+            class="flex items-center justify-between border-b border-[var(--auxline-line)] px-1 py-1 text-[0.65rem]
+              font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
+          >
+            <span>观测消耗 {{ observeCost }} 积分</span>
+            <span v-if="user">
+              当前积分 {{ formatCount(user.credit) }}
+            </span>
+            <AuxlineBtn
+              v-else
+              size="sm"
+              to="/login"
+            >
+              登录后观测
+            </AuxlineBtn>
+          </div>
+          <p v-if="observeError" class="px-1 py-2 text-xs text-red-600">
+            {{ observeError }}
+          </p>
+          <p v-else-if="observeSuccess" class="px-1 py-2 text-xs text-blue-600">
+            {{ observeSuccess }}
+          </p>
+        </div>
+
+        <div class="border-b border-[var(--auxline-line)]">
+          <div class="h-8" aria-hidden="true" />
+        </div>
+
         <div class="mx-auto">
           <form
             class="flex flex-col sm:flex-row sm:items-end"
