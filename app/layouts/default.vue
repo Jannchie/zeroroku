@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { authClient } from '~~/lib/client'
 
@@ -9,6 +9,7 @@ const avatarUrl = computed(() => session.value?.data?.user?.image || null)
 const avatarInitial = computed(() => displayName.value.slice(0, 1).toUpperCase())
 const { activeScheme, selectedScheme, toggleScheme } = useColorScheme()
 const route = useRoute()
+const lastDailyLoginUserId = ref<string | null>(null)
 
 const themeIcon = computed(() => {
   return activeScheme.value === 'dark' ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'
@@ -41,6 +42,29 @@ function isActiveRoute(to: string): boolean {
   }
   return route.path.startsWith(to)
 }
+
+onMounted(() => {
+  watch(
+    () => session.value?.data?.user?.id,
+    async (userId) => {
+      if (!userId) {
+        lastDailyLoginUserId.value = null
+        return
+      }
+      if (lastDailyLoginUserId.value === userId) {
+        return
+      }
+      lastDailyLoginUserId.value = userId
+      try {
+        await $fetch('/api/user/daily-login', { method: 'post' })
+      }
+      catch (error) {
+        console.error('Failed to sync daily login reward.', error)
+      }
+    },
+    { immediate: true },
+  )
+})
 </script>
 
 <template>
@@ -128,8 +152,15 @@ function isActiveRoute(to: string): boolean {
       <slot />
     </template>
     <template #footer>
-      <p class="text-sm py-2 text-center">
+      <p class="text-sm py-2 text-center text-[var(--auxline-fg-muted)]">
         {{ new Date().getFullYear() }}
+        <span class="mx-2">·</span>
+        <a
+          href="https://github.com/Jannchie/zeroroku"
+          target="_blank"
+          rel="noreferrer"
+          class="underline underline-offset-4 hover:text-[var(--auxline-fg)]"
+        >GitHub</a>
       </p>
     </template>
   </AuxlineRoot>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type uPlot from 'uplot'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import 'uplot/dist/uPlot.min.css'
 
 interface FansHistoryItem {
@@ -24,7 +24,7 @@ const axisFont = '11px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "L
 const xAxisFormatter = new Intl.DateTimeFormat('zh-CN', { dateStyle: 'short' })
 
 let chart: uPlot | null = null
-let plotCtor: typeof import('uplot') | null = null
+let plotConstructor: typeof import('uplot') | null = null
 let resizeObserver: ResizeObserver | null = null
 
 function readPalette(target: HTMLElement) {
@@ -43,7 +43,7 @@ function readPalette(target: HTMLElement) {
 
 const seriesData = computed<SeriesData | null>(() => {
   const points = props.items
-    .map(item => {
+    .map((item) => {
       if (!item.createdAt) {
         return null
       }
@@ -59,7 +59,7 @@ const seriesData = computed<SeriesData | null>(() => {
       }
     })
     .filter((point): point is { x: number, y: number | null } => point !== null)
-    .sort((a, b) => a.x - b.x)
+    .toSorted((a, b) => a.x - b.x)
 
   if (points.length === 0) {
     return null
@@ -128,15 +128,15 @@ function buildOptions(
 }
 
 async function loadPlot(): Promise<typeof import('uplot') | null> {
-  if (!process.client) {
+  if (!import.meta.client) {
     return null
   }
-  if (plotCtor) {
-    return plotCtor
+  if (plotConstructor) {
+    return plotConstructor
   }
   const module = await import('uplot')
-  plotCtor = (module as { default: typeof import('uplot') }).default
-  return plotCtor
+  plotConstructor = (module as { default: typeof import('uplot') }).default
+  return plotConstructor
 }
 
 function destroyPlot() {
@@ -155,8 +155,8 @@ async function renderPlot() {
     destroyPlot()
     return
   }
-  const uPlotCtor = await loadPlot()
-  if (!uPlotCtor) {
+  const UPlotCtor = await loadPlot()
+  if (!UPlotCtor) {
     return
   }
   await nextTick()
@@ -165,14 +165,13 @@ async function renderPlot() {
     return
   }
   const palette = readPalette(target)
-  const pathBuilder = uPlotCtor.paths.spline ? uPlotCtor.paths.spline() : undefined
-  if (!chart) {
-    chart = new uPlotCtor(buildOptions(width, props.height, palette, pathBuilder), seriesData.value, target)
-  }
-  else {
+  const pathBuilder = UPlotCtor.paths.spline ? UPlotCtor.paths.spline() : undefined
+  if (chart) {
     chart.setData(seriesData.value)
     chart.setSize({ width, height: props.height })
+    return
   }
+  chart = new UPlotCtor(buildOptions(width, props.height, palette, pathBuilder), seriesData.value, target)
 }
 
 function updateSize() {

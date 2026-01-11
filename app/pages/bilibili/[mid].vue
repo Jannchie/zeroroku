@@ -60,6 +60,7 @@ const pageSize = 100
 const currentPage = ref(1)
 const totalHistory = computed(() => historyItems.value.length)
 const totalPages = computed(() => Math.ceil(totalHistory.value / pageSize))
+const canDownloadHistory = computed(() => historyItems.value.length > 0 && !historyPending.value && !historyError.value)
 const pagedHistory = computed(() => {
   if (historyItems.value.length === 0) {
     return []
@@ -72,7 +73,7 @@ watch(historyItems, () => {
   currentPage.value = 1
 })
 
-watch(totalPages, value => {
+watch(totalPages, (value) => {
   if (value <= 0) {
     currentPage.value = 1
     return
@@ -105,6 +106,46 @@ function formatTimestamp(value: string | null | undefined): string {
     return value
   }
   return dateFormatter.format(parsed)
+}
+
+function formatCsvValue(value: string | number | null | undefined): string {
+  if (value === null || value === undefined) {
+    return ''
+  }
+  const text = String(value)
+  if (/[",\n\r]/.test(text)) {
+    return `"${text.replaceAll('"', '""')}"`
+  }
+  return text
+}
+
+function buildHistoryCsv(items: AuthorHistoryItem[]): string {
+  const header = ['时间', '粉丝', '7日变化', '1日变化']
+  const rows = items.map(item => [
+    item.createdAt ?? '',
+    item.fans ?? '',
+    item.rate7 ?? '',
+    item.rate1 ?? '',
+  ])
+  const lines = rows.map(row => row.map(value => formatCsvValue(value)).join(','))
+  return [header.join(','), ...lines].join('\n')
+}
+
+function downloadHistory() {
+  if (!canDownloadHistory.value) {
+    return
+  }
+  if (globalThis.document === undefined || globalThis.URL === undefined) {
+    return
+  }
+  const csv = buildHistoryCsv(historyItems.value)
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+  const url = globalThis.URL.createObjectURL(blob)
+  const link = globalThis.document.createElement('a')
+  link.href = url
+  link.download = mid.value ? `bilibili_${mid.value}_history.csv` : 'bilibili_history.csv'
+  link.click()
+  globalThis.URL.revokeObjectURL(url)
 }
 
 function goPrevPage() {
@@ -157,7 +198,7 @@ const historySkeletonRows = Array.from({ length: 8 }, (_, index) => index)
 <template>
   <section class="flex flex-col items-center pb-12">
     <div class="w-full max-w-3xl border-b border-[var(--auxline-line)]">
-      <div class="flex items-center gap-4 px-4 py-6">
+      <div class="flex items-center gap-4 border-x border-[var(--auxline-line)]">
         <div
           class="flex h-16 w-16 items-center justify-center overflow-hidden border border-[var(--auxline-line)]
             bg-[var(--auxline-bg-emphasis)] text-[0.7rem] font-mono uppercase tracking-[0.12em]"
@@ -195,7 +236,7 @@ const historySkeletonRows = Array.from({ length: 8 }, (_, index) => index)
         </div>
       </template>
       <template v-else-if="author">
-        <div class="border-b border-[var(--auxline-line)] px-4 py-6">
+        <div class="border-b border-[var(--auxline-line)] px-2 py-2 border-x border-[var(--auxline-line)]">
           <p class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
             简介
           </p>
@@ -203,38 +244,43 @@ const historySkeletonRows = Array.from({ length: 8 }, (_, index) => index)
             {{ author.sign || '暂无简介' }}
           </p>
         </div>
-        <div class="grid grid-cols-1 gap-4 border-b border-[var(--auxline-line)] px-4 py-6 sm:grid-cols-3">
+        <div class="grid grid-cols-1 gap-4 border-b border-[var(--auxline-line)] sm:border-x sm:grid-cols-3">
           <div v-for="item in infoRows" :key="item.label" class="flex flex-col gap-1">
-            <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+            <span class="px-2 text-sm tracking-[0.12em] text-[var(--auxline-fg-muted)]">
               {{ item.label }}
             </span>
-            <span class="text-sm">
+            <span class="px-2 text-lg">
               {{ item.value }}
             </span>
           </div>
         </div>
-        <div class="px-4 py-6">
-          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-              历史数据
-            </p>
-            <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+        <div class="sm:border-x border-[var(--auxline-line)]">
+          <div class="flex flex-col gap-2 sm:flex-row border-b border-[var(--auxline-line)] sm:items-center sm:justify-between">
+            <div class="flex flex-wrap items-center gap-2">
+              <p class="text-sm px-2 font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                历史数据
+              </p>
+              <AuxlineBtn
+                type="button"
+                size="sm"
+                :disabled="!canDownloadHistory"
+                @click="downloadHistory"
+              >
+                下载
+              </AuxlineBtn>
+            </div>
+            <span class="px-2 text-sm font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
               共 {{ totalHistory }} 条
             </span>
           </div>
-          <div class="mt-4 border border-[var(--auxline-line)]">
-            <div class="flex items-center justify-between border-b border-[var(--auxline-line)] px-3 py-2">
-              <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                粉丝总数
-              </span>
-            </div>
+          <div class="border-[var(--auxline-line)] border-b">
             <BilibiliAuthorFansHistoryChart
               :items="historyItems"
               :loading="historyPending"
               :height="220"
             />
           </div>
-          <div class="mt-4 overflow-x-auto border border-[var(--auxline-line)]">
+          <div class="mt-4 overflow-x-auto border-[var(--auxline-line)]">
             <div class="min-w-[560px] divide-y divide-[var(--auxline-line)]">
               <div class="grid grid-cols-4 gap-3 px-3 py-2 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
                 <span

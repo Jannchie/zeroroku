@@ -4,8 +4,8 @@ import type { H3Event } from 'h3'
 import { sql } from 'drizzle-orm'
 import { getTableConfig } from 'drizzle-orm/pg-core'
 import { getRequestIP, getRouterParam } from 'h3'
-import { auth } from '~~/lib/auth'
 import { authorInfoMaster, authorLatestFans, authorVisitRecords } from '~~/drizzle/schema'
+import { auth } from '~~/lib/auth'
 import { db } from '~~/server/index'
 
 interface AuthorDetailItem {
@@ -38,8 +38,8 @@ interface AuthorDetailRow extends Record<string, unknown> {
   rate1: string | number | null
 }
 
-const MIN_MID = BigInt(0)
-const MAX_MID = BigInt('9223372036854775807')
+const MIN_MID = 0n
+const MAX_MID = 9_223_372_036_854_775_807n
 
 function parseNumber(value: string | number | null | undefined): number | null {
   if (value === null || value === undefined) {

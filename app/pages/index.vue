@@ -2,6 +2,10 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 type PixiModule = typeof import('pixi.js')
+type PixiAppInit = {
+  init: (options: Record<string, unknown>) => Promise<void>
+}
+type PixiRenderer = import('pixi.js').Renderer
 
 type GlobalWindow = Window & {
   PIXI?: PixiModule
@@ -24,11 +28,11 @@ const canvasFadeDelay = 500
 let cubismCorePromise: Promise<void> | null = null
 
 async function loadCubismCore() {
-  if (globalThis.window === undefined) {
+  if (typeof window === 'undefined') {
     return
   }
 
-  const globalWindow = globalThis as GlobalWindow
+  const globalWindow = window as unknown as GlobalWindow
   if (globalWindow.Live2DCubismCore) {
     return
   }
@@ -120,7 +124,7 @@ onMounted(async () => {
   const { Application, Ticker } = pixiModule
   const { Live2DModel } = live2dModule
 
-  const globalWindow = globalThis as unknown as GlobalWindow
+  const globalWindow = window as unknown as GlobalWindow
   globalWindow.PIXI = pixiModule
   Live2DModel.registerTicker(Ticker)
 
@@ -129,7 +133,7 @@ onMounted(async () => {
   }
 
   app = new Application()
-  await app.init({
+  await (app as PixiAppInit).init({
     resizeTo: containerRef.value,
     canvas: canvasRef.value,
     antialias: true,
@@ -166,14 +170,14 @@ onMounted(async () => {
     return
   }
 
-  live2dModel.setRenderer(app.renderer)
+  live2dModel.setRenderer(app.renderer as PixiRenderer)
   app.stage.addChild(live2dModel)
 
   fitModel()
   resizeHandler = () => fitModel()
   window.addEventListener('resize', resizeHandler)
 
-  fadeTimer = globalThis.setTimeout(() => {
+  fadeTimer = window.setTimeout(() => {
     if (!disposed) {
       canvasVisible.value = true
     }
@@ -184,7 +188,7 @@ onBeforeUnmount(() => {
   disposed = true
 
   if (fadeTimer) {
-    globalThis.clearTimeout(fadeTimer)
+    window.clearTimeout(fadeTimer)
     fadeTimer = null
   }
 
@@ -206,7 +210,6 @@ onBeforeUnmount(() => {
     app.destroy(true, {
       children: true,
       texture: true,
-      textureSource: true,
     })
     app = null
   }

@@ -12,14 +12,56 @@ interface AuthorSearchResponse {
   items: AuthorSearchItem[]
 }
 
+interface VisitTopItem {
+  mid: string
+  name: string | null
+  face: string | null
+  visits: number
+}
+
+interface VisitTopResponse {
+  items: VisitTopItem[]
+}
+
 const searchQuery = ref('')
 const searchResults = ref<AuthorSearchItem[]>([])
 const searchError = ref<string | null>(null)
 const searchPending = ref(false)
 const hasSearched = ref(false)
 
+const { data: visitTopData, pending: visitTopPending, error: visitTopError } = useFetch<VisitTopResponse>(
+  '/api/bilibili/visit-top',
+  {
+    watch: false,
+  },
+)
+
+const visitTopItems = computed(() => visitTopData.value?.items ?? [])
+
 const formatter = new Intl.NumberFormat('zh-CN')
 const skeletonRows = Array.from({ length: 6 }, (_, index) => index)
+const visitTopSkeletonWidths = [
+  'w-10',
+  'w-16',
+  'w-12',
+  'w-20',
+  'w-14',
+  'w-24',
+  'w-12',
+  'w-18',
+  'w-16',
+  'w-22',
+  'w-14',
+  'w-20',
+  'w-12',
+  'w-24',
+  'w-16',
+  'w-18',
+]
+const visitTopSkeletons = visitTopSkeletonWidths.map((widthClass, index) => ({
+  id: index,
+  widthClass,
+}))
 const canSearch = computed(() => searchQuery.value.trim().length > 0 && !searchPending.value)
 
 function formatCount(value: number | undefined): string {
@@ -29,7 +71,7 @@ function formatCount(value: number | undefined): string {
   return formatter.format(value)
 }
 
-function displayAuthorName(item: AuthorSearchItem): string {
+function displayAuthorName(item: { name: string | null, mid: string }): string {
   if (item.name && item.name.trim().length > 0) {
     return item.name
   }
@@ -94,26 +136,74 @@ watch(searchQuery, (value) => {
       title="Bilibili"
       subtitle="数据观测站"
     />
-    <div class="border-b border-[var(--auxline-line)] flex justify-center w-full">
-      <AuxlineBtn to="/bilibili/fans" size="sm">
-        总排行
-      </AuxlineBtn>
-      <AuxlineBtn to="/bilibili/fans/7d-up" size="sm">
-        7日涨粉榜
-      </AuxlineBtn>
-      <AuxlineBtn to="/bilibili/fans/1d-up" size="sm">
-        1日涨粉榜
-      </AuxlineBtn>
-      <AuxlineBtn to="/bilibili/fans/7d-down" size="sm">
-        7日掉粉榜
-      </AuxlineBtn>
-      <AuxlineBtn to="/bilibili/fans/1d-down" size="sm">
-        1日掉粉榜
-      </AuxlineBtn>
+    <BilibiliFansRankingNav />
+
+    <div class="w-full border-b border-[var(--auxline-line)]">
+      <div class="w-full max-w-3xl mx-auto sm:border-x border-[var(--auxline-line)]">
+        <div class="flex items-center border-b border-[var(--auxline-line)] p-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+          <span>焦点UP主</span>
+        </div>
+        <div class="flex flex-wrap gap-2 p-1">
+          <template v-if="visitTopPending">
+            <div
+              v-for="item in visitTopSkeletons"
+              :key="`visit-top-${item.id}`"
+              class="inline-flex items-center gap-2 border border-[var(--auxline-line)] pr-2 pl-0 py-0 text-xs"
+              aria-hidden="true"
+            >
+              <span
+                class="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden border-r border-[var(--auxline-line)]
+                  bg-[var(--auxline-bg-emphasis)]"
+              />
+              <span class="h-3 bg-[var(--auxline-bg-emphasis)]" :class="item.widthClass" />
+            </div>
+          </template>
+          <template v-else>
+            <NuxtLink
+              v-for="item in visitTopItems"
+              :key="item.mid"
+              :to="authorLink(item.mid)"
+              class="inline-flex items-center gap-2 border border-[var(--auxline-line)] pr-2 pl-0 py-0 text-xs text-[var(--auxline-fg)]
+                hover:bg-[var(--auxline-bg-hover)] focus-visible:outline focus-visible:outline-1
+                focus-visible:outline-[var(--auxline-line)]"
+            >
+              <span
+                class="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden border-r border-[var(--auxline-line)]
+                  bg-[var(--auxline-bg-emphasis)] text-[0.55rem] font-mono uppercase tracking-[0.12em]"
+                aria-hidden="true"
+              >
+                <NuxtImg
+                  v-if="item.face"
+                  :src="item.face"
+                  alt=""
+                  class="h-full w-full object-cover"
+                  width="20"
+                  height="20"
+                />
+                <span v-else>
+                  {{ displayAuthorName(item).slice(0, 1) }}
+                </span>
+              </span>
+              <span class="max-w-[8rem] truncate">
+                {{ displayAuthorName(item) }}
+              </span>
+            </NuxtLink>
+            <span
+              v-if="visitTopItems.length === 0"
+              class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
+            >
+              暂无焦点UP主
+            </span>
+          </template>
+        </div>
+        <p v-if="visitTopError" class="p-1 text-xs text-red-600">
+          焦点UP主加载失败
+        </p>
+      </div>
     </div>
 
     <div class="w-full border-b border-[var(--auxline-line)]">
-      <div class="w-full">
+      <div class="w-full max-w-3xl mx-auto sm:border-x border-[var(--auxline-line)]">
         <div class="mx-auto">
           <form
             class="flex flex-col sm:flex-row sm:items-end"

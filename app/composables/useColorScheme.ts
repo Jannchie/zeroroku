@@ -6,11 +6,19 @@ export type ActiveScheme = 'light' | 'dark'
 let isInitialized = false
 let mediaQuery: MediaQueryList | null = null
 
+function getWindow(): Window | undefined {
+  if (globalThis.window === undefined) {
+    return undefined
+  }
+  return globalThis.window
+}
+
 function getStoredScheme(): ColorScheme {
-  if (typeof window === 'undefined') {
+  const globalWindow = getWindow()
+  if (!globalWindow) {
     return 'auto'
   }
-  const stored = window.localStorage.getItem('scheme')
+  const stored = globalWindow.localStorage.getItem('scheme')
   if (stored === 'light' || stored === 'dark' || stored === 'auto') {
     return stored
   }
@@ -18,10 +26,11 @@ function getStoredScheme(): ColorScheme {
 }
 
 function getPreferredScheme(): ActiveScheme {
-  if (typeof window === 'undefined') {
+  const globalWindow = getWindow()
+  if (!globalWindow) {
     return 'light'
   }
-  const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
+  const prefersDark = globalWindow.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
   return prefersDark ? 'dark' : 'light'
 }
 
@@ -31,8 +40,8 @@ export function useColorScheme() {
 
   function applyActiveScheme(nextScheme: ActiveScheme) {
     activeScheme.value = nextScheme
-    if (typeof document !== 'undefined') {
-      document.documentElement.dataset.scheme = nextScheme
+    if (globalThis.document !== undefined) {
+      globalThis.document.documentElement.dataset.scheme = nextScheme
     }
   }
 
@@ -46,8 +55,9 @@ export function useColorScheme() {
 
   function setScheme(nextScheme: ColorScheme) {
     selectedScheme.value = nextScheme
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('scheme', nextScheme)
+    const globalWindow = getWindow()
+    if (globalWindow) {
+      globalWindow.localStorage.setItem('scheme', nextScheme)
     }
     syncScheme(nextScheme)
   }
@@ -64,13 +74,14 @@ export function useColorScheme() {
   }
 
   function init() {
-    if (isInitialized || typeof window === 'undefined') {
+    const globalWindow = getWindow()
+    if (isInitialized || !globalWindow) {
       return
     }
     isInitialized = true
     selectedScheme.value = getStoredScheme()
     syncScheme(selectedScheme.value)
-    mediaQuery = window.matchMedia?.('(prefers-color-scheme: dark)') ?? null
+    mediaQuery = globalWindow.matchMedia?.('(prefers-color-scheme: dark)') ?? null
     mediaQuery?.addEventListener('change', handleMediaChange)
   }
 

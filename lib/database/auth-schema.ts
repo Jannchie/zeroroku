@@ -1,4 +1,4 @@
-import { bigint, bigserial, boolean, numeric, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { bigint, bigserial, boolean, jsonb, numeric, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 
 export const user = pgTable('user', {
   id: bigserial({ mode: 'number' }).primaryKey().notNull(),
@@ -13,6 +13,20 @@ export const user = pgTable('user', {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
+})
+
+export const checkIns = pgTable('check_ins', {
+  id: bigserial({ mode: 'number' }).primaryKey().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }),
+})
+
+export const creditRecords = pgTable('credit_records', {
+  id: bigserial({ mode: 'number' }).primaryKey().notNull(),
+  userId: bigint('user_id', { mode: 'number' }),
+  credit: numeric('credit', { mode: 'number' }),
+  text: text('text'),
+  createdAt: timestamp('created_at', { withTimezone: true }),
+  data: jsonb('data').$type<Record<string, unknown> | null>(),
 })
 
 export const session = pgTable('session', {

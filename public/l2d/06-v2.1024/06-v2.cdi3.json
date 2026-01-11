@@ -19,22 +19,22 @@
     {
       "Id": "ParamEyeLOpen",
       "GroupId": "",
-      "Name": "左眼　開閉"
+      "Name": "左眼 開閉"
     },
     {
       "Id": "ParamEyeLSmile",
       "GroupId": "",
-      "Name": "左眼　笑顔"
+      "Name": "左眼 笑顔"
     },
     {
       "Id": "ParamEyeROpen",
       "GroupId": "",
-      "Name": "右眼　開閉"
+      "Name": "右眼 開閉"
     },
     {
       "Id": "ParamEyeRSmile",
       "GroupId": "",
-      "Name": "右眼　笑顔"
+      "Name": "右眼 笑顔"
     },
     {
       "Id": "ParamEyeBallX",
@@ -49,37 +49,37 @@
     {
       "Id": "ParamBrowLY",
       "GroupId": "",
-      "Name": "左眉　上下"
+      "Name": "左眉 上下"
     },
     {
       "Id": "ParamBrowRY",
       "GroupId": "",
-      "Name": "右眉　上下"
+      "Name": "右眉 上下"
     },
     {
       "Id": "ParamMouthForm",
       "GroupId": "",
-      "Name": "口　変形"
+      "Name": "口 変形"
     },
     {
       "Id": "ParamMouthOpenY",
       "GroupId": "",
-      "Name": "口　開閉"
+      "Name": "口 開閉"
     },
     {
       "Id": "ParamBodyAngleX",
       "GroupId": "",
-      "Name": "体の回転　X"
+      "Name": "体の回転 X"
     },
     {
       "Id": "ParamBodyAngleY",
       "GroupId": "",
-      "Name": "体の回転　Y"
+      "Name": "体の回転 Y"
     },
     {
       "Id": "ParamBodyAngleZ",
       "GroupId": "",
-      "Name": "体の回転　Z"
+      "Name": "体の回転 Z"
     },
     {
       "Id": "ParamArmL",
@@ -99,17 +99,17 @@
     {
       "Id": "ParamHairFront",
       "GroupId": "",
-      "Name": "髪揺れ　前"
+      "Name": "髪揺れ 前"
     },
     {
       "Id": "ParamHairSide",
       "GroupId": "",
-      "Name": "髪揺れ　横"
+      "Name": "髪揺れ 横"
     },
     {
       "Id": "ParamHairBack",
       "GroupId": "",
-      "Name": "髪揺れ　後ろ"
+      "Name": "髪揺れ 後ろ"
     }
   ],
   "ParameterGroups": [],

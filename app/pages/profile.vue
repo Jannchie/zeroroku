@@ -169,7 +169,7 @@ async function updateName() {
     </div>
 
     <div v-else class="w-full border-[var(--auxline-line)] max-w-3xl sm:border-x">
-      <div class="flex flex-col items-center sm:flex-row sm:items-start">
+      <div class="flex items-start">
         <div
           class="flex h-20 w-20 items-center justify-center overflow-hidden border-r border-[var(--auxline-line)]
             bg-[var(--auxline-bg-emphasis)] text-[0.7rem] font-mono uppercase tracking-[0.12em]"
@@ -187,11 +187,11 @@ async function updateName() {
             {{ avatarInitial }}
           </span>
         </div>
-        <div class="flex flex-col items-center text-center sm:items-start sm:text-left">
-          <div class="flex flex-wrap items-center justify-center sm:justify-start">
+        <div class="flex flex-col items-start text-left">
+          <div class="flex flex-wrap items-center justify-start">
             <form
               v-if="isEditingName"
-              class="flex flex-wrap items-center justify-center sm:justify-start"
+              class="flex flex-wrap items-center justify-start"
               @submit.prevent="updateName"
             >
               <input
