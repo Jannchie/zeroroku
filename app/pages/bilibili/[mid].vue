@@ -71,9 +71,9 @@ const pageTitle = computed(() => {
   return 'Bilibili'
 })
 
-useSeoMeta(() => ({
-  title: pageTitle.value,
-}))
+useSeoMeta({
+  title: pageTitle,
+})
 
 const historyItems = computed(() => historyData.value?.items ?? [])
 const formatter = new Intl.NumberFormat('zh-CN')
