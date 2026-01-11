@@ -202,8 +202,8 @@ watch(searchQuery, (value) => {
       </div>
     </div>
 
-    <div class="w-full border-b border-[var(--auxline-line)]">
-      <div class="w-full max-w-3xl mx-auto sm:border-x border-[var(--auxline-line)]">
+    <div class="w-full border-[var(--auxline-line)]">
+      <div class="w-full max-w-3xl mx-auto sm:border-x  border-[var(--auxline-line)]">
         <div class="mx-auto">
           <form
             class="flex flex-col sm:flex-row sm:items-end"
@@ -213,7 +213,7 @@ watch(searchQuery, (value) => {
               <div class="pl-1 py-1 border-b border-[var(--auxline-line)]">
                 搜索UP
               </div>
-              <div class="flex">
+              <div class="flex border-b border-[var(--auxline-line)]">
                 <input
                   v-model="searchQuery"
                   type="text"
@@ -236,7 +236,7 @@ watch(searchQuery, (value) => {
           </form>
         </div>
 
-        <div class="border-t border-[var(--auxline-line)]">
+        <div class="border-[var(--auxline-line)]">
           <div class="flex items-center justify-between border-b border-[var(--auxline-line)] py-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
             <span class="px-1">搜索结果</span>
             <span class="px-1">粉丝</span>

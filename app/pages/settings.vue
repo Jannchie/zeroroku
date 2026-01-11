@@ -13,7 +13,7 @@ const activeSchemeLabel = computed(() => (activeScheme.value === 'dark' ? '夜�
       subtitle="外观与显示"
     />
 
-    <div class="w-full max-w-xl border-b border-[var(--auxline-line)]">
+    <div class="w-full max-w-xl border-[var(--auxline-line)]">
       <div class="flex flex-col gap-4 px-4 py-6 border-x border-[var(--auxline-line)]">
         <div class="flex flex-col gap-2">
           <p class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 interface AuthorDetailItem {
@@ -68,6 +68,7 @@ const pagedHistory = computed(() => {
   const start = (currentPage.value - 1) * pageSize
   return historyItems.value.slice(start, start + pageSize)
 })
+const historyTableHeaderRef = ref<HTMLDivElement | null>(null)
 
 watch(historyItems, () => {
   currentPage.value = 1
@@ -148,16 +149,30 @@ function downloadHistory() {
   globalThis.URL.revokeObjectURL(url)
 }
 
-function goPrevPage() {
-  if (currentPage.value > 1) {
-    currentPage.value -= 1
+function scrollToHistoryHeader() {
+  const target = historyTableHeaderRef.value
+  if (!target) {
+    return
   }
+  target.scrollIntoView({ block: 'start' })
 }
 
-function goNextPage() {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value += 1
+async function goPrevPage() {
+  if (currentPage.value <= 1) {
+    return
   }
+  currentPage.value -= 1
+  await nextTick()
+  scrollToHistoryHeader()
+}
+
+async function goNextPage() {
+  if (currentPage.value >= totalPages.value) {
+    return
+  }
+  currentPage.value += 1
+  await nextTick()
+  scrollToHistoryHeader()
 }
 
 function displayAuthorName(value: AuthorDetailItem | null): string {
@@ -192,11 +207,11 @@ const historyHeaders = [
   { key: 'rate1', label: '1日变化', align: 'text-right' },
 ]
 
-const historySkeletonRows = Array.from({ length: 8 }, (_, index) => index)
+const historySkeletonRows = Array.from({ length: 100 }, (_, index) => index)
 </script>
 
 <template>
-  <section class="flex flex-col items-center pb-12">
+  <section class="flex flex-col items-center border-b-0">
     <div class="w-full max-w-3xl border-b border-[var(--auxline-line)]">
       <div class="flex items-center gap-4 border-x border-[var(--auxline-line)]">
         <div
@@ -280,9 +295,12 @@ const historySkeletonRows = Array.from({ length: 8 }, (_, index) => index)
               :height="220"
             />
           </div>
-          <div class="mt-4 overflow-x-auto border-[var(--auxline-line)]">
+          <div class="overflow-x-auto border-[var(--auxline-line)]">
             <div class="min-w-[560px] divide-y divide-[var(--auxline-line)]">
-              <div class="grid grid-cols-4 gap-3 px-3 py-2 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+              <div
+                ref="historyTableHeaderRef"
+                class="grid grid-cols-4 gap-3 px-3 py-2 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
+              >
                 <span
                   v-for="item in historyHeaders"
                   :key="item.key"
@@ -335,11 +353,11 @@ const historySkeletonRows = Array.from({ length: 8 }, (_, index) => index)
           </div>
           <div
             v-if="totalHistory > 0"
-            class="mt-4 flex flex-wrap items-center justify-between gap-3"
+            class="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--auxline-line)]"
           >
             <button
               type="button"
-              class="border border-[var(--auxline-line)] px-3 py-1 text-xs font-mono uppercase tracking-[0.12em]
+              class="border-r border-[var(--auxline-line)] px-3 py-1 text-xs font-mono uppercase tracking-[0.12em]
                 text-[var(--auxline-fg)] transition-colors hover:bg-[var(--auxline-bg-hover)]
                 disabled:cursor-not-allowed disabled:opacity-50"
               :disabled="currentPage <= 1"
@@ -352,7 +370,7 @@ const historySkeletonRows = Array.from({ length: 8 }, (_, index) => index)
             </span>
             <button
               type="button"
-              class="border border-[var(--auxline-line)] px-3 py-1 text-xs font-mono uppercase tracking-[0.12em]
+              class="border-l border-[var(--auxline-line)] px-3 py-1 text-xs font-mono uppercase tracking-[0.12em]
                 text-[var(--auxline-fg)] transition-colors hover:bg-[var(--auxline-bg-hover)]
                 disabled:cursor-not-allowed disabled:opacity-50"
               :disabled="totalPages === 0 || currentPage >= totalPages"
