@@ -25,14 +25,14 @@
 }
 
 :root {
-  --font-display-latin: 'Berkeley Mono', 'Space Grotesk', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-display-zh: 'Berkeley Mono', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Heiti SC', sans-serif;
-  --font-display-ja: 'Berkeley Mono', 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif;
-  --font-title-latin: 'Berkeley Mono', 'Space Grotesk', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-title-zh: 'Berkeley Mono', 'Noto Serif SC', 'Songti SC', 'Noto Serif', serif;
-  --font-title-ja: 'Berkeley Mono', 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+  --font-display-latin: 'Berkeley Mono', 'HarmonyOS Sans', 'HarmonyOS Sans SC', 'Noto Sans SC', 'Noto Sans', sans-serif;
+  --font-display-zh: 'Berkeley Mono', 'HarmonyOS Sans', 'HarmonyOS Sans SC', 'Noto Sans SC', 'Noto Sans', sans-serif;
+  --font-display-ja: 'Berkeley Mono', 'HarmonyOS Sans', 'HarmonyOS Sans SC', 'Noto Sans SC', 'Noto Sans', sans-serif;
+  --font-title-latin: 'Berkeley Mono', 'HarmonyOS Sans', 'HarmonyOS Sans SC', 'Noto Sans SC', 'Noto Sans', sans-serif;
+  --font-title-zh: 'Berkeley Mono', 'HarmonyOS Sans', 'HarmonyOS Sans SC', 'Noto Sans SC', 'Noto Sans', sans-serif;
+  --font-title-ja: 'Berkeley Mono', 'HarmonyOS Sans', 'HarmonyOS Sans SC', 'Noto Sans SC', 'Noto Sans', sans-serif;
   --font-sans: var(--font-display-latin);
-  --font-mono: "Berkeley Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-mono: 'Berkeley Mono', 'HarmonyOS Sans', 'HarmonyOS Sans SC', 'Noto Sans SC', 'Noto Sans', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
   --default-font-family: var(--font-sans);
   --default-monoFont-family: var(--font-mono);
 }

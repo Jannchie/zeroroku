@@ -43,7 +43,7 @@ export default defineNuxtConfig({
     },
   },
   site: {
-    url: process.env.NUXT_PUBLIC_SITE_URL ?? 'http://localhost:6066',
+    url: process.env.NUXT_PUBLIC_SITE_URL ?? 'https://zeroroku.com',
     name: 'ZeroRoku',
     description: 'ZeroRoku',
   },
