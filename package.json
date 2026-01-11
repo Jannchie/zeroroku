@@ -11,7 +11,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@jannchie/pixi-live2d-display": "^1.1.3",
+    "@jannchie/pixi-live2d-display": "^1.2.0",
     "@nuxt/eslint": "1.12.1",
     "@nuxt/fonts": "0.12.1",
     "@nuxt/icon": "2.2.0",
