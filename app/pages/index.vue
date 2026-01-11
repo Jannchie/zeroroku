@@ -10,14 +10,17 @@ type GlobalWindow = Window & {
 
 const containerRef = ref<HTMLDivElement | null>(null)
 const canvasRef = ref<HTMLCanvasElement | null>(null)
+const canvasVisible = ref(false)
 const modelPath = '/l2d/06-v2.1024/06-v2.model3.json'
 
 let app: import('pixi.js').Application | null = null
 let live2dModel: import('@jannchie/pixi-live2d-display/cubism4').Live2DModel | null = null
 let resizeHandler: (() => void) | null = null
+let fadeTimer: number | null = null
 let disposed = false
 
 const cubismCoreSrc = '/vendor/live2d/live2dcubismcore.min.js'
+const canvasFadeDelay = 500
 let cubismCorePromise: Promise<void> | null = null
 
 async function loadCubismCore() {
@@ -100,6 +103,8 @@ onMounted(async () => {
     return
   }
 
+  canvasVisible.value = false
+
   try {
     await loadCubismCore()
   }
@@ -115,7 +120,7 @@ onMounted(async () => {
   const { Application, Ticker } = pixiModule
   const { Live2DModel } = live2dModule
 
-  const globalWindow = globalThis as GlobalWindow
+  const globalWindow = globalThis as unknown as GlobalWindow
   globalWindow.PIXI = pixiModule
   Live2DModel.registerTicker(Ticker)
 
@@ -167,10 +172,21 @@ onMounted(async () => {
   fitModel()
   resizeHandler = () => fitModel()
   window.addEventListener('resize', resizeHandler)
+
+  fadeTimer = globalThis.setTimeout(() => {
+    if (!disposed) {
+      canvasVisible.value = true
+    }
+  }, canvasFadeDelay)
 })
 
 onBeforeUnmount(() => {
   disposed = true
+
+  if (fadeTimer) {
+    globalThis.clearTimeout(fadeTimer)
+    fadeTimer = null
+  }
 
   if (resizeHandler) {
     window.removeEventListener('resize', resizeHandler)
@@ -200,7 +216,11 @@ onBeforeUnmount(() => {
 <template>
   <div class="h-[70vh] w-full overflow-hidden">
     <div ref="containerRef" class="h-full w-full">
-      <canvas ref="canvasRef" class="block h-full w-full" />
+      <canvas
+        ref="canvasRef"
+        class="block h-full w-full transition-opacity duration-500 ease-out"
+        :class="canvasVisible ? 'opacity-100' : 'opacity-0'"
+      />
     </div>
   </div>
 </template>

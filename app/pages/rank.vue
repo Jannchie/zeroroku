@@ -75,7 +75,7 @@ function displayName(item: UserExpRankItem): string {
 <template>
   <section class="flex flex-col items-center pb-12">
     <AuxlinePageHeader
-      title="经验排行榜"
+      title="观测者排行榜"
       subtitle="TOP 100"
     />
     <div class="w-full border-b border-[var(--auxline-line)]">
