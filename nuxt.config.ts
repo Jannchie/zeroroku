@@ -1,8 +1,15 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import process from 'node:process'
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   devServer: { port: 6066 },
+  vite: {
+    server: {
+      allowedHosts: ['next.zeroroku.com'],
+    },
+  },
   modules: [
     '@nuxt/image',
     '@nuxt/icon',
@@ -42,8 +49,11 @@ export default defineNuxtConfig({
       ],
     },
   },
-  routeRules: {
-    '/open-letter': { prerender: true },
+  nitro: {
+    prerender: {
+      crawlLinks: false,
+      routes: [],
+    },
   },
   site: {
     url: process.env.NUXT_PUBLIC_SITE_URL ?? 'https://zeroroku.com',
