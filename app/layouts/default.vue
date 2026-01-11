@@ -8,6 +8,7 @@ const displayName = computed(() => session.value?.data?.user?.name ?? session.va
 const avatarUrl = computed(() => session.value?.data?.user?.image || null)
 const avatarInitial = computed(() => displayName.value.slice(0, 1).toUpperCase())
 const { activeScheme, selectedScheme, toggleScheme } = useColorScheme()
+const { count: onlineCount } = useOnlineCount()
 const route = useRoute()
 const lastDailyLoginUserId = ref<string | null>(null)
 
@@ -34,6 +35,13 @@ const navItems = computed(() => {
     { label: '设置', to: '/settings', disabled: false },
   ]
   return items
+})
+
+const onlineCountLabel = computed(() => {
+  if (onlineCount.value === null) {
+    return '--'
+  }
+  return Math.max(0, onlineCount.value).toString()
 })
 
 function isActiveRoute(to: string): boolean {
@@ -167,6 +175,10 @@ onMounted(() => {
     </template>
     <template #footer>
       <p class="text-sm py-2 text-center text-[var(--auxline-fg-muted)]">
+        <span aria-live="polite">
+          在线人数 {{ onlineCountLabel }}
+        </span>
+        <span class="mx-2">·</span>
         {{ new Date().getFullYear() }}
         <span class="mx-2">·</span>
         <a

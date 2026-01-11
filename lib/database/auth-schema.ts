@@ -1,4 +1,4 @@
-import { bigint, bigserial, boolean, jsonb, numeric, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { bigint, bigserial, boolean, index, jsonb, numeric, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 
 export const user = pgTable('user', {
   id: bigserial({ mode: 'number' }).primaryKey().notNull(),
@@ -28,6 +28,15 @@ export const creditRecords = pgTable('credit_records', {
   createdAt: timestamp('created_at', { withTimezone: true }),
   data: jsonb('data').$type<Record<string, unknown> | null>(),
 })
+
+export const sponsors = pgTable('sponsors', {
+  id: bigserial({ mode: 'number' }).primaryKey().notNull(),
+  userName: text('user_name').notNull(),
+  sponsoredAt: timestamp('sponsored_at', { withTimezone: true }).notNull(),
+  amount: numeric('amount', { mode: 'number' }).notNull(),
+}, table => [
+  index('idx_sponsors_sponsored_at').on(table.sponsoredAt),
+])
 
 export const session = pgTable('session', {
   id: text('id').primaryKey(),

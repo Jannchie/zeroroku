@@ -29,6 +29,13 @@
       "when": 1768143659796,
       "tag": "0003_author-video-schedules",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1768155406620,
+      "tag": "0004_add-sponsors",
+      "breakpoints": true
     }
   ]
 }
