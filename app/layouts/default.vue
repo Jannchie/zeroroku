@@ -59,7 +59,7 @@ const navItems = computed(() => {
   const items = [
     { label: '首页', to: '/', disabled: false },
     { label: '排行榜', to: '/rank', disabled: false },
-    { label: '个人', to: '/profile', disabled: !isLoggedIn },
+    { label: '个人', to: '/me', disabled: !isLoggedIn },
     { label: '哔哩哔哩', to: '/bilibili', disabled: false },
     { label: '设置', to: '/settings', disabled: false },
   ]
@@ -264,6 +264,29 @@ onMounted(() => {
             <p v-if="sponsorsError" class="px-1 py-1 text-[0.65rem] text-red-600">
               赞助列表加载失败
             </p>
+          </div>
+        </aside>
+        <aside
+          class="hidden w-full border-b border-[var(--auxline-line)] flex-col 2xl:flex
+            2xl:absolute 2xl:right-0 2xl:top-0 2xl:bottom-8 2xl:w-72 2xl:translate-x-full border-x 2xl:bg-[var(--auxline-bg)]"
+        >
+          <div class="flex flex-col min-h-0 2xl:sticky 2xl:top-6">
+            <AuxlineCommentSidebar
+              title="评论"
+              path-label="当前页面"
+              note-label="登录后可评论"
+              empty-label="暂无评论"
+              error-label="评论加载失败"
+              placeholder-label="写下你的评论…"
+              placeholder-logged-out-label="登录后可评论"
+              login-hint-label="登录后可评论"
+              max-length-label="最多 {max} 字"
+              submit-label="发送"
+              unauthenticated-label="请先登录。"
+              empty-content-label="评论内容不能为空。"
+              submit-failed-label="评论提交失败。"
+              :limit="30"
+            />
           </div>
         </aside>
         <div class="flex flex-wrap justify-center children:border-r first:children:border-l">

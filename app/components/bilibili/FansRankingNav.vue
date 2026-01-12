@@ -4,15 +4,23 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 
 const navItems = [
-  { label: '总排行', shortLabel: '总榜', to: '/bilibili/fans' },
-  { label: '7日涨粉榜', shortLabel: '7日涨', to: '/bilibili/fans/7d-up' },
-  { label: '1日涨粉榜', shortLabel: '1日涨', to: '/bilibili/fans/1d-up' },
-  { label: '7日掉粉榜', shortLabel: '7日跌', to: '/bilibili/fans/7d-down' },
-  { label: '1日掉粉榜', shortLabel: '1日跌', to: '/bilibili/fans/1d-down' },
+  {
+    label: '总排行',
+    shortLabel: '总榜',
+    to: '/bilibili/rank',
+    activePaths: ['/bilibili/rank', '/bilibili/rank/fans/desc'],
+  },
+  { label: '7日涨粉榜', shortLabel: '7日涨', to: '/bilibili/rank/rate7/desc' },
+  { label: '1日涨粉榜', shortLabel: '1日涨', to: '/bilibili/rank/rate1/desc' },
+  { label: '7日掉粉榜', shortLabel: '7日跌', to: '/bilibili/rank/rate7/asc' },
+  { label: '1日掉粉榜', shortLabel: '1日跌', to: '/bilibili/rank/rate1/asc' },
 ]
 
-function isActiveRoute(to: string): boolean {
-  return route.path === to
+function isActiveRoute(item: { to: string, activePaths?: string[] }): boolean {
+  if (item.activePaths) {
+    return item.activePaths.includes(route.path)
+  }
+  return route.path === item.to
 }
 </script>
 
@@ -23,8 +31,8 @@ function isActiveRoute(to: string): boolean {
       :key="item.to"
       size="sm"
       :to="item.to"
-      :variant="isActiveRoute(item.to) ? 'contrast' : 'solid'"
-      :aria-current="isActiveRoute(item.to) ? 'page' : undefined"
+      :variant="isActiveRoute(item) ? 'contrast' : 'solid'"
+      :aria-current="isActiveRoute(item) ? 'page' : undefined"
       :aria-label="item.label"
     >
       <span class="sm:hidden">{{ item.shortLabel }}</span>

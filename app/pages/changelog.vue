@@ -110,7 +110,7 @@ const parseFailed = computed(() => parseResult.value.error)
           返回主页面
         </AuxlineBtn>
       </div>
-      <article class="flex flex-col gap-6 px-4 py-6 text-sm leading-7">
+      <article class="flex flex-col gap-6 py-6 text-sm leading-7">
         <p
           v-if="pending"
           class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
@@ -135,7 +135,7 @@ const parseFailed = computed(() => parseResult.value.error)
         >
           暂无更新
         </p>
-        <div v-else class="flex flex-col gap-6">
+        <div v-else class="flex flex-col children:px-4 gap-6">
           <section
             v-for="item in changelogItems"
             :key="`${item.date}-${item.version}`"

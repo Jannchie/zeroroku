@@ -123,7 +123,7 @@ function buildAuthorLink(mid: string | null | undefined): string | null {
   if (!trimmed) {
     return null
   }
-  return `/bilibili/${encodeURIComponent(trimmed)}`
+  return `/bilibili/author/${encodeURIComponent(trimmed)}`
 }
 
 function isAuthorLinkable(mid: string | null | undefined): boolean {

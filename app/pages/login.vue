@@ -16,7 +16,7 @@ const redirectTarget = computed(() => {
   if (typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//')) {
     return redirect
   }
-  return '/profile'
+  return '/me'
 })
 
 useSeoMeta({

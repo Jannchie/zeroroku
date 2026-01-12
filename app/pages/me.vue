@@ -30,7 +30,7 @@ const canSaveName = computed(() => {
 })
 const route = useRoute()
 const activeTab = computed<'profile' | 'security'>(() => {
-  return route.path.startsWith('/profile/security') ? 'security' : 'profile'
+  return route.path.startsWith('/me/security') ? 'security' : 'profile'
 })
 const loginLink = computed(() => `/login?redirect=${encodeURIComponent(route.fullPath)}`)
 
@@ -231,7 +231,7 @@ async function updateName() {
           aria-label="个人资料设置"
         >
           <NuxtLink
-            to="/profile"
+            to="/me"
             class="px-3 py-2 text-xs font-mono uppercase tracking-[0.12em] transition-colors
               focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)]"
             :class="activeTab === 'profile'
@@ -242,7 +242,7 @@ async function updateName() {
             资料
           </NuxtLink>
           <NuxtLink
-            to="/profile/security"
+            to="/me/security"
             class="px-3 py-2 text-xs font-mono uppercase tracking-[0.12em] transition-colors
               focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)]"
             :class="activeTab === 'security'
