@@ -174,7 +174,7 @@ watch(path, () => {
 <template>
   <section class="flex flex-col w-full max-h-[calc(100vh-8rem)] border-b border-[var(--auxline-line)] pb-8">
     <form
-      class="border-b border-[var(--auxline-line)] px-2 py-2 flex flex-col gap-2"
+      class="border-b border-[var(--auxline-line)] flex flex-col"
       @submit.prevent="submitComment"
     >
       <textarea
@@ -183,11 +183,11 @@ watch(path, () => {
         :maxlength="MAX_CONTENT_LENGTH"
         :disabled="!isLoggedIn || isSubmitting"
         rows="3"
-        class="w-full resize-none border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)] px-2 py-2 text-sm
+        class="w-full resize-none bg-[var(--auxline-bg-emphasis)] px-2 py-2 text-sm
           text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)]"
       />
       <div class="flex items-center justify-between text-[0.6rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-        <span>
+        <span class="px-2">
           {{ isLoggedIn ? maxLengthHint : props.loginHintLabel }}
         </span>
         <AuxlineBtn

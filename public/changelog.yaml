@@ -11,8 +11,8 @@ changelog:
         text: 添加了更新日志页面。
       - type: 特性
         text: 添加了修改密码的功能。
-      - type: Fix
-        text: Restored core comment functionality.
+      - type: 特性
+        text: 添加评论功能。
   - date: 2026-01-11
     version: 0.1.0
     summary: 网站重写
