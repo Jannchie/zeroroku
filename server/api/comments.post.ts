@@ -1,6 +1,10 @@
+import type { AnyPgTable } from 'drizzle-orm/pg-core'
+
 import { sql } from 'drizzle-orm'
+import { getTableConfig } from 'drizzle-orm/pg-core'
 import { createError, readBody } from 'h3'
 import { auth } from '~~/lib/auth'
+import { comments } from '~~/drizzle/schema'
 import { db } from '~~/server/index'
 import { applyCreditChange } from '~~/server/utils/credit'
 
@@ -94,6 +98,12 @@ function parseUserId(value: unknown): number | null {
   return null
 }
 
+function getTableIdentifier(table: AnyPgTable) {
+  const config = getTableConfig(table)
+  const schemaName = config.schema ?? 'public'
+  return sql`${sql.identifier(schemaName)}.${sql.identifier(config.name)}`
+}
+
 export default defineEventHandler(async (event): Promise<{ ok: boolean, id: string }> => {
   const session = await auth.api.getSession({
     headers: event.headers,
@@ -118,7 +128,7 @@ export default defineEventHandler(async (event): Promise<{ ok: boolean, id: stri
     throw createError({ statusCode: 400, statusMessage: 'Invalid parent id.' })
   }
 
-  const commentsTable = sql`${sql.identifier('public')}.${sql.identifier('comments')}`
+  const commentsTable = getTableIdentifier(comments)
   const now = new Date()
 
   const result = await db.transaction(async (tx) => {

@@ -7,23 +7,19 @@ Nuxt 4 application with a Nitro server, Drizzle ORM, and Better Auth.
 - Node.js (use the version required by Nuxt 4)
 - pnpm 10.x
 
-## Setup
+## Quick start
 
 ```bash
 pnpm install
-```
-
-## Development
-
-The dev server runs on http://localhost:6066.
-
-```bash
 pnpm dev
 ```
 
-## Build
+The dev server runs at http://localhost:6066.
+
+## Scripts
 
 ```bash
+pnpm dev
 pnpm build
 pnpm preview
 pnpm generate
@@ -32,16 +28,16 @@ pnpm generate
 ## Environment variables
 
 - `DATABASE_URL`: Postgres connection string used by Drizzle and auth.
-- `NUXT_PUBLIC_SITE_URL`: base URL for SEO metadata (defaults to http://localhost:6066).
+- `NUXT_PUBLIC_SITE_URL`: Base URL for SEO metadata (defaults to http://localhost:6066).
 
 ## Project structure
 
 - `app/`: Nuxt app source (pages, layouts, components).
 - `app/components/auxline/`: Auxline UI components.
 - `server/`: Nitro server routes and plugins.
-- `lib/`: shared runtime utilities (auth, database).
-- `drizzle/`: generated schema artifacts.
-- `public/`: static assets served as-is.
+- `lib/`: Shared runtime utilities (auth, database).
+- `drizzle/`: Generated schema artifacts.
+- `public/`: Static assets served as-is.
 
 ## Database workflow
 

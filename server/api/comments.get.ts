@@ -1,5 +1,10 @@
+import type { AnyPgTable } from 'drizzle-orm/pg-core'
+
 import { sql } from 'drizzle-orm'
+import { getTableConfig } from 'drizzle-orm/pg-core'
 import { getQuery } from 'h3'
+import { comments } from '~~/drizzle/schema'
+import { user } from '~~/lib/database/auth-schema'
 import { db } from '~~/server/index'
 
 interface CommentItem {
@@ -122,6 +127,12 @@ function buildDedupeKey(row: CommentRow): string {
   return `${uid}\n${parentId}\n${content}`
 }
 
+function getTableIdentifier(table: AnyPgTable) {
+  const config = getTableConfig(table)
+  const schemaName = config.schema ?? 'public'
+  return sql`${sql.identifier(schemaName)}.${sql.identifier(config.name)}`
+}
+
 export default defineEventHandler(async (event): Promise<CommentsResponse> => {
   const query = getQuery(event)
   const path = normalizePath(query.path)
@@ -131,8 +142,8 @@ export default defineEventHandler(async (event): Promise<CommentsResponse> => {
   const limit = normalizeLimit(query.limit)
   const queryLimit = Math.min(limit * QUERY_LIMIT_MULTIPLIER, MAX_LIMIT * QUERY_LIMIT_MULTIPLIER)
 
-  const commentsTable = sql`${sql.identifier('public')}.${sql.identifier('comments')}`
-  const usersTable = sql`${sql.identifier('public')}.${sql.identifier('user')}`
+  const commentsTable = getTableIdentifier(comments)
+  const usersTable = getTableIdentifier(user)
 
   const totalResult = await db.execute<CountRow>(sql`
     select count(*)::bigint as count

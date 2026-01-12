@@ -1,4 +1,4 @@
-import { bigint, bigserial, boolean, date, index, integer, jsonb, numeric, pgSequence, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core'
+import { bigint, bigserial, boolean, date, index, integer, jsonb, numeric, pgSequence, pgTable, primaryKey, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
 
 export const authorFansStatsIdSeq = pgSequence('author_fans_stats_id_seq', { startWith: '1', increment: '1', minValue: '1', maxValue: '9223372036854775807', cache: '1', cycle: false })
 export const videoHistoryStatsIdSeq = pgSequence('video_history_stats_id_seq', { startWith: '1', increment: '1', minValue: '1', maxValue: '9223372036854775807', cache: '1', cycle: false })
@@ -100,6 +100,43 @@ export const authorFansSchedules = pgTable('author_fans_schedules', {
   updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }),
 })
 
+export const authorInfoSchedules = pgTable('author_info_schedules', {
+  // You can use { mode: "bigint" } if numbers are exceeding js number limitations
+  mid: bigint({ mode: 'number' }).primaryKey().notNull(),
+  next: timestamp({ withTimezone: true, mode: 'string' }),
+  updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }),
+}, table => [
+  index('idx_author_info_schedules_next').using('btree', table.next.asc().nullsLast().op('timestamptz_ops')),
+])
+
+export const authorVideoSchedules = pgTable('author_video_schedules', {
+  // You can use { mode: "bigint" } if numbers are exceeding js number limitations
+  mid: bigint({ mode: 'number' }).primaryKey().notNull(),
+  next: timestamp({ withTimezone: true, mode: 'string' }),
+  updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }),
+}, table => [
+  index('idx_author_video_schedules_next').using('btree', table.next.asc().nullsLast().op('timestamptz_ops')),
+])
+
+export const authorFansStatMaster = pgTable('author_fans_stat_master', {
+  id: bigserial({ mode: 'bigint' }).notNull(),
+  // You can use { mode: "bigint" } if numbers are exceeding js number limitations
+  mid: bigint({ mode: 'number' }).notNull(),
+  // You can use { mode: "bigint" } if numbers are exceeding js number limitations
+  fans: bigint({ mode: 'number' }),
+  createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }),
+  // You can use { mode: "bigint" } if numbers are exceeding js number limitations
+  rate1: bigint({ mode: 'number' }),
+  // You can use { mode: "bigint" } if numbers are exceeding js number limitations
+  rate7: bigint({ mode: 'number' }),
+}, table => [
+  primaryKey({ columns: [table.mid, table.id], name: 'author_fans_stat_master_pkey' }),
+  uniqueIndex('author_fans_stat_master_mid_created_at_uindex')
+    .using('btree', table.mid.asc().nullsLast().op('int8_ops'), table.createdAt.asc().nullsLast().op('timestamptz_ops')),
+  index('idx_author_fans_stat_master_rate1').using('btree', table.rate1.desc().nullsFirst().op('int8_ops')),
+  index('idx_author_fans_stat_master_rate7').using('btree', table.rate7.desc().nullsFirst().op('int8_ops')),
+])
+
 export const authorLatestFans = pgTable('author_latest_fans', {
   mid: bigserial({ mode: 'bigint' }).primaryKey().notNull(),
   // You can use { mode: "bigint" } if numbers are exceeding js number limitations
@@ -183,6 +220,26 @@ export const authorVisitRecords = pgTable('author_visit_records', {
   index('idx_author_visit_records_ip').using('btree', table.ip.asc().nullsLast().op('text_ops')),
   index('idx_author_visit_records_mid').using('btree', table.mid.asc().nullsLast().op('int8_ops')),
   index('idx_author_visit_records_uid').using('btree', table.uid.asc().nullsLast().op('int8_ops')),
+])
+
+export const comments = pgTable('comments', {
+  id: bigserial({ mode: 'bigint' }).primaryKey().notNull(),
+  path: text(),
+  // You can use { mode: "bigint" } if numbers are exceeding js number limitations
+  parentId: bigint('parent_id', { mode: 'number' }),
+  // You can use { mode: "bigint" } if numbers are exceeding js number limitations
+  uid: bigint({ mode: 'number' }),
+  content: text(),
+  createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }),
+  // You can use { mode: "bigint" } if numbers are exceeding js number limitations
+  like: bigint('like', { mode: 'number' }),
+  // You can use { mode: "bigint" } if numbers are exceeding js number limitations
+  dislike: bigint('dislike', { mode: 'number' }).default(0),
+}, table => [
+  index('idx_comments_like').using('btree', table.like.asc().nullsLast().op('int8_ops')),
+  index('idx_comments_parent_id').using('btree', table.parentId.asc().nullsLast().op('int8_ops')),
+  index('idx_comments_path').using('btree', table.path.asc().nullsLast().op('text_ops')),
+  index('idx_comments_uid').using('btree', table.uid.asc().nullsLast().op('int8_ops')),
 ])
 
 export const channelStats = pgTable('channel_stats', {

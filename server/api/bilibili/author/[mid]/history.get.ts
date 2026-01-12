@@ -1,5 +1,9 @@
+import type { AnyPgTable } from 'drizzle-orm/pg-core'
+
 import { sql } from 'drizzle-orm'
+import { getTableConfig } from 'drizzle-orm/pg-core'
 import { getRouterParam } from 'h3'
+import { authorFansStatMaster } from '~~/drizzle/schema'
 import { db } from '~~/server/index'
 
 interface AuthorFansHistoryItem {
@@ -77,8 +81,10 @@ function parseMid(value: string | null | undefined): bigint | null {
   return numeric
 }
 
-function getTableIdentifier(schemaName: string, tableName: string) {
-  return sql`${sql.identifier(schemaName)}.${sql.identifier(tableName)}`
+function getTableIdentifier(table: AnyPgTable) {
+  const config = getTableConfig(table)
+  const schemaName = config.schema ?? 'public'
+  return sql`${sql.identifier(schemaName)}.${sql.identifier(config.name)}`
 }
 
 export default defineEventHandler(async (event): Promise<AuthorFansHistoryResponse> => {
@@ -88,7 +94,7 @@ export default defineEventHandler(async (event): Promise<AuthorFansHistoryRespon
     return { items: [] }
   }
 
-  const historyTable = getTableIdentifier('public', 'author_fans_stat_master')
+  const historyTable = getTableIdentifier(authorFansStatMaster)
   const result = await db.execute<AuthorFansHistoryRow>(sql`
     select
       id::text as id,

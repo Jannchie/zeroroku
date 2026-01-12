@@ -4,7 +4,7 @@ import { sql } from 'drizzle-orm'
 import { getTableConfig } from 'drizzle-orm/pg-core'
 import { createError, getRouterParam } from 'h3'
 import { auth } from '~~/lib/auth'
-import { authorFansSchedules } from '~~/drizzle/schema'
+import { authorFansSchedules, authorInfoSchedules, authorVideoSchedules } from '~~/drizzle/schema'
 import { db } from '~~/server/index'
 import { applyCreditChange } from '~~/server/utils/credit'
 
@@ -58,10 +58,6 @@ function getTableIdentifier(table: AnyPgTable) {
   return sql`${sql.identifier(schemaName)}.${sql.identifier(config.name)}`
 }
 
-function getNamedTableIdentifier(tableName: string) {
-  return sql`${sql.identifier('public')}.${sql.identifier(tableName)}`
-}
-
 export default defineEventHandler(async (event): Promise<ObserveResponse> => {
   const session = await auth.api.getSession({
     headers: event.headers,
@@ -86,7 +82,8 @@ export default defineEventHandler(async (event): Promise<ObserveResponse> => {
   const now = new Date()
   const priorityTime = new Date(0)
   const fansScheduleTable = getTableIdentifier(authorFansSchedules)
-  const videoScheduleTable = getNamedTableIdentifier('author_video_schedules')
+  const videoScheduleTable = getTableIdentifier(authorVideoSchedules)
+  const infoScheduleTable = getTableIdentifier(authorInfoSchedules)
 
   const result = await db.transaction(async (tx) => {
     const creditResult = await applyCreditChange(tx, {
@@ -109,6 +106,13 @@ export default defineEventHandler(async (event): Promise<ObserveResponse> => {
 
     await tx.execute(sql`
       insert into ${videoScheduleTable} (mid, next, updated_at)
+      values (${numericMid}, ${priorityTime}, ${now})
+      on conflict (mid) do update
+      set next = excluded.next, updated_at = excluded.updated_at
+    `)
+
+    await tx.execute(sql`
+      insert into ${infoScheduleTable} (mid, next, updated_at)
       values (${numericMid}, ${priorityTime}, ${now})
       on conflict (mid) do update
       set next = excluded.next, updated_at = excluded.updated_at
