@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { authClient } from '~~/lib/client'
 
 definePageMeta({
   middleware: ['auth'],
-})
-
-useSeoMeta({
-  title: '个人资料',
 })
 
 const session = authClient.useSession()
@@ -21,19 +18,6 @@ const nameTouched = ref(false)
 const nameError = ref<string | null>(null)
 const nameSuccess = ref<string | null>(null)
 const isUpdatingName = ref(false)
-const currentPassword = ref('')
-const newPassword = ref('')
-const confirmPassword = ref('')
-const passwordError = ref<string | null>(null)
-const passwordSuccess = ref<string | null>(null)
-const isChangingPassword = ref(false)
-const revokeOtherSessions = ref(true)
-const canChangePassword = computed(() => {
-  if (!currentPassword.value || !newPassword.value || !confirmPassword.value) {
-    return false
-  }
-  return !isChangingPassword.value
-})
 const canSaveName = computed(() => {
   if (!isEditingName.value) {
     return false
@@ -44,37 +28,11 @@ const canSaveName = computed(() => {
   }
   return trimmed !== (user.value.name ?? '')
 })
-
-const numberFormatter = new Intl.NumberFormat('zh-CN')
-const dateFormatter = new Intl.DateTimeFormat('zh-CN', {
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
+const route = useRoute()
+const activeTab = computed<'profile' | 'security'>(() => {
+  return route.path.startsWith('/profile/security') ? 'security' : 'profile'
 })
-
-function formatNumber(value: number | string | null | undefined): string {
-  if (typeof value === 'number') {
-    return numberFormatter.format(Number.isFinite(value) ? value : 0)
-  }
-  if (typeof value === 'string') {
-    const parsed = Number.parseFloat(value)
-    return Number.isNaN(parsed) ? '0' : numberFormatter.format(parsed)
-  }
-  return '0'
-}
-
-function formatDate(value: string | Date | null | undefined): string {
-  if (!value) {
-    return '--'
-  }
-  const date = typeof value === 'string' ? new Date(value) : value
-  if (Number.isNaN(date.getTime())) {
-    return '--'
-  }
-  return dateFormatter.format(date)
-}
+const loginLink = computed(() => `/login?redirect=${encodeURIComponent(route.fullPath)}`)
 
 watch(
   () => user.value?.name,
@@ -112,11 +70,6 @@ function onNameInput() {
   }
   nameError.value = null
   nameSuccess.value = null
-}
-
-function onPasswordInput() {
-  passwordError.value = null
-  passwordSuccess.value = null
 }
 
 async function updateName() {
@@ -172,66 +125,6 @@ async function updateName() {
     isUpdatingName.value = false
   }
 }
-
-async function changePassword() {
-  if (isChangingPassword.value) {
-    return
-  }
-  passwordError.value = null
-  passwordSuccess.value = null
-
-  if (!user.value) {
-    passwordError.value = '当前未登录。'
-    return
-  }
-  if (!currentPassword.value) {
-    passwordError.value = '请输入当前密码。'
-    return
-  }
-  if (!newPassword.value) {
-    passwordError.value = '请输入新密码。'
-    return
-  }
-  if (newPassword.value.length < 8) {
-    passwordError.value = '新密码至少需要 8 位。'
-    return
-  }
-  if (newPassword.value !== confirmPassword.value) {
-    passwordError.value = '两次输入的新密码不一致。'
-    return
-  }
-  if (newPassword.value === currentPassword.value) {
-    passwordError.value = '新密码不能与当前密码一致。'
-    return
-  }
-
-  isChangingPassword.value = true
-  try {
-    const { error } = await authClient.changePassword({
-      currentPassword: currentPassword.value,
-      newPassword: newPassword.value,
-      revokeOtherSessions: revokeOtherSessions.value,
-    })
-    if (error) {
-      passwordError.value = error.message ?? '修改密码失败。'
-      return
-    }
-    currentPassword.value = ''
-    newPassword.value = ''
-    confirmPassword.value = ''
-    passwordSuccess.value = '密码已更新。'
-  }
-  catch (error) {
-    if (error && typeof error === 'object' && 'message' in error) {
-      passwordError.value = String(error.message) || '修改密码失败。'
-      return
-    }
-    passwordError.value = '修改密码失败。'
-  }
-  finally {
-    isChangingPassword.value = false
-  }
-}
 </script>
 
 <template>
@@ -245,7 +138,7 @@ async function changePassword() {
       <p class="text-sm font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
         当前未登录
       </p>
-      <AuxlineBtn to="/login?redirect=/profile" class="mt-4">
+      <AuxlineBtn :to="loginLink" class="mt-4">
         去登录
       </AuxlineBtn>
     </div>
@@ -332,123 +225,35 @@ async function changePassword() {
         </div>
       </div>
 
-      <div class="grid grid-cols-1 border-t border-[var(--auxline-line)] sm:grid-cols-2">
-        <div
-          class="flex items-center justify-between px-4 py-3 text-xs font-mono uppercase tracking-[0.12em]
-            text-[var(--auxline-fg-muted)] border-b border-[var(--auxline-line)] sm:border-b-0 sm:border-r"
-        >
-          <span>经验</span>
-          <span class="text-sm font-mono text-[var(--auxline-fg)]">
-            {{ formatNumber(user.exp) }}
-          </span>
-        </div>
-        <div
-          class="flex items-center justify-between px-4 py-3 text-xs font-mono uppercase tracking-[0.12em]
-            text-[var(--auxline-fg-muted)]"
-        >
-          <span>积分</span>
-          <span class="text-sm font-mono text-[var(--auxline-fg)]">
-            {{ formatNumber(user.credit) }}
-          </span>
-        </div>
-      </div>
-
       <div class="border-t border-[var(--auxline-line)]">
-        <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--auxline-line)]">
-          <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-            邮箱验证
-          </span>
-          <span class="text-sm font-mono text-[var(--auxline-fg)]">
-            {{ user.emailVerified ? '已验证' : '未验证' }}
-          </span>
-        </div>
-        <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--auxline-line)]">
-          <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-            注册时间
-          </span>
-          <span class="text-sm font-mono text-[var(--auxline-fg)]">
-            {{ formatDate(user.createdAt) }}
-          </span>
-        </div>
-        <div class="flex items-center justify-between px-4 py-3">
-          <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-            最近更新
-          </span>
-          <span class="text-sm font-mono text-[var(--auxline-fg)]">
-            {{ formatDate(user.updatedAt) }}
-          </span>
-        </div>
-      </div>
-
-      <div class="border-t border-[var(--auxline-line)]">
-        <form class="flex flex-col gap-3 px-4 py-5" @submit.prevent="changePassword">
-          <p class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-            修改密码
-          </p>
-          <label class="flex flex-col gap-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-            当前密码
-            <input
-              v-model="currentPassword"
-              type="password"
-              autocomplete="current-password"
-              :disabled="isChangingPassword"
-              class="h-9 px-3 border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
-                text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
-                focus-visible:outline-[var(--auxline-line)]"
-              @input="onPasswordInput"
-            >
-          </label>
-          <label class="flex flex-col gap-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-            新密码
-            <input
-              v-model="newPassword"
-              type="password"
-              autocomplete="new-password"
-              :disabled="isChangingPassword"
-              class="h-9 px-3 border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
-                text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
-                focus-visible:outline-[var(--auxline-line)]"
-              @input="onPasswordInput"
-            >
-          </label>
-          <label class="flex flex-col gap-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-            确认新密码
-            <input
-              v-model="confirmPassword"
-              type="password"
-              autocomplete="new-password"
-              :disabled="isChangingPassword"
-              class="h-9 px-3 border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
-                text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
-                focus-visible:outline-[var(--auxline-line)]"
-              @input="onPasswordInput"
-            >
-          </label>
-          <div class="flex flex-wrap items-center gap-2 text-xs text-[var(--auxline-fg-muted)]">
-            <input
-              id="revoke-sessions"
-              v-model="revokeOtherSessions"
-              type="checkbox"
-              class="h-3 w-3 accent-[var(--auxline-fg)]"
-              :disabled="isChangingPassword"
-            >
-            <label for="revoke-sessions">更新后注销其他会话</label>
-          </div>
-          <AuxlineBtn
-            type="submit"
-            variant="contrast"
-            :loading="isChangingPassword"
-            :disabled="!canChangePassword"
+        <nav
+          class="flex items-center border-b border-[var(--auxline-line)]"
+          aria-label="个人资料设置"
+        >
+          <NuxtLink
+            to="/profile"
+            class="px-3 py-2 text-xs font-mono uppercase tracking-[0.12em] transition-colors
+              focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)]"
+            :class="activeTab === 'profile'
+              ? 'bg-[var(--auxline-bg-emphasis)] text-[var(--auxline-fg)]'
+              : 'text-[var(--auxline-fg-muted)] hover:bg-[var(--auxline-bg-hover)]'"
+            :aria-current="activeTab === 'profile' ? 'page' : undefined"
           >
-            更新密码
-          </AuxlineBtn>
-          <p v-if="passwordError" class="text-xs text-red-600">
-            {{ passwordError }}
-          </p>
-          <p v-else-if="passwordSuccess" class="text-xs text-blue-600">
-            {{ passwordSuccess }}
-          </p>
-        </form>
+            资料
+          </NuxtLink>
+          <NuxtLink
+            to="/profile/security"
+            class="px-3 py-2 text-xs font-mono uppercase tracking-[0.12em] transition-colors
+              focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)]"
+            :class="activeTab === 'security'
+              ? 'bg-[var(--auxline-bg-emphasis)] text-[var(--auxline-fg)]'
+              : 'text-[var(--auxline-fg-muted)] hover:bg-[var(--auxline-bg-hover)]'"
+            :aria-current="activeTab === 'security' ? 'page' : undefined"
+          >
+            安全
+          </NuxtLink>
+        </nav>
+        <NuxtPage />
       </div>
     </div>
   </section>
