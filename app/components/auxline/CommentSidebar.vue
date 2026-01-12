@@ -199,7 +199,7 @@ watch(path, () => {
           {{ props.submitLabel }}
         </AuxlineBtn>
       </div>
-      <p v-if="submitError" class="text-[0.65rem] text-red-600">
+      <p v-if="submitError" class="text-xs text-red-600">
         {{ submitError }}
       </p>
     </form>
@@ -245,7 +245,7 @@ watch(path, () => {
           <p v-if="item.content" class="text-sm leading-relaxed whitespace-pre-wrap break-words">
             {{ item.content }}
           </p>
-          <p v-else class="text-[0.65rem] text-[var(--auxline-fg-muted)]">
+          <p v-else class="text-xs text-[var(--auxline-fg-muted)]">
             --
           </p>
           <!-- <div class="flex items-center gap-3 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
@@ -255,12 +255,12 @@ watch(path, () => {
         </div>
         <div
           v-if="items.length === 0"
-          class="px-2 py-3 text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
+          class="px-2 py-3 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
         >
           {{ props.emptyLabel }}
         </div>
       </template>
-      <p v-if="error" class="px-2 py-2 text-[0.65rem] text-red-600">
+      <p v-if="error" class="px-2 py-2 text-xs text-red-600">
         {{ props.errorLabel }}
       </p>
     </div>

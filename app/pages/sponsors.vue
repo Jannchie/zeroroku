@@ -61,7 +61,7 @@ function displaySponsorName(name: string): string {
               :href="action.href"
               target="_blank"
               rel="noreferrer"
-              class="inline-flex items-center justify-center px-1 py-0.5 text-[0.65rem]
+              class="inline-flex items-center justify-center px-1 py-0.5 text-xs
                 text-[var(--auxline-fg)] hover:bg-[var(--auxline-bg-hover)] focus-visible:outline focus-visible:outline-1
                 focus-visible:outline-[var(--auxline-line)]"
             >

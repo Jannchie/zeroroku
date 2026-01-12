@@ -407,7 +407,7 @@ onMounted(() => {
             </label>
           </form>
           <div
-            class="flex items-center justify-between border-b border-[var(--auxline-line)] px-1 py-1 text-[0.65rem]
+            class="flex items-center justify-between border-b border-[var(--auxline-line)] px-1 py-1 text-xs
               font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
           >
             <span>观测消耗 {{ observeCost }} 积分</span>

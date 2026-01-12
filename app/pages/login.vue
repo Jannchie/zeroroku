@@ -163,7 +163,7 @@ async function signInWithPassword() {
         {{ credentialError }}
       </span>
     </form>
-    <div class="flex w-full max-w-sm items-center gap-3 pt-2 text-[0.65rem] font-mono uppercase tracking-[0.2em] text-[var(--auxline-fg-muted)]">
+    <div class="flex w-full max-w-sm items-center gap-3 pt-2 text-xs font-mono uppercase tracking-[0.2em] text-[var(--auxline-fg-muted)]">
       <span class="h-px flex-1 bg-[var(--auxline-line)]" aria-hidden="true" />
       或
       <span class="h-px flex-1 bg-[var(--auxline-line)]" aria-hidden="true" />

@@ -110,7 +110,7 @@ function roomLink(roomId: string): string {
           <span class="text-left flex-1 pl-4">直播间</span>
           <span class="px-1">礼物价值</span>
         </div>
-        <div class="border-b sm:border-x border-[var(--auxline-line)] px-3 py-2 text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+        <div class="border-b sm:border-x border-[var(--auxline-line)] px-3 py-2 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
           统计窗口：近{{ windowLabel }}
         </div>
         <template v-if="pending">
@@ -188,10 +188,10 @@ function roomLink(roomId: string): string {
                 </div>
               </div>
               <div class="flex flex-col items-end gap-1 px-1">
-                <span class="text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
                   {{ formatAmount(item.amount) }}
                 </span>
-                <span class="text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
                   {{ formatCount(item.gifts) }} gifts
                 </span>
               </div>

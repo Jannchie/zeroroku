@@ -381,7 +381,7 @@ watch(author, (value) => {
             >
               观测 -{{ observeCost }}积分
             </AuxlineBtn>
-            <span class="text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+            <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
               当前积分 {{ formatCount(user.credit) }}
             </span>
           </template>
@@ -392,7 +392,7 @@ watch(author, (value) => {
             >
               登录后观测
             </AuxlineBtn>
-            <span class="text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+            <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
               观测消耗 {{ observeCost }} 积分
             </span>
           </template>

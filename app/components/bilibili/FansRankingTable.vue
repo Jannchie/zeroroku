@@ -250,11 +250,11 @@ const skeletonRows = Array.from({ length: 50 }, (_, index) => index)
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-1 px-1">
-                  <span class="text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                  <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
                     {{ formatValue(item[props.valueKey]) }}
                   </span>
                   <template v-if="props.showTrendMeta">
-                    <span class="text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                    <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
                       <span class="hidden sm:inline">{{ formatCount(item.fans) }}</span>
                       <span class="hidden sm:inline"> · </span>
                       <span>{{ formatPercent(item.delta, item.fans) }}</span>
@@ -303,11 +303,11 @@ const skeletonRows = Array.from({ length: 50 }, (_, index) => index)
                   </div>
                 </div>
                 <div class="flex flex-col items-end gap-1 px-1">
-                  <span class="text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                  <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
                     {{ formatValue(item[props.valueKey]) }}
                   </span>
                   <template v-if="props.showTrendMeta">
-                    <span class="text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                    <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
                       <span class="hidden sm:inline">{{ formatCount(item.fans) }}</span>
                       <span class="hidden sm:inline"> · </span>
                       <span>{{ formatPercent(item.delta, item.fans) }}</span>
