@@ -1,7 +1,9 @@
-import { eq, sql } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
+import { createError } from 'h3'
 import { auth } from '~~/lib/auth'
-import { checkIns, creditRecords, user } from '~~/lib/database/auth-schema'
+import { checkIns } from '~~/lib/database/auth-schema'
 import { db } from '~~/server/index'
+import { applyCreditChange } from '~~/server/utils/credit'
 
 interface DailyLoginResponse {
   awarded: boolean
@@ -76,17 +78,10 @@ export default defineEventHandler(async (event): Promise<DailyLoginResponse> => 
       return { awarded: false }
     }
 
-    await tx
-      .update(user)
-      .set({
-        exp: sql`${user.exp} + ${DAILY_REWARD}`,
-        credit: sql`${user.credit} + ${DAILY_REWARD}`,
-      })
-      .where(eq(user.id, userId))
-
-    await tx.insert(creditRecords).values({
+    await applyCreditChange(tx, {
       userId,
-      credit: DAILY_REWARD,
+      creditDelta: DAILY_REWARD,
+      expDelta: DAILY_REWARD,
       text: '登录',
       createdAt: now,
       data: {

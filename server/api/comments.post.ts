@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import { createError, readBody } from 'h3'
 import { auth } from '~~/lib/auth'
 import { db } from '~~/server/index'
+import { applyCreditChange } from '~~/server/utils/credit'
 
 interface CreateCommentBody {
   path?: unknown
@@ -15,6 +16,8 @@ interface InsertedCommentRow {
 
 const MAX_CONTENT_LENGTH = 500
 const MAX_PATH_LENGTH = 512
+const COMMENT_COST = 1
+const COMMENT_EXP = 1
 
 function normalizeBodyValue(value: unknown): string | null {
   if (Array.isArray(value)) {
@@ -78,12 +81,25 @@ function normalizeId(value: unknown): string | null {
   return trimmed
 }
 
+function parseUserId(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isSafeInteger(value) && value > 0) {
+    return value
+  }
+  if (typeof value === 'string' && /^\d+$/.test(value)) {
+    const parsed = Number(value)
+    if (Number.isSafeInteger(parsed) && parsed > 0) {
+      return parsed
+    }
+  }
+  return null
+}
+
 export default defineEventHandler(async (event): Promise<{ ok: boolean, id: string }> => {
   const session = await auth.api.getSession({
     headers: event.headers,
   })
-  const uid = normalizeId(session?.user?.id)
-  if (!uid) {
+  const userId = parseUserId(session?.user?.id)
+  if (!userId) {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
   }
 
@@ -103,12 +119,28 @@ export default defineEventHandler(async (event): Promise<{ ok: boolean, id: stri
   }
 
   const commentsTable = sql`${sql.identifier('public')}.${sql.identifier('comments')}`
+  const now = new Date()
 
-  const result = await db.execute<InsertedCommentRow>(sql`
-    insert into ${commentsTable} (path, parent_id, uid, content, created_at, "like", dislike)
-    values (${path}, ${parentId}, ${uid}, ${content}, now(), 0, 0)
-    returning id::text as id
-  `)
+  const result = await db.transaction(async (tx) => {
+    await applyCreditChange(tx, {
+      userId,
+      creditDelta: -COMMENT_COST,
+      expDelta: COMMENT_EXP,
+      text: '评论',
+      createdAt: now,
+      data: {
+        type: 'comment',
+        path,
+        parentId,
+      },
+    })
+
+    return tx.execute<InsertedCommentRow>(sql`
+      insert into ${commentsTable} (path, parent_id, uid, content, created_at, "like", dislike)
+      values (${path}, ${parentId}, ${userId}, ${content}, ${now}, 0, 0)
+      returning id::text as id
+    `)
+  })
 
   const id = result.rows[0]?.id ? String(result.rows[0].id) : ''
 

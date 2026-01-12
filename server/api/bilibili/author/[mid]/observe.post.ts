@@ -4,9 +4,9 @@ import { sql } from 'drizzle-orm'
 import { getTableConfig } from 'drizzle-orm/pg-core'
 import { createError, getRouterParam } from 'h3'
 import { auth } from '~~/lib/auth'
-import { creditRecords, user } from '~~/lib/database/auth-schema'
 import { authorFansSchedules } from '~~/drizzle/schema'
 import { db } from '~~/server/index'
+import { applyCreditChange } from '~~/server/utils/credit'
 
 interface ObserveResponse {
   ok: boolean
@@ -14,24 +14,9 @@ interface ObserveResponse {
   credit: number
 }
 
-interface CreditRow extends Record<string, unknown> {
-  credit: string | number | null
-}
-
 const OBSERVE_COST = 10
 const MIN_MID = BigInt('0')
 const MAX_MID = BigInt('9223372036854775807')
-
-function parseNumber(value: string | number | null | undefined): number | null {
-  if (value === null || value === undefined) {
-    return null
-  }
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : null
-  }
-  const parsed = Number.parseFloat(value)
-  return Number.isNaN(parsed) ? null : parsed
-}
 
 function parseMid(value: string | null | undefined): bigint | null {
   if (!value) {
@@ -104,25 +89,9 @@ export default defineEventHandler(async (event): Promise<ObserveResponse> => {
   const videoScheduleTable = getNamedTableIdentifier('author_video_schedules')
 
   const result = await db.transaction(async (tx) => {
-    const creditResult = await tx.execute<CreditRow>(sql`
-      update ${user}
-      set credit = ${user.credit} - ${OBSERVE_COST}
-      where ${user.id} = ${userId}
-        and ${user.credit} >= ${OBSERVE_COST}
-      returning ${user.credit} as credit
-    `)
-
-    const creditValue = parseNumber(creditResult.rows[0]?.credit)
-    if (creditValue === null) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: '积分不足。',
-      })
-    }
-
-    await tx.insert(creditRecords).values({
+    const creditResult = await applyCreditChange(tx, {
       userId,
-      credit: -OBSERVE_COST,
+      creditDelta: -OBSERVE_COST,
       text: '观测',
       createdAt: now,
       data: {
@@ -145,7 +114,7 @@ export default defineEventHandler(async (event): Promise<ObserveResponse> => {
       set next = excluded.next, updated_at = excluded.updated_at
     `)
 
-    return creditValue
+    return creditResult.credit
   })
 
   return {
