@@ -217,13 +217,6 @@ watch(path, () => {
       <span class="shrink-0">{{ props.pathLabel }}</span>
       <span class="truncate">{{ path }}</span>
     </div>
-    <div
-      v-if="props.noteLabel"
-      class="border-b border-[var(--auxline-line)] px-2 py-2 text-[0.65rem]
-        font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-    >
-      {{ props.noteLabel }}
-    </div>
     <div class="flex-1 min-h-0 overflow-y-auto">
       <template v-if="pending">
         <div
