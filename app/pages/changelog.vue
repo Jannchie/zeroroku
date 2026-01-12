@@ -30,6 +30,11 @@ interface RawChangelogDoc {
   changelog?: RawChangelogItem[]
 }
 
+interface ParseResult {
+  items: ChangelogItem[]
+  error: boolean
+}
+
 useSeoMeta({
   title: '更新日志',
 })
@@ -37,8 +42,8 @@ useSeoMeta({
 const { data, pending, error } = useAsyncData<string>('changelog', async () => {
   if (import.meta.server) {
     const { readFile } = await import('node:fs/promises')
-    const { join } = await import('node:path')
-    return await readFile(join(process.cwd(), 'public', 'changelog.yaml'), 'utf8')
+    const { default: path } = await import('node:path')
+    return await readFile(path.join(process.cwd(), 'public', 'changelog.yaml'), 'utf8')
   }
   return await $fetch<string>('/changelog.yaml', { responseType: 'text' })
 }, {
@@ -54,7 +59,7 @@ function normalizeEntry(entry: RawChangelogEntry): ChangelogEntry {
 
 function normalizeItem(item: RawChangelogItem): ChangelogItem {
   const entries = Array.isArray(item.entries)
-    ? item.entries.map(normalizeEntry).filter((entry) => entry.text.length > 0)
+    ? item.entries.map(entry => normalizeEntry(entry)).filter(entry => entry.text.length > 0)
     : []
   return {
     date: item.date ?? '',
@@ -64,7 +69,7 @@ function normalizeItem(item: RawChangelogItem): ChangelogItem {
   }
 }
 
-function parseChangelog(source: string): { items: ChangelogItem[]; error: boolean } {
+function parseChangelog(source: string): ParseResult {
   if (!source) {
     return { items: [], error: false }
   }
@@ -73,7 +78,7 @@ function parseChangelog(source: string): { items: ChangelogItem[]; error: boolea
     if (!parsed?.changelog || !Array.isArray(parsed.changelog)) {
       return { items: [], error: false }
     }
-    const items = parsed.changelog.map(normalizeItem).filter((item) => {
+    const items = parsed.changelog.map(item => normalizeItem(item)).filter((item) => {
       return item.date.length > 0 || item.version.length > 0 || Boolean(item.summary) || item.entries.length > 0
     })
     return { items, error: false }
@@ -88,44 +93,6 @@ const parseResult = computed(() => parseChangelog(data.value ?? ''))
 const changelogItems = computed(() => parseResult.value.items)
 const hasEntries = computed(() => changelogItems.value.length > 0)
 const parseFailed = computed(() => parseResult.value.error)
-
-const entryIcons: Record<string, string> = {
-  added: 'i-heroicons-plus-circle-20-solid',
-  changed: 'i-heroicons-arrow-path-20-solid',
-  fixed: 'i-heroicons-wrench-screwdriver-20-solid',
-  removed: 'i-heroicons-minus-circle-20-solid',
-  deprecated: 'i-heroicons-exclamation-triangle-20-solid',
-  security: 'i-heroicons-shield-check-20-solid',
-  新增: 'i-heroicons-plus-circle-20-solid',
-  变更: 'i-heroicons-arrow-path-20-solid',
-  修复: 'i-heroicons-wrench-screwdriver-20-solid',
-  移除: 'i-heroicons-minus-circle-20-solid',
-  弃用: 'i-heroicons-exclamation-triangle-20-solid',
-  安全: 'i-heroicons-shield-check-20-solid',
-}
-
-const entryLabels: Record<string, string> = {
-  added: '新增',
-  changed: '变更',
-  fixed: '修复',
-  removed: '移除',
-  deprecated: '弃用',
-  security: '安全',
-  新增: '新增',
-  变更: '变更',
-  修复: '修复',
-  移除: '移除',
-  弃用: '弃用',
-  安全: '安全',
-}
-
-function entryIcon(type: string): string {
-  return entryIcons[type] ?? 'i-heroicons-sparkles-20-solid'
-}
-
-function entryLabel(type: string): string {
-  return entryLabels[type] ?? type
-}
 </script>
 
 <template>
@@ -199,9 +166,8 @@ function entryLabel(type: string): string {
                 :key="`${item.date}-${item.version}-${index}`"
                 class="flex flex-wrap items-center gap-3"
               >
-                <span class="flex items-center gap-2 min-w-[4rem] text-[0.6rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                  <span class="text-base" :class="entryIcon(entry.type)" aria-hidden="true" />
-                  <span>{{ entryLabel(entry.type) }}</span>
+                <span class="min-w-[3rem] text-[0.6rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                  {{ entry.type }}
                 </span>
                 <span class="flex-1 min-w-[12rem]">
                   {{ entry.text }}

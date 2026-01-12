@@ -14,7 +14,6 @@ const confirmPassword = ref('')
 const passwordError = ref<string | null>(null)
 const passwordSuccess = ref<string | null>(null)
 const isChangingPassword = ref(false)
-const revokeOtherSessions = ref(true)
 const canChangePassword = computed(() => {
   if (!currentPassword.value || !newPassword.value || !confirmPassword.value) {
     return false
@@ -64,7 +63,7 @@ async function changePassword() {
     const { error } = await authClient.changePassword({
       currentPassword: currentPassword.value,
       newPassword: newPassword.value,
-      revokeOtherSessions: revokeOtherSessions.value,
+      revokeOtherSessions: true,
     })
     if (error) {
       passwordError.value = error.message ?? '修改密码失败。'
@@ -133,16 +132,9 @@ async function changePassword() {
           @input="onPasswordInput"
         >
       </label>
-      <div class="flex flex-wrap items-center gap-2 text-xs text-[var(--auxline-fg-muted)]">
-        <input
-          id="revoke-sessions"
-          v-model="revokeOtherSessions"
-          type="checkbox"
-          class="h-3 w-3 accent-[var(--auxline-fg)]"
-          :disabled="isChangingPassword"
-        >
-        <label for="revoke-sessions">更新后注销其他会话</label>
-      </div>
+      <p class="text-xs text-[var(--auxline-fg-muted)]">
+        更新后将自动注销其他会话。
+      </p>
       <AuxlineBtn
         type="submit"
         variant="contrast"
