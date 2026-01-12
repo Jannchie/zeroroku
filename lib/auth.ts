@@ -18,6 +18,9 @@ export const auth = betterAuth({
     provider: 'pg',
     schema,
   }),
+  rateLimit: {
+    enabled: true,
+  },
   emailAndPassword: {
     enabled: true,
     password: {

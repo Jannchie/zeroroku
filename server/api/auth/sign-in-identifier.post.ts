@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm'
 import { auth } from '~~/lib/auth'
 import { user } from '~~/lib/database/auth-schema'
 import { db } from '~~/server/index'
+import { enforceSignInRateLimit } from '~~/server/utils/auth-rate-limit'
 
 interface SignInIdentifierBody {
   identifier?: string
@@ -19,6 +20,8 @@ export default defineEventHandler(async (event) => {
   const body = await readBody<SignInIdentifierBody>(event)
   const identifier = body.identifier?.trim()
   const password = body.password ?? ''
+
+  enforceSignInRateLimit(event, identifier)
 
   if (!identifier || !password) {
     throw createError({
