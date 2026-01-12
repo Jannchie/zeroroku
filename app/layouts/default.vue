@@ -205,15 +205,15 @@ onMounted(() => {
         <aside
           v-if="showSponsorsAside"
           class="hidden w-full border-b border-[var(--auxline-line)] flex-col 2xl:flex
-            2xl:absolute 2xl:left-0 2xl:top-0 2xl:bottom-0 2xl:w-64 2xl:-translate-x-full 2xl:border 2xl:bg-[var(--auxline-bg)]"
+            2xl:absolute 2xl:left-0 2xl:top-0 2xl:bottom-0 2xl:w-64 2xl:-translate-x-full border-x 2xl:bg-[var(--auxline-bg)]"
         >
           <div
-            class="flex flex-wrap items-center justify-between gap-1 border-b border-[var(--auxline-line)] px-1 py-1 text-[0.6rem]
+            class="flex flex-wrap items-center justify-between gap-1 border-b border-[var(--auxline-line)] text-[0.6rem]
               font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
           >
             <div class="flex items-center gap-1">
-              <span>赞助</span>
-              <span v-if="sponsorItems.length > 0" class="text-[var(--auxline-fg-muted)]">
+              <span class="px-1 py-1">赞助</span>
+              <span v-if="sponsorItems.length > 0" class="px-1 py-1 text-[var(--auxline-fg-muted)]">
                 {{ sponsorItems.length }}
               </span>
             </div>
@@ -224,7 +224,7 @@ onMounted(() => {
                 :href="action.href"
                 target="_blank"
                 rel="noreferrer"
-                class="inline-flex items-center justify-center px-1 py-0.5 text-[0.55rem]
+                class="inline-flex items-center justify-center h-5 px-2 text-[0.55rem]
                   text-[var(--auxline-fg)] hover:bg-[var(--auxline-bg-hover)] focus-visible:outline focus-visible:outline-1
                   focus-visible:outline-[var(--auxline-line)]"
               >

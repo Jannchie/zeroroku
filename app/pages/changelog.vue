@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed } from 'vue'
 import { parse } from 'yaml'
 
 interface ChangelogEntry {
@@ -34,17 +34,15 @@ useSeoMeta({
   title: '更新日志',
 })
 
-const { data, pending, error } = useFetch<string>('/changelog.yaml', {
-  responseType: 'text',
-  watch: false,
-  server: false,
+const { data, pending, error } = useAsyncData<string>('changelog', async () => {
+  if (import.meta.server) {
+    const { readFile } = await import('node:fs/promises')
+    const { join } = await import('node:path')
+    return await readFile(join(process.cwd(), 'public', 'changelog.yaml'), 'utf8')
+  }
+  return await $fetch<string>('/changelog.yaml', { responseType: 'text' })
+}, {
   default: () => '',
-})
-
-const isHydrated = ref(false)
-
-onMounted(() => {
-  isHydrated.value = true
 })
 
 function normalizeEntry(entry: RawChangelogEntry): ChangelogEntry {
@@ -147,7 +145,7 @@ function entryLabel(type: string): string {
       </div>
       <article class="flex flex-col gap-6 px-4 py-6 text-sm leading-7">
         <p
-          v-if="pending || !isHydrated"
+          v-if="pending"
           class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
         >
           正在加载更新日志
