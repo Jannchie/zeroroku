@@ -39,6 +39,12 @@ interface ObserveResponse {
   credit: number
 }
 
+interface RecentAuthorItem {
+  mid: string
+  name: string | null
+  face: string | null
+}
+
 const route = useRoute()
 const midParam = computed(() => (Array.isArray(route.params.mid) ? route.params.mid[0] : route.params.mid))
 const mid = computed(() => (typeof midParam.value === 'string' ? midParam.value : ''))
@@ -278,6 +284,59 @@ const historyHeaders = [
 ]
 
 const historySkeletonRows = Array.from({ length: 100 }, (_, index) => index)
+const recentStorageKey = 'bilibili_recent_authors'
+const recentLimit = 16
+
+function parseRecentAuthors(raw: string | null): RecentAuthorItem[] {
+  if (!raw) {
+    return []
+  }
+  try {
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) {
+      return []
+    }
+    return parsed
+      .filter((item): item is RecentAuthorItem => {
+        if (!item || typeof item !== 'object') {
+          return false
+        }
+        const record = item as Record<string, unknown>
+        return typeof record.mid === 'string'
+      })
+      .map(item => ({
+        mid: item.mid,
+        name: typeof item.name === 'string' ? item.name : null,
+        face: typeof item.face === 'string' ? item.face : null,
+      }))
+  }
+  catch {
+    return []
+  }
+}
+
+function updateRecentAuthors(item: RecentAuthorItem): void {
+  if (!import.meta.client || !globalThis.localStorage) {
+    return
+  }
+  const current = parseRecentAuthors(globalThis.localStorage.getItem(recentStorageKey))
+  const next = [
+    item,
+    ...current.filter(entry => entry.mid !== item.mid),
+  ].slice(0, recentLimit)
+  globalThis.localStorage.setItem(recentStorageKey, JSON.stringify(next))
+}
+
+watch(author, (value) => {
+  if (!value || !mid.value) {
+    return
+  }
+  updateRecentAuthors({
+    mid: mid.value,
+    name: value.name ?? null,
+    face: value.face ?? null,
+  })
+})
 </script>
 
 <template>

@@ -21,6 +21,19 @@ const nameTouched = ref(false)
 const nameError = ref<string | null>(null)
 const nameSuccess = ref<string | null>(null)
 const isUpdatingName = ref(false)
+const currentPassword = ref('')
+const newPassword = ref('')
+const confirmPassword = ref('')
+const passwordError = ref<string | null>(null)
+const passwordSuccess = ref<string | null>(null)
+const isChangingPassword = ref(false)
+const revokeOtherSessions = ref(true)
+const canChangePassword = computed(() => {
+  if (!currentPassword.value || !newPassword.value || !confirmPassword.value) {
+    return false
+  }
+  return !isChangingPassword.value
+})
 const canSaveName = computed(() => {
   if (!isEditingName.value) {
     return false
@@ -101,6 +114,11 @@ function onNameInput() {
   nameSuccess.value = null
 }
 
+function onPasswordInput() {
+  passwordError.value = null
+  passwordSuccess.value = null
+}
+
 async function updateName() {
   if (!isEditingName.value) {
     return
@@ -152,6 +170,66 @@ async function updateName() {
   }
   finally {
     isUpdatingName.value = false
+  }
+}
+
+async function changePassword() {
+  if (isChangingPassword.value) {
+    return
+  }
+  passwordError.value = null
+  passwordSuccess.value = null
+
+  if (!user.value) {
+    passwordError.value = '当前未登录。'
+    return
+  }
+  if (!currentPassword.value) {
+    passwordError.value = '请输入当前密码。'
+    return
+  }
+  if (!newPassword.value) {
+    passwordError.value = '请输入新密码。'
+    return
+  }
+  if (newPassword.value.length < 8) {
+    passwordError.value = '新密码至少需要 8 位。'
+    return
+  }
+  if (newPassword.value !== confirmPassword.value) {
+    passwordError.value = '两次输入的新密码不一致。'
+    return
+  }
+  if (newPassword.value === currentPassword.value) {
+    passwordError.value = '新密码不能与当前密码一致。'
+    return
+  }
+
+  isChangingPassword.value = true
+  try {
+    const { error } = await authClient.changePassword({
+      currentPassword: currentPassword.value,
+      newPassword: newPassword.value,
+      revokeOtherSessions: revokeOtherSessions.value,
+    })
+    if (error) {
+      passwordError.value = error.message ?? '修改密码失败。'
+      return
+    }
+    currentPassword.value = ''
+    newPassword.value = ''
+    confirmPassword.value = ''
+    passwordSuccess.value = '密码已更新。'
+  }
+  catch (error) {
+    if (error && typeof error === 'object' && 'message' in error) {
+      passwordError.value = String(error.message) || '修改密码失败。'
+      return
+    }
+    passwordError.value = '修改密码失败。'
+  }
+  finally {
+    isChangingPassword.value = false
   }
 }
 </script>
@@ -300,6 +378,77 @@ async function updateName() {
             {{ formatDate(user.updatedAt) }}
           </span>
         </div>
+      </div>
+
+      <div class="border-t border-[var(--auxline-line)]">
+        <form class="flex flex-col gap-3 px-4 py-5" @submit.prevent="changePassword">
+          <p class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+            修改密码
+          </p>
+          <label class="flex flex-col gap-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+            当前密码
+            <input
+              v-model="currentPassword"
+              type="password"
+              autocomplete="current-password"
+              :disabled="isChangingPassword"
+              class="h-9 px-3 border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
+                text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
+                focus-visible:outline-[var(--auxline-line)]"
+              @input="onPasswordInput"
+            >
+          </label>
+          <label class="flex flex-col gap-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+            新密码
+            <input
+              v-model="newPassword"
+              type="password"
+              autocomplete="new-password"
+              :disabled="isChangingPassword"
+              class="h-9 px-3 border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
+                text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
+                focus-visible:outline-[var(--auxline-line)]"
+              @input="onPasswordInput"
+            >
+          </label>
+          <label class="flex flex-col gap-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+            确认新密码
+            <input
+              v-model="confirmPassword"
+              type="password"
+              autocomplete="new-password"
+              :disabled="isChangingPassword"
+              class="h-9 px-3 border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
+                text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
+                focus-visible:outline-[var(--auxline-line)]"
+              @input="onPasswordInput"
+            >
+          </label>
+          <div class="flex flex-wrap items-center gap-2 text-xs text-[var(--auxline-fg-muted)]">
+            <input
+              id="revoke-sessions"
+              v-model="revokeOtherSessions"
+              type="checkbox"
+              class="h-3 w-3 accent-[var(--auxline-fg)]"
+              :disabled="isChangingPassword"
+            >
+            <label for="revoke-sessions">更新后注销其他会话</label>
+          </div>
+          <AuxlineBtn
+            type="submit"
+            variant="contrast"
+            :loading="isChangingPassword"
+            :disabled="!canChangePassword"
+          >
+            更新密码
+          </AuxlineBtn>
+          <p v-if="passwordError" class="text-xs text-red-600">
+            {{ passwordError }}
+          </p>
+          <p v-else-if="passwordSuccess" class="text-xs text-blue-600">
+            {{ passwordSuccess }}
+          </p>
+        </form>
       </div>
     </div>
   </section>

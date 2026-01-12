@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { authClient } from '~~/lib/client'
 
 interface AuthorSearchItem {
@@ -30,6 +30,12 @@ interface ObserveResponse {
   credit: number
 }
 
+interface RecentAuthorItem {
+  mid: string
+  name: string | null
+  face: string | null
+}
+
 useSeoMeta({
   title: 'Bilibili',
 })
@@ -46,6 +52,9 @@ const observePending = ref(false)
 const observeError = ref<string | null>(null)
 const observeSuccess = ref<string | null>(null)
 const observeCost = 10
+const recentAuthors = ref<RecentAuthorItem[]>([])
+const recentStorageKey = 'bilibili_recent_authors'
+const recentLimit = 16
 
 const { data: visitTopData, pending: visitTopPending, error: visitTopError } = useFetch<VisitTopResponse>(
   '/api/bilibili/visit-top',
@@ -55,6 +64,7 @@ const { data: visitTopData, pending: visitTopPending, error: visitTopError } = u
 )
 
 const visitTopItems = computed(() => visitTopData.value?.items ?? [])
+const limitedRecentAuthors = computed(() => recentAuthors.value.slice(0, recentLimit))
 const observeTarget = computed(() => observeMid.value.trim())
 const canObserve = computed(() => observeTarget.value.length > 0 && !observePending.value)
 
@@ -122,6 +132,34 @@ function isAuthorLinkable(mid: string | null | undefined): boolean {
 
 function authorLink(mid: string | null | undefined): string {
   return buildAuthorLink(mid) ?? ''
+}
+
+function parseRecentAuthors(raw: string | null): RecentAuthorItem[] {
+  if (!raw) {
+    return []
+  }
+  try {
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) {
+      return []
+    }
+    return parsed
+      .filter((item): item is RecentAuthorItem => {
+        if (!item || typeof item !== 'object') {
+          return false
+        }
+        const record = item as Record<string, unknown>
+        return typeof record.mid === 'string'
+      })
+      .map(item => ({
+        mid: item.mid,
+        name: typeof item.name === 'string' ? item.name : null,
+        face: typeof item.face === 'string' ? item.face : null,
+      }))
+  }
+  catch {
+    return []
+  }
 }
 
 async function searchAuthors() {
@@ -202,6 +240,13 @@ watch(observeMid, () => {
   observeError.value = null
   observeSuccess.value = null
 })
+
+onMounted(() => {
+  if (!import.meta.client || !globalThis.localStorage) {
+    return
+  }
+  recentAuthors.value = parseRecentAuthors(globalThis.localStorage.getItem(recentStorageKey))
+})
 </script>
 
 <template>
@@ -211,6 +256,51 @@ watch(observeMid, () => {
       subtitle="数据观测站"
     />
     <BilibiliFansRankingNav />
+
+    <div class="w-full border-b border-[var(--auxline-line)]">
+      <div class="w-full max-w-3xl mx-auto sm:border-x border-[var(--auxline-line)]">
+        <div class="flex items-center border-b border-[var(--auxline-line)] p-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+          <span>最近访问</span>
+        </div>
+        <div class="flex flex-wrap gap-1 p-1">
+          <NuxtLink
+            v-for="item in limitedRecentAuthors"
+            :key="`recent-${item.mid}`"
+            :to="authorLink(item.mid)"
+            class="inline-flex items-center gap-2 border border-[var(--auxline-line)] pr-2 pl-0 py-0 text-xs text-[var(--auxline-fg)]
+                hover:bg-[var(--auxline-bg-hover)] focus-visible:outline focus-visible:outline-1
+                focus-visible:outline-[var(--auxline-line)]"
+          >
+            <span
+              class="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden border-r border-[var(--auxline-line)]
+                  bg-[var(--auxline-bg-emphasis)] text-[0.55rem] font-mono uppercase tracking-[0.12em]"
+              aria-hidden="true"
+            >
+              <NuxtImg
+                v-if="item.face"
+                :src="item.face"
+                alt=""
+                class="h-full w-full object-cover"
+                width="20"
+                height="20"
+              />
+              <span v-else>
+                {{ displayAuthorName(item).slice(0, 1) }}
+              </span>
+            </span>
+            <span class="max-w-[8rem] truncate">
+              {{ displayAuthorName(item) }}
+            </span>
+          </NuxtLink>
+          <span
+            v-if="limitedRecentAuthors.length === 0"
+            class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
+          >
+            暂无最近访问
+          </span>
+        </div>
+      </div>
+    </div>
 
     <div class="w-full border-b border-[var(--auxline-line)]">
       <div class="w-full max-w-3xl mx-auto sm:border-x border-[var(--auxline-line)]">
