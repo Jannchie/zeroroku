@@ -12,6 +12,8 @@ node_modules
 # Logs
 logs
 *.log
+!server/api/logs/
+!server/api/logs/**
 
 # Misc
 .DS_Store
