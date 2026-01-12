@@ -153,7 +153,7 @@ function roomLink(roomId: string): string {
               <div class="flex flex-1 items-center gap-3 pl-4 min-w-0">
                 <div
                   class="flex h-9 w-9 items-center justify-center overflow-hidden border-x border-[var(--auxline-line)]
-                    bg-[var(--auxline-bg-emphasis)] text-[0.6rem] font-mono uppercase tracking-[0.12em]"
+                    bg-[var(--auxline-bg-emphasis)] text-xs font-mono uppercase tracking-[0.12em]"
                   aria-hidden="true"
                 >
                   <NuxtImg

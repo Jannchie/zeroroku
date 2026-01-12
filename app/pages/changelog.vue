@@ -166,7 +166,7 @@ const parseFailed = computed(() => parseResult.value.error)
                 :key="`${item.date}-${item.version}-${index}`"
                 class="flex flex-wrap items-center gap-3"
               >
-                <span class="min-w-[3rem] text-[0.6rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                <span class="min-w-[3rem] text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
                   {{ entry.type }}
                 </span>
                 <span class="flex-1 min-w-[12rem]">

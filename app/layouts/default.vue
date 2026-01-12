@@ -162,7 +162,7 @@ onMounted(() => {
               >
                 <div
                   class="flex h-9 w-9 items-center justify-center overflow-hidden border-x border-[var(--auxline-line)]
-                    bg-[var(--auxline-bg-emphasis)] text-[0.6rem] font-mono uppercase tracking-[0.12em]"
+                    bg-[var(--auxline-bg-emphasis)] text-xs font-mono uppercase tracking-[0.12em]"
                   aria-hidden="true"
                 >
                   <NuxtImg
@@ -208,7 +208,7 @@ onMounted(() => {
             2xl:absolute 2xl:left-0 2xl:top-0 2xl:bottom-0 2xl:w-64 2xl:-translate-x-full border-x 2xl:bg-[var(--auxline-bg)]"
         >
           <div
-            class="flex flex-wrap items-center justify-between gap-1 border-b border-[var(--auxline-line)] text-[0.6rem]
+            class="flex flex-wrap items-center justify-between gap-1 border-b border-[var(--auxline-line)] text-xs
               font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
           >
             <div class="flex items-center gap-1">
@@ -224,7 +224,7 @@ onMounted(() => {
                 :href="action.href"
                 target="_blank"
                 rel="noreferrer"
-                class="inline-flex items-center justify-center h-5 px-2 text-[0.55rem]
+                class="inline-flex items-center justify-center h-5 px-2 text-xs
                   text-[var(--auxline-fg)] hover:bg-[var(--auxline-bg-hover)] focus-visible:outline focus-visible:outline-1
                   focus-visible:outline-[var(--auxline-line)]"
               >
@@ -247,21 +247,21 @@ onMounted(() => {
               <div
                 v-for="item in sponsorItems"
                 :key="item.id"
-                class="flex items-center justify-between gap-1 border-b border-[var(--auxline-line)] px-1 py-1 text-[0.7rem] last:border-b-0"
+                class="flex items-center justify-between gap-1 border-b border-[var(--auxline-line)] px-1 py-1 text-xs last:border-b-0"
               >
                 <span class="truncate">{{ displaySponsorName(item.name) }}</span>
-                <span class="shrink-0 text-[0.6rem] font-mono text-[var(--auxline-fg-muted)]">
+                <span class="shrink-0 text-xs font-mono text-[var(--auxline-fg-muted)]">
                   {{ formatAmount(item.amount) }}
                 </span>
               </div>
               <div
                 v-if="sponsorItems.length === 0"
-                class="px-1 py-2 text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
+                class="px-1 py-2 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
               >
                 暂无赞助者
               </div>
             </template>
-            <p v-if="sponsorsError" class="px-1 py-1 text-[0.65rem] text-red-600">
+            <p v-if="sponsorsError" class="px-1 py-1 text-xs text-red-600">
               赞助列表加载失败
             </p>
           </div>

@@ -20,7 +20,7 @@ const props = withDefaults(defineProps<{
   to: undefined,
 })
 
-const baseClass = 'auxline-btn inline-flex items-center justify-center gap-2 whitespace-nowrap border-[var(--auxline-line)] font-mono uppercase tracking-[0.12em] text-[0.75rem] leading-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)] disabled:cursor-not-allowed disabled:opacity-60'
+const baseClass = 'auxline-btn inline-flex items-center justify-center gap-2 whitespace-nowrap border-[var(--auxline-line)] font-mono uppercase tracking-[0.12em] text-xs leading-none focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)] disabled:cursor-not-allowed disabled:opacity-60'
 
 const variantClasses: Record<AuxlineBtnVariant, string> = {
   solid: 'text-[var(--auxline-fg)] hover:bg-[var(--auxline-bg-hover)]',

@@ -1,4 +1,12 @@
 changelog:
+  - date: 2026-01-13
+    version: 0.3.0
+    summary: 特性与修复
+    entries:
+      - type: 特性
+        text: 添加了首页酷炫的日志展示。
+      - type: 优化
+        text: 改善了文本大小
   - date: 2026-01-12
     version: 0.2.0
     summary: 新增页面与展示

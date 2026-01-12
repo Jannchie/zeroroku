@@ -186,7 +186,7 @@ watch(path, () => {
         class="w-full resize-none bg-[var(--auxline-bg-emphasis)] px-2 py-2 text-sm
           text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)]"
       />
-      <div class="flex items-center justify-between text-[0.6rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+      <div class="flex items-center justify-between text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
         <span class="px-2">
           {{ isLoggedIn ? maxLengthHint : props.loginHintLabel }}
         </span>
@@ -204,14 +204,14 @@ watch(path, () => {
       </p>
     </form>
     <div
-      class="flex items-center justify-between gap-2 border-b border-[var(--auxline-line)] px-2 py-2 text-[0.6rem]
+      class="flex items-center justify-between gap-2 border-b border-[var(--auxline-line)] px-2 py-2 text-xs
         font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
     >
       <span>{{ props.title }}</span>
       <span v-if="total > 0">{{ formatCount(total) }}</span>
     </div>
     <div
-      class="flex items-center gap-2 border-b border-[var(--auxline-line)] px-2 py-2 text-[0.6rem]
+      class="flex items-center gap-2 border-b border-[var(--auxline-line)] px-2 py-2 text-xs
         font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
     >
       <span class="shrink-0">{{ props.pathLabel }}</span>
@@ -238,7 +238,7 @@ watch(path, () => {
           :key="item.id"
           class="flex flex-col gap-2 border-b border-[var(--auxline-line)] px-2 py-2 last:border-b-0"
         >
-          <div class="flex items-center justify-between text-[0.6rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+          <div class="flex items-center justify-between text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
             <span class="truncate">{{ displayName(item) }}</span>
             <span class="shrink-0">{{ formatDate(item.createdAt) }}</span>
           </div>
@@ -248,10 +248,10 @@ watch(path, () => {
           <p v-else class="text-[0.65rem] text-[var(--auxline-fg-muted)]">
             --
           </p>
-          <div class="flex items-center gap-3 text-[0.6rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+          <!-- <div class="flex items-center gap-3 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
             <span>LIKE {{ formatCount(item.likes) }}</span>
             <span>DISLIKE {{ formatCount(item.dislikes) }}</span>
-          </div>
+          </div> -->
         </div>
         <div
           v-if="items.length === 0"
