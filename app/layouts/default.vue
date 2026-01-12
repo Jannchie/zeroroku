@@ -8,9 +8,34 @@ const displayName = computed(() => session.value?.data?.user?.name ?? session.va
 const avatarUrl = computed(() => session.value?.data?.user?.image || null)
 const avatarInitial = computed(() => displayName.value.slice(0, 1).toUpperCase())
 const { activeScheme, selectedScheme, toggleScheme } = useColorScheme()
+const { showSponsorsSidebar } = useSponsorSidebar()
 const { count: onlineCount } = useOnlineCount()
 const route = useRoute()
 const lastDailyLoginUserId = ref<string | null>(null)
+
+interface SponsorItem {
+  id: string
+  name: string
+  amount: number
+}
+
+interface SponsorResponse {
+  items: SponsorItem[]
+}
+
+const sponsorActions: { label: string, href: string }[] = [
+  { label: '爱发电', href: 'https://afdian.com/a/jannchie' },
+  { label: 'AZZ', href: 'https://azz.net/jannchie' },
+  { label: 'B站充电', href: 'https://space.bilibili.com/1850091' },
+]
+
+const { data: sponsorsData, pending: sponsorsPending, error: sponsorsError } = useFetch<SponsorResponse>('/api/sponsors', {
+  watch: false,
+})
+
+const sponsorItems = computed(() => sponsorsData.value?.items ?? [])
+const sponsorSkeletons = Array.from({ length: 6 }, (_, index) => index)
+const amountFormatter = new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 })
 
 const themeIcon = computed(() => {
   return activeScheme.value === 'dark' ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'
@@ -24,6 +49,10 @@ const themeToggleLabel = computed(() => {
   }
   return `切换到${nextLabel}模式`
 })
+
+const isHome = computed(() => route.path === '/')
+const isSponsorsPage = computed(() => route.path.startsWith('/sponsors'))
+const showSponsorsAside = computed(() => !isSponsorsPage.value && showSponsorsSidebar.value)
 
 const navItems = computed(() => {
   const isLoggedIn = Boolean(session.value?.data)
@@ -49,6 +78,19 @@ function isActiveRoute(to: string): boolean {
     return route.path === '/'
   }
   return route.path.startsWith(to)
+}
+
+function formatAmount(value: number): string {
+  if (!Number.isFinite(value)) {
+    return '--'
+  }
+  const normalized = value / 100
+  return `${amountFormatter.format(normalized)}元`
+}
+
+function displaySponsorName(name: string): string {
+  const trimmed = name.trim()
+  return trimmed.length > 0 ? trimmed : '匿名'
 }
 
 onMounted(() => {
@@ -80,12 +122,21 @@ onMounted(() => {
     <template #header>
       <NuxtLink
         to="/open-letter"
-        class="flex h-9 w-9 items-center justify-center hover:bg-[var(--auxline-bg-hover)]
+        class="inline-flex h-9 w-9 items-center justify-center hover:bg-[var(--auxline-bg-hover)]
           focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)]"
         aria-label="说明"
         title="说明"
       >
         <span class="text-base i-heroicons-information-circle-20-solid" aria-hidden="true" />
+      </NuxtLink>
+      <NuxtLink
+        to="/changelog"
+        class="inline-flex h-9 w-9 items-center justify-center hover:bg-[var(--auxline-bg-hover)]
+          focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)]"
+        aria-label="更新日志"
+        title="更新日志"
+      >
+        <span class="text-base i-heroicons-document-text-20-solid" aria-hidden="true" />
       </NuxtLink>
     </template>
     <template #headerActions>
@@ -150,28 +201,108 @@ onMounted(() => {
       </template>
     </template>
     <template #main>
-      <section class="flex flex-col items-center gap-1 pt-12 pb-12">
-        <h1 class="text-3xl  text-center">
-          ZeroRoku
-        </h1>
-        <p class="text-xs text-[var(--auxline-fg-muted)]">
-          06数据观测站
-        </p>
-      </section>
-      <div class="flex flex-wrap justify-center children:border-r first:children:border-l">
-        <AuxlineBtn
-          v-for="item in navItems"
-          :key="item.to"
-          size="sm"
-          :to="item.to"
-          :disabled="item.disabled"
-          :variant="isActiveRoute(item.to) ? 'contrast' : 'solid'"
-          :aria-current="isActiveRoute(item.to) ? 'page' : undefined"
+      <div class="relative w-full flex flex-col flex-1 min-h-full border-b-0 children:border-b children:border-[var(--auxline-line)]">
+        <aside
+          v-if="showSponsorsAside"
+          class="hidden w-full border-b border-[var(--auxline-line)] flex-col 2xl:flex
+            2xl:absolute 2xl:left-0 2xl:top-0 2xl:bottom-0 2xl:w-64 2xl:-translate-x-full 2xl:border 2xl:bg-[var(--auxline-bg)]"
         >
-          {{ item.label }}
-        </AuxlineBtn>
+          <div
+            class="flex flex-wrap items-center justify-between gap-1 border-b border-[var(--auxline-line)] px-1 py-1 text-[0.6rem]
+              font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
+          >
+            <div class="flex items-center gap-1">
+              <span>赞助</span>
+              <span v-if="sponsorItems.length > 0" class="text-[var(--auxline-fg-muted)]">
+                {{ sponsorItems.length }}
+              </span>
+            </div>
+            <div class="flex flex-wrap items-center gap-0">
+              <a
+                v-for="action in sponsorActions"
+                :key="action.href"
+                :href="action.href"
+                target="_blank"
+                rel="noreferrer"
+                class="inline-flex items-center justify-center px-1 py-0.5 text-[0.55rem]
+                  text-[var(--auxline-fg)] hover:bg-[var(--auxline-bg-hover)] focus-visible:outline focus-visible:outline-1
+                  focus-visible:outline-[var(--auxline-line)]"
+              >
+                {{ action.label }}
+              </a>
+            </div>
+          </div>
+          <div class="flex flex-col flex-1 min-h-0 overflow-y-auto">
+            <template v-if="sponsorsPending">
+              <div
+                v-for="index in sponsorSkeletons"
+                :key="`sponsor-skeleton-${index}`"
+                class="flex items-center justify-between gap-1 border-b border-[var(--auxline-line)] px-1 py-1 last:border-b-0"
+              >
+                <span class="h-3 w-24 bg-[var(--auxline-bg-emphasis)]" />
+                <span class="h-3 w-10 bg-[var(--auxline-bg-emphasis)]" />
+              </div>
+            </template>
+            <template v-else>
+              <div
+                v-for="item in sponsorItems"
+                :key="item.id"
+                class="flex items-center justify-between gap-1 border-b border-[var(--auxline-line)] px-1 py-1 text-[0.7rem] last:border-b-0"
+              >
+                <span class="truncate">{{ displaySponsorName(item.name) }}</span>
+                <span class="shrink-0 text-[0.6rem] font-mono text-[var(--auxline-fg-muted)]">
+                  {{ formatAmount(item.amount) }}
+                </span>
+              </div>
+              <div
+                v-if="sponsorItems.length === 0"
+                class="px-1 py-2 text-[0.65rem] font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
+              >
+                暂无赞助者
+              </div>
+            </template>
+            <p v-if="sponsorsError" class="px-1 py-1 text-[0.65rem] text-red-600">
+              赞助列表加载失败
+            </p>
+          </div>
+        </aside>
+        <div class="flex flex-wrap justify-center children:border-r first:children:border-l">
+          <AuxlineBtn
+            v-for="item in navItems"
+            :key="item.to"
+            size="sm"
+            :to="item.to"
+            :disabled="item.disabled"
+            :variant="isActiveRoute(item.to) ? 'contrast' : 'solid'"
+            :aria-current="isActiveRoute(item.to) ? 'page' : undefined"
+          >
+            {{ item.label }}
+          </AuxlineBtn>
+        </div>
+        <section
+          v-if="isHome"
+          class="flex flex-col items-center text-center"
+          :class="isHome ? 'gap-1 pt-12 pb-12' : 'gap-0 py-1'"
+        >
+          <h1 class="text-3xl">
+            ZeroRoku
+          </h1>
+          <p class="text-xs text-[var(--auxline-fg-muted)]">
+            06数据观测站
+          </p>
+        </section>
+
+        <div v-if="!isSponsorsPage" class="flex w-full justify-center lg:hidden">
+          <AuxlineBtn
+            to="/sponsors" size="sm" class="w-full justify-center"
+          >
+            赞助者
+          </AuxlineBtn>
+        </div>
+        <div class="w-full">
+          <slot />
+        </div>
       </div>
-      <slot />
     </template>
     <template #footer>
       <p class="text-sm py-2 text-center text-[var(--auxline-fg-muted)]">

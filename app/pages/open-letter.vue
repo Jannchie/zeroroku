@@ -11,9 +11,9 @@ useSeoMeta({
       subtitle="06数据观测站"
     />
     <div class="w-full max-w-3xl border-[var(--auxline-line)] sm:border-x">
-      <div class="flex items-center justify-between border-b border-[var(--auxline-line)] px-4 py-3">
-        <p class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-          致每一位观察者
+      <div class="flex items-center justify-between border-b border-[var(--auxline-line)]">
+        <p class="px-2 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+          致观测者
         </p>
         <AuxlineBtn to="/" size="sm">
           返回主页面

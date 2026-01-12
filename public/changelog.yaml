@@ -1,0 +1,17 @@
+changelog:
+  - date: '2026-01-12'
+    version: '0.4.0'
+    summary: '新增页面与展示'
+    entries:
+      - type: '新增'
+        text: '添加了赞助者相关的页面。'
+      - type: '新增'
+        text: '添加了最近访问的显示。'
+      - type: '新增'
+        text: '添加了更新日志页面。'
+  - date: '2026-01-11'
+    version: '0.3.0'
+    summary: '网站重写'
+    entries:
+      - type: '变更'
+        text: '重写整个网站。'

@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 
 const { selectedScheme, activeScheme, setScheme } = useColorScheme()
+const { showSponsorsSidebar, setShowSponsorsSidebar } = useSponsorSidebar()
 
 const activeSchemeLabel = computed(() => (activeScheme.value === 'dark' ? '夜间' : '日间'))
 
@@ -52,6 +53,32 @@ useSeoMeta({
           <p class="text-xs text-[var(--auxline-fg-muted)]">
             <span v-if="selectedScheme === 'auto'">当前系统为 {{ activeSchemeLabel }}。</span>
             <span v-else>切换后立即生效，并记住你的选择。</span>
+          </p>
+        </div>
+        <div class="flex flex-col gap-2">
+          <p class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+            侧边赞助栏
+          </p>
+          <div class="flex flex-wrap items-center" role="group" aria-label="侧边赞助栏显示">
+            <AuxlineBtn
+              size="sm"
+              :variant="showSponsorsSidebar ? 'contrast' : 'solid'"
+              :aria-pressed="showSponsorsSidebar"
+              @click="setShowSponsorsSidebar(true)"
+            >
+              显示
+            </AuxlineBtn>
+            <AuxlineBtn
+              size="sm"
+              :variant="showSponsorsSidebar ? 'solid' : 'contrast'"
+              :aria-pressed="!showSponsorsSidebar"
+              @click="setShowSponsorsSidebar(false)"
+            >
+              关闭
+            </AuxlineBtn>
+          </div>
+          <p class="text-xs text-[var(--auxline-fg-muted)]">
+            关闭后不再显示侧边赞助栏，仅对桌面端有效。
           </p>
         </div>
       </div>
