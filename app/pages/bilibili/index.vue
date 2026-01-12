@@ -381,7 +381,7 @@ onMounted(() => {
           >
             <label class="flex flex-1 flex-col text-xs tracking-[0.12em] text-[var(--auxline-fg-muted)]">
               <div class="pl-1 py-1 border-b border-[var(--auxline-line)]">
-                输入 MID 观测
+                输入UP主ID观测
               </div>
               <div class="flex border-b border-[var(--auxline-line)]">
                 <input
