@@ -255,7 +255,7 @@ watch(path, () => {
             <span>DISLIKE {{ formatCount(item.dislikes) }}</span>
           </div> -->
           </div>
-          <div class="h-2 border-b  auxline-stripe-mask" />
+          <div class="h-2 auxline-stripe-mask" />
           <div class="border-b border-[var(--auxline-line)]" />
         </div>
         <div
