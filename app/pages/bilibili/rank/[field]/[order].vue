@@ -73,10 +73,30 @@ const config = computed<RankConfig | null>(() => {
   return null
 })
 
-const pageTitle = computed(() => config.value?.title ?? 'Bilibili 排行榜')
+const pageTitle = computed(() => {
+  const title = config.value?.title
+  if (title) {
+    return `${title} · Bilibili`
+  }
+  return 'Bilibili 排行榜'
+})
+
+const pageDescription = computed(() => {
+  const current = config.value
+  if (!current) {
+    return '查看 Bilibili UP 主粉丝与涨跌趋势排行榜。'
+  }
+  if (current.showTrendMeta) {
+    return `${current.title}，按涨粉或掉粉趋势统计的 Bilibili UP 主排行，展示变化幅度与排名。`
+  }
+  return `${current.title}，按 Bilibili UP 主粉丝总数排序，展示头部账号排名。`
+})
 
 useSeoMeta({
   title: pageTitle,
+  description: pageDescription,
+  ogTitle: pageTitle,
+  ogDescription: pageDescription,
 })
 
 watch(

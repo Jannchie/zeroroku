@@ -69,16 +69,12 @@ const author = computed(() => data.value?.item ?? null)
 const pageTitle = computed(() => {
   const name = author.value?.name?.trim()
   if (name) {
-    return `${name} · Bilibili`
+    return `${name} 粉丝趋势与数据 · Bilibili`
   }
   if (mid.value) {
-    return `UP ${mid.value} · Bilibili`
+    return `UP ${mid.value} 粉丝趋势与数据 · Bilibili`
   }
-  return 'Bilibili'
-})
-
-useSeoMeta({
-  title: pageTitle,
+  return 'Bilibili UP 主数据'
 })
 
 const historyItems = computed(() => historyData.value?.items ?? [])
@@ -148,6 +144,55 @@ function formatTimestamp(value: string | null | undefined): string {
   }
   return dateFormatter.format(parsed)
 }
+
+const seoDescriptionMaxLength = 120
+
+function normalizeSeoText(value: string): string {
+  return value.replace(/\s+/g, ' ').trim()
+}
+
+function trimSeoText(value: string, maxLength: number): string {
+  if (value.length <= maxLength) {
+    return value
+  }
+  return `${value.slice(0, Math.max(0, maxLength - 3))}...`
+}
+
+const pageDescription = computed(() => {
+  const name = author.value?.name?.trim()
+  const midLabel = mid.value ? `UP ${mid.value}` : 'UP 主'
+  const titlePart = name ? `${name}（${midLabel}）` : midLabel
+  const stats: string[] = []
+  const fans = author.value?.fans
+  const rate7 = author.value?.rate7
+  const rate1 = author.value?.rate1
+  if (typeof fans === 'number' && Number.isFinite(fans)) {
+    stats.push(`粉丝 ${formatCount(fans)}`)
+  }
+  if (typeof rate7 === 'number' && Number.isFinite(rate7)) {
+    stats.push(`7日变化 ${formatDelta(rate7)}`)
+  }
+  if (typeof rate1 === 'number' && Number.isFinite(rate1)) {
+    stats.push(`1日变化 ${formatDelta(rate1)}`)
+  }
+  const sign = author.value?.sign ? normalizeSeoText(author.value.sign) : ''
+  const segments = [titlePart]
+  if (stats.length > 0) {
+    segments.push(stats.join(' · '))
+  }
+  if (sign) {
+    segments.push(`简介：${sign}`)
+  }
+  segments.push('Bilibili UP 主数据与粉丝趋势')
+  return trimSeoText(segments.join(' | '), seoDescriptionMaxLength)
+})
+
+useSeoMeta({
+  title: pageTitle,
+  description: pageDescription,
+  ogTitle: pageTitle,
+  ogDescription: pageDescription,
+})
 
 function formatCsvValue(value: string | number | null | undefined): string {
   if (value === null || value === undefined) {

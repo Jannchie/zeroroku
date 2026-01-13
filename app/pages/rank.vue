@@ -13,6 +13,9 @@ interface UserExpRankResponse {
 
 useSeoMeta({
   title: '观测者排行榜',
+  description: '观测者经验 TOP 100 排行榜，展示用户 EXP 排名与数据。',
+  ogTitle: '观测者排行榜',
+  ogDescription: '观测者经验 TOP 100 排行榜，展示用户 EXP 排名与数据。',
 })
 
 const { data, pending, error } = useFetch<UserExpRankResponse>('/api/rank', {

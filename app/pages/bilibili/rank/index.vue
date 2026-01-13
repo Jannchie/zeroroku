@@ -1,6 +1,9 @@
 <script setup lang="ts">
 useSeoMeta({
-  title: '粉丝总数排行榜',
+  title: '粉丝总数排行榜 · Bilibili',
+  description: '按 Bilibili UP 主粉丝总数排序的榜单，快速查看头部账号排名。',
+  ogTitle: '粉丝总数排行榜 · Bilibili',
+  ogDescription: '按 Bilibili UP 主粉丝总数排序的榜单，快速查看头部账号排名。',
 })
 </script>
 

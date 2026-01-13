@@ -4,6 +4,9 @@ import { authClient } from '~~/lib/client'
 
 useSeoMeta({
   title: '账户安全',
+  description: '在这里更新密码并维护账户安全设置。',
+  ogTitle: '账户安全',
+  ogDescription: '在这里更新密码并维护账户安全设置。',
 })
 
 const session = authClient.useSession()

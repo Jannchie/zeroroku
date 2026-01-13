@@ -4,6 +4,9 @@ import { authClient } from '~~/lib/client'
 
 useSeoMeta({
   title: '个人资料',
+  description: '查看并管理你的账户基础信息、经验与积分概览。',
+  ogTitle: '个人资料',
+  ogDescription: '查看并管理你的账户基础信息、经验与积分概览。',
 })
 
 const session = authClient.useSession()

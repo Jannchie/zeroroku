@@ -43,6 +43,13 @@
       "when": 1768156723510,
       "tag": "0005_add-sponsor-order-id",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1768296515443,
+      "tag": "0006_add-author-follows-target-index",
+      "breakpoints": true
     }
   ]
 }

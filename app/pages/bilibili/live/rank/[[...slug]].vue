@@ -53,10 +53,14 @@ const windowLabel = computed(() => {
   return `${minutes}分钟`
 })
 
-const pageTitle = computed(() => `直播礼物排行榜 · 近${windowLabel.value}`)
+const pageTitle = computed(() => `直播礼物排行榜 · 近${windowLabel.value} · Bilibili`)
+const pageDescription = computed(() => `Bilibili 直播礼物排行榜，统计近${windowLabel.value}的礼物价值与热度排行。`)
 
 useSeoMeta({
   title: pageTitle,
+  description: pageDescription,
+  ogTitle: pageTitle,
+  ogDescription: pageDescription,
 })
 
 const { data, pending, error } = useFetch<LiveRankResponse>(

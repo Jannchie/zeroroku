@@ -14,7 +14,7 @@ pnpm install
 pnpm dev
 ```
 
-The dev server runs at http://localhost:6066.
+The dev server runs at <http://localhost:6066>.
 
 ## Scripts
 
@@ -28,7 +28,7 @@ pnpm generate
 ## Environment variables
 
 - `DATABASE_URL`: Postgres connection string used by Drizzle and auth.
-- `NUXT_PUBLIC_SITE_URL`: Base URL for SEO metadata (defaults to http://localhost:6066).
+- `NUXT_PUBLIC_SITE_URL`: Base URL for SEO metadata (defaults to <http://localhost:6066>).
 
 ## Project structure
 
@@ -41,7 +41,6 @@ pnpm generate
 
 ## Database workflow
 
-- Introspect schema: `pnpm drizzle-kit introspect --config drizzle.config.ts`.
 - Create migrations: `pnpm drizzle-kit generate --config drizzle.config.ts --name <migration>`.
 - Avoid `pnpm drizzle-kit push`; review SQL before applying.
 - Partitioned tables use numeric suffixes and are excluded by `tablesFilter` in `drizzle.config.ts`.
