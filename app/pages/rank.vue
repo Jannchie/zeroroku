@@ -23,9 +23,6 @@ const { data, pending, error } = useFetch<UserExpRankResponse>('/api/rank', {
 })
 
 const formatter = new Intl.NumberFormat('zh-CN')
-const stripeMaskSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="4" height="4" viewBox="0 0 4 4" shape-rendering="crispEdges"><path d="M0 4L4 0" stroke="white" stroke-width="1"/></svg>'
-const stripeMask = `url("data:image/svg+xml,${encodeURIComponent(stripeMaskSvg)}")`
-const stripeMaskSize = '4px 4px'
 const stripeOffsetRem = 5.75
 const skeletonRows = Array.from({ length: 12 }, (_, index) => index)
 
@@ -61,13 +58,6 @@ function barStyle(item: UserExpRankItem): Record<string, string> {
     width: ratio <= 0
       ? '0%'
       : `calc(${ratio * 100}% - ${ratio * stripeOffsetRem}rem)`,
-    backgroundColor: 'var(--auxline-line)',
-    maskImage: stripeMask,
-    maskSize: stripeMaskSize,
-    maskRepeat: 'repeat',
-    WebkitMaskImage: stripeMask,
-    WebkitMaskSize: stripeMaskSize,
-    WebkitMaskRepeat: 'repeat',
   }
 }
 
@@ -125,7 +115,7 @@ function displayName(item: UserExpRankItem): string {
             class="relative overflow-hidden border-b border-l border-r border-[var(--auxline-line)] last:border-b-0"
           >
             <span
-              class="absolute inset-y-0 z-0 pointer-events-none"
+              class="absolute inset-y-0 z-0 pointer-events-none auxline-stripe-mask"
               :style="barStyle(item)"
               aria-hidden="true"
             />

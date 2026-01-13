@@ -36,9 +36,6 @@ const percentFormatter = new Intl.NumberFormat('zh-CN', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 })
-const stripeMaskSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="4" height="4" viewBox="0 0 4 4" shape-rendering="crispEdges"><path d="M0 4L4 0" stroke="white" stroke-width="1"/></svg>'
-const stripeMask = `url("data:image/svg+xml,${encodeURIComponent(stripeMaskSvg)}")`
-const stripeMaskSize = '4px 4px'
 const stripeOffsetRem = 5.75
 
 function formatValue(value: string | number | null | undefined): string {
@@ -122,13 +119,6 @@ function barStyle(item: FansRankingItem): Record<string, string> {
     width: ratio <= 0
       ? '0%'
       : `calc(${ratio * 100}% - ${ratio * stripeOffsetRem}rem)`,
-    backgroundColor: 'var(--auxline-line)',
-    maskImage: stripeMask,
-    maskSize: stripeMaskSize,
-    maskRepeat: 'repeat',
-    WebkitMaskImage: stripeMask,
-    WebkitMaskSize: stripeMaskSize,
-    WebkitMaskRepeat: 'repeat',
   }
 }
 
@@ -215,7 +205,7 @@ const skeletonRows = Array.from({ length: 50 }, (_, index) => index)
                 focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)]"
             >
               <span
-                class="absolute inset-y-0 z-0 pointer-events-none"
+                class="absolute inset-y-0 z-0 pointer-events-none auxline-stripe-mask"
                 :style="barStyle(item)"
                 aria-hidden="true"
               />
@@ -268,7 +258,7 @@ const skeletonRows = Array.from({ length: 50 }, (_, index) => index)
               class="relative overflow-hidden border-b border-[var(--auxline-line)] last:border-b-0 sm:border-x"
             >
               <span
-                class="absolute inset-y-0 z-0 pointer-events-none"
+                class="absolute inset-y-0 z-0 pointer-events-none auxline-stripe-mask"
                 :style="barStyle(item)"
                 aria-hidden="true"
               />
