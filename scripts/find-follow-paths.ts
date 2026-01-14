@@ -26,8 +26,8 @@ interface CliOptions {
 
 const DEFAULT_MAX_DEPTH = 4
 const DEFAULT_LIMIT = 20
-const MIN_MID = BigInt('0')
-const MAX_MID = BigInt('9223372036854775807')
+const MIN_MID = 0n
+const MAX_MID = 9_223_372_036_854_775_807n
 const USAGE = 'Usage: pnpm tsx scripts/find-follow-paths.ts <fromMid> <toMid> [--max-depth <n>] [--limit <n>]'
 
 function parseMid(input: string | undefined, label: string): bigint {
@@ -67,7 +67,11 @@ function parseArgs(args: string[]): CliOptions {
     throw new Error('Missing required arguments.')
   }
 
-  const [fromRaw, toRaw, ...rest] = args
+  const [
+    fromRaw,
+    toRaw,
+    ...rest
+  ] = args
   let maxDepth = DEFAULT_MAX_DEPTH
   let limit = DEFAULT_LIMIT
 
@@ -205,7 +209,7 @@ function materializePath(node: PathNode): string[] {
     path.push(current.id)
     current = current.parent
   }
-  return path.reverse()
+  return path.toReversed()
 }
 
 type NeighborLoader = (
@@ -232,7 +236,7 @@ async function buildPathIndex(
       break
     }
 
-    const sources = Array.from(new Set(frontier.map(node => node.id)))
+    const sources = [...new Set(frontier.map(node => node.id))]
     const adjacency = await loadNeighbors(client, sources, cache)
     const nextFrontier: PathNode[] = []
 
@@ -277,8 +281,8 @@ function canJoinPaths(forward: PathNode, reverse: PathNode): boolean {
 
 function combinePaths(forward: PathNode, reverse: PathNode): string[] {
   const forwardPath = materializePath(forward)
-  const reversePath = materializePath(reverse).reverse()
-  return forwardPath.concat(reversePath.slice(1))
+  const reversePath = materializePath(reverse).toReversed()
+  return [...forwardPath, ...reversePath.slice(1)]
 }
 
 async function findPathsBidirectional(
@@ -296,7 +300,7 @@ async function findPathsBidirectional(
   const forwardIndex = await buildPathIndex(client, start, forwardDepth, loadAdjacency, forwardCache)
   const reverseIndex = await buildPathIndex(client, target, backwardDepth, loadReverseAdjacency, reverseCache)
 
-  const meetingNodes = Array.from(forwardIndex.keys()).filter(node => reverseIndex.has(node))
+  const meetingNodes = [...forwardIndex.keys()].filter(node => reverseIndex.has(node))
   const results: string[][] = []
   const seen = new Set<string>()
 

@@ -64,7 +64,7 @@ function parseArgs(args: string[]): Options {
     }
     if (arg === '--help' || arg === '-h') {
       printUsage()
-      process.exit(0)
+      throw new Error('Invalid arguments')
     }
     if (arg === '--dry-run') {
       options.dryRun = true
@@ -184,7 +184,7 @@ function readString(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null
 }
 
-function readList(value: unknown): unknown[] {
+function _readList(value: unknown): unknown[] {
   return Array.isArray(value) ? value : []
 }
 
@@ -289,7 +289,7 @@ interface DebugStats {
   sample: Record<string, unknown> | null
 }
 
-function normalizeOrders(items: unknown[], debug: boolean): { rows: SponsorRow[]; ignored: number; debugStats: DebugStats | null } {
+function normalizeOrders(items: unknown[], debug: boolean): { rows: SponsorRow[], ignored: number, debugStats: DebugStats | null } {
   const rows: SponsorRow[] = []
   let ignored = 0
   const seen = new Set<string>()
@@ -365,9 +365,9 @@ async function fetchPage(page: number, options: Options): Promise<FetchResult> {
 
   const response = await fetch(url.toString(), {
     headers: {
-      accept: 'application/json, text/plain, */*',
-      cookie: `token=${options.token}`,
-      referer: `${refererBase}/my/orders/receive`,
+      'accept': 'application/json, text/plain, */*',
+      'cookie': `token=${options.token}`,
+      'referer': `${refererBase}/my/orders/receive`,
       'user-agent': DEFAULT_USER_AGENT,
     },
   })
@@ -387,7 +387,7 @@ async function insertSponsors(
   rows: SponsorRow[],
   timezone: string,
   dryRun: boolean,
-): Promise<{ inserted: number; skipped: number }> {
+): Promise<{ inserted: number, skipped: number }> {
   if (rows.length === 0) {
     return { inserted: 0, skipped: 0 }
   }

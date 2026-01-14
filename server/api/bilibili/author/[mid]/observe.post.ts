@@ -3,8 +3,8 @@ import type { AnyPgTable } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 import { getTableConfig } from 'drizzle-orm/pg-core'
 import { createError, getRouterParam } from 'h3'
-import { auth } from '~~/lib/auth'
 import { authorFansSchedules, authorInfoSchedules, authorVideoSchedules } from '~~/drizzle/schema'
+import { auth } from '~~/lib/auth'
 import { db } from '~~/server/index'
 import { applyCreditChange } from '~~/server/utils/credit'
 
@@ -15,8 +15,8 @@ interface ObserveResponse {
 }
 
 const OBSERVE_COST = 10
-const MIN_MID = BigInt('0')
-const MAX_MID = BigInt('9223372036854775807')
+const MIN_MID = 0n
+const MAX_MID = 9_223_372_036_854_775_807n
 
 function parseMid(value: string | null | undefined): bigint | null {
   if (!value) {

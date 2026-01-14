@@ -1,5 +1,5 @@
-import { Client } from 'pg'
 import Table from 'cli-table3'
+import { Client } from 'pg'
 import 'dotenv/config'
 
 interface FollowerRow {
@@ -14,8 +14,8 @@ interface CliOptions {
 }
 
 const DEFAULT_LIMIT = 50
-const MIN_MID = BigInt('0')
-const MAX_MID = BigInt('9223372036854775807')
+const MIN_MID = 0n
+const MAX_MID = 9_223_372_036_854_775_807n
 const USAGE = 'Usage: pnpm tsx scripts/list-follower-fans.ts <mid> [--limit <n>]'
 
 function parseMid(input: string | undefined, label: string): bigint {
@@ -51,7 +51,7 @@ function parsePositiveInt(input: string | undefined, fallback: number, label: st
 }
 
 function parseArgs(args: string[]): CliOptions {
-  if (args.length < 1) {
+  if (args.length === 0) {
     throw new Error('Missing required arguments.')
   }
   const [midRaw, ...rest] = args

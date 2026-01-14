@@ -1,7 +1,9 @@
+import path from 'node:path'
 import * as process from 'node:process'
-import { resolve } from 'node:path'
-import { drizzle } from 'drizzle-orm/node-postgres'
 import { config } from 'dotenv'
+import { drizzle } from 'drizzle-orm/node-postgres'
+
+const { resolve } = path
 
 config({ path: process.env.DOTENV_CONFIG_PATH ?? resolve(process.cwd(), '.env') })
 

@@ -74,18 +74,18 @@ interface QueryResult<T> {
   rowCount: number | null
 }
 
-const parseDatabaseName = (connectionString: string): string => {
+function parseDatabaseName(connectionString: string): string {
   const url = new URL(connectionString)
   return url.pathname.replace(/^\//, '')
 }
 
-const buildConnectionString = (connectionString: string, database: string): string => {
+function buildConnectionString(connectionString: string, database: string): string {
   const url = new URL(connectionString)
   url.pathname = `/${database}`
   return url.toString()
 }
 
-const parseBatchSize = (value: string | undefined): number => {
+function parseBatchSize(value: string | undefined): number {
   if (!value) {
     return DEFAULT_BATCH_SIZE
   }
@@ -96,18 +96,20 @@ const parseBatchSize = (value: string | undefined): number => {
   return parsed
 }
 
-const requireEnv = (value: string | undefined, message: string): string => {
+function requireEnv(value: string | undefined, message: string): string {
   if (!value) {
     throw new Error(message)
   }
   return value
 }
 
-const quoteIdent = (value: string): string => `"${value.replace(/"/g, '""')}"`
+function quoteIdent(value: string): string {
+  return `"${value.replaceAll('"', '""')}"`
+}
 
 const qualify = (schema: string, name: string): string => `${quoteIdent(schema)}.${quoteIdent(name)}`
 
-const rewriteSchemaInSql = (value: string, sourceSchema: string, targetSchema: string): string => {
+function rewriteSchemaInSql(value: string, sourceSchema: string, targetSchema: string): string {
   if (sourceSchema === targetSchema) {
     return value
   }
@@ -116,32 +118,32 @@ const rewriteSchemaInSql = (value: string, sourceSchema: string, targetSchema: s
   return value.replaceAll(plain, `${targetSchema}.`).replaceAll(quoted, `"${targetSchema}".`)
 }
 
-const mapSchema = (schema: string, sourceSchema: string, targetSchema: string): string => (
-  schema === sourceSchema ? targetSchema : schema
-)
+function mapSchema(schema: string, sourceSchema: string, targetSchema: string): string {
+  return schema === sourceSchema ? targetSchema : schema
+}
 
-const parseIdentity = (value: string | null): ColumnInfo['identity'] => {
+function parseIdentity(value: string | null): ColumnInfo['identity'] {
   if (value === 'a' || value === 'd') {
     return value
   }
   return ''
 }
 
-const parseGenerated = (value: string | null): ColumnInfo['generated'] => {
+function parseGenerated(value: string | null): ColumnInfo['generated'] {
   if (value === 's') {
     return 's'
   }
   return ''
 }
 
-const shouldIncludeForeignKeys = (value: string | undefined): boolean => {
+function shouldIncludeForeignKeys(value: string | undefined): boolean {
   if (!value) {
     return false
   }
   return value === '1' || value.toLowerCase() === 'true'
 }
 
-const addIfNotExistsToIndex = (definition: string): string => {
+function addIfNotExistsToIndex(definition: string): string {
   if (definition.startsWith('CREATE UNIQUE INDEX ')) {
     return definition.replace('CREATE UNIQUE INDEX ', 'CREATE UNIQUE INDEX IF NOT EXISTS ')
   }
@@ -170,7 +172,7 @@ async function tableExists(client: Client, schema: string, table: string): Promi
       limit 1
     `,
     [schema, table],
-  ) as QueryResult<{}>
+  ) as QueryResult<object>
   return result.rowCount !== null && result.rowCount > 0
 }
 
@@ -517,7 +519,7 @@ async function constraintExists(
       limit 1
     `,
     [schema, table, constraintName],
-  ) as QueryResult<{}>
+  ) as QueryResult<object>
   return result.rowCount !== null && result.rowCount > 0
 }
 

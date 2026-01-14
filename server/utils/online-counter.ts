@@ -1,6 +1,7 @@
+import type { RedisClientType } from 'redis'
 import { randomUUID } from 'node:crypto'
 import * as process from 'node:process'
-import { createClient, type RedisClientType } from 'redis'
+import { createClient } from 'redis'
 
 interface OnlineUpdatePayload {
   instanceId: string
@@ -124,7 +125,7 @@ class OnlineCounter {
     }
   }
 
-  async openSession(): Promise<{ id: string; count: number }> {
+  async openSession(): Promise<{ id: string, count: number }> {
     await this.ensureReady()
     const id = randomUUID()
     const now = Date.now()

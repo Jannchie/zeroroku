@@ -1,6 +1,6 @@
+import type { H3Event } from 'h3'
 import * as process from 'node:process'
 import { createError, getRequestIP, setHeader } from 'h3'
-import type { H3Event } from 'h3'
 
 interface RateLimitBucket {
   count: number

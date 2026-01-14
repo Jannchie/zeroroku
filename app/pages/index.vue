@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { formatDateTime } from '~~/lib/formatDateTime'
 
 type PixiModule = typeof import('pixi.js')
 interface PixiAppInit {
@@ -92,22 +93,8 @@ async function loadCubismCore() {
   }
 }
 
-function padTimePart(input: number) {
-  return String(input).padStart(2, '0')
-}
-
 function formatTimestamp(value: string) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-  const year = date.getFullYear()
-  const month = padTimePart(date.getMonth() + 1)
-  const day = padTimePart(date.getDate())
-  const hours = padTimePart(date.getHours())
-  const minutes = padTimePart(date.getMinutes())
-  const seconds = padTimePart(date.getSeconds())
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+  return formatDateTime(value, { fallback: value })
 }
 
 function formatLogPayload(raw: string, eventType?: string) {

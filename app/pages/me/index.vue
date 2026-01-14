@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { authClient } from '~~/lib/client'
+import { formatDateTime } from '~~/lib/formatDateTime'
 
 useSeoMeta({
   title: '个人资料',
@@ -13,13 +14,6 @@ const session = authClient.useSession()
 const user = computed(() => session.value?.data?.user ?? null)
 
 const numberFormatter = new Intl.NumberFormat('zh-CN')
-const dateFormatter = new Intl.DateTimeFormat('zh-CN', {
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
-})
 
 function formatNumber(value: number | string | null | undefined): string {
   if (typeof value === 'number') {
@@ -33,14 +27,7 @@ function formatNumber(value: number | string | null | undefined): string {
 }
 
 function formatDate(value: string | Date | null | undefined): string {
-  if (!value) {
-    return '--'
-  }
-  const date = typeof value === 'string' ? new Date(value) : value
-  if (Number.isNaN(date.getTime())) {
-    return '--'
-  }
-  return dateFormatter.format(date)
+  return formatDateTime(value, { fallback: '--', useRawOnInvalid: false })
 }
 </script>
 

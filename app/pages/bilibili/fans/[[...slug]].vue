@@ -17,18 +17,24 @@ const slug = computed(() => {
 
 const target = computed(() => {
   switch (slug.value) {
-    case '':
+    case '': {
       return '/bilibili/rank'
-    case '1d-up':
+    }
+    case '1d-up': {
       return '/bilibili/rank/rate1/desc'
-    case '1d-down':
+    }
+    case '1d-down': {
       return '/bilibili/rank/rate1/asc'
-    case '7d-up':
+    }
+    case '7d-up': {
       return '/bilibili/rank/rate7/desc'
-    case '7d-down':
+    }
+    case '7d-down': {
       return '/bilibili/rank/rate7/asc'
-    default:
+    }
+    default: {
       return '/bilibili/rank'
+    }
   }
 })
 

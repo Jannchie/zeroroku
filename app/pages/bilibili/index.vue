@@ -394,6 +394,7 @@ onMounted(() => {
                   class="h-9 pl-1 grow border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
                 text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
                 focus-visible:outline-[var(--auxline-line)]"
+                  @keydown.enter.prevent="observeAuthor"
                 >
                 <AuxlineBtn
                   type="submit"
@@ -407,7 +408,7 @@ onMounted(() => {
             </label>
           </form>
           <div
-            class="flex items-center justify-between border-b border-[var(--auxline-line)] px-1 py-1 text-xs
+            class="flex items-center justify-between border-b border-[var(--auxline-line)] pl-1 text-xs
               font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
           >
             <span>观测消耗 {{ observeCost }} 积分</span>
@@ -416,7 +417,7 @@ onMounted(() => {
             </span>
             <AuxlineBtn
               v-else
-              size="sm"
+              size="xs"
               to="/login"
             >
               登录后观测
@@ -452,6 +453,7 @@ onMounted(() => {
                   class="h-9 pl-1 grow border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
                 text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
                 focus-visible:outline-[var(--auxline-line)]"
+                  @keydown.enter.prevent="searchAuthors"
                 >
                 <AuxlineBtn
                   type="submit"

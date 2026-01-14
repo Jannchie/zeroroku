@@ -13,7 +13,7 @@ export function useOnlineCount() {
       return
     }
     source = new EventSource('/api/online')
-    source.onmessage = (event) => {
+    source.addEventListener('message', (event) => {
       try {
         const payload = JSON.parse(event.data) as OnlineMessage
         if (typeof payload.count === 'number' && Number.isFinite(payload.count)) {
@@ -23,7 +23,7 @@ export function useOnlineCount() {
       catch {
         // Ignore malformed payloads from transient network issues.
       }
-    }
+    })
   }
 
   const disconnect = () => {

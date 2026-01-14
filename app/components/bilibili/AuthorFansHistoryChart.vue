@@ -21,7 +21,6 @@ type SeriesData = [number[], (number | null)[]]
 
 const container = ref<HTMLDivElement | null>(null)
 const axisFont = '11px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
-const xAxisFormatter = new Intl.DateTimeFormat('zh-CN', { dateStyle: 'short' })
 
 let chart: uPlot | null = null
 let plotConstructor: typeof import('uplot') | null = null
@@ -69,6 +68,7 @@ const seriesData = computed<SeriesData | null>(() => {
 })
 
 const hasData = computed(() => (seriesData.value?.[0].length ?? 0) > 0)
+const { activeScheme } = useColorScheme()
 
 function buildOptions(
   width: number,
@@ -96,10 +96,11 @@ function buildOptions(
     axes: [
       {
         ...axisBase,
+        show: false,
         grid: { show: false },
-        size: 24,
-        gap: 2,
-        values: (_: uPlot, splits: number[]) => splits.map(value => xAxisFormatter.format(new Date(value * 1000))),
+        size: 0,
+        gap: 0,
+        values: () => [],
       },
       {
         ...axisBase,
@@ -115,7 +116,7 @@ function buildOptions(
         label: '粉丝总数',
         stroke: palette.fg,
         width: 1.5,
-        cap: 'round',
+        cap: 'round' as CanvasLineCap,
         pxAlign: false,
         paths: pathBuilder,
         points: { show: false },
@@ -197,6 +198,14 @@ onMounted(() => {
 })
 
 watch([seriesData, () => props.height, () => props.loading], () => {
+  void renderPlot()
+})
+
+watch(activeScheme, () => {
+  if (!import.meta.client) {
+    return
+  }
+  destroyPlot()
   void renderPlot()
 })
 

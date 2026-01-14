@@ -2,6 +2,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { authClient } from '~~/lib/client'
+import { formatDateTime } from '~~/lib/formatDateTime'
 
 interface AuthorDetailItem {
   mid: string
@@ -31,6 +32,12 @@ interface AuthorHistoryItem {
 
 interface AuthorHistoryResponse {
   items: AuthorHistoryItem[]
+}
+
+interface LivePaidEventAggregationResponse {
+  roomId: string | null
+  columns: string[]
+  items: Record<string, string | number | null>[]
 }
 
 interface ObserveResponse {
@@ -65,6 +72,13 @@ const { data: historyData, pending: historyPending, error: historyError } = useF
   },
 )
 
+const { data: aggregationData, pending: aggregationPending, error: aggregationError } = useFetch<LivePaidEventAggregationResponse>(
+  () => `/api/bilibili/author/${encodeURIComponent(mid.value)}/live-paid-aggregations`,
+  {
+    watch: [mid],
+  },
+)
+
 const author = computed(() => data.value?.item ?? null)
 const pageTitle = computed(() => {
   const name = author.value?.name?.trim()
@@ -78,15 +92,37 @@ const pageTitle = computed(() => {
 })
 
 const historyItems = computed(() => historyData.value?.items ?? [])
+const hiddenAggregationColumnKeys = new Set(['id', 'roomid', 'updateat', 'updatedat', 'updatetime', 'updatedtime'])
+const aggregationColumns = computed(() => {
+  const columns = aggregationData.value?.columns ?? []
+  return columns.filter((column) => {
+    const normalized = normalizeAggregationColumnKey(column)
+    if (normalized === 'bucketstart') {
+      return true
+    }
+    if (hiddenAggregationColumnKeys.has(normalized)) {
+      return false
+    }
+    if (normalized.includes('bucket')) {
+      return false
+    }
+    if (normalized.includes('time') || normalized.includes('date')) {
+      return false
+    }
+    return true
+  })
+})
+const aggregationItems = computed(() => aggregationData.value?.items ?? [])
+const aggregationRoomId = computed(() => aggregationData.value?.roomId ?? null)
 const formatter = new Intl.NumberFormat('zh-CN')
+const amountFormatter = new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 })
 const deltaFormatter = new Intl.NumberFormat('zh-CN', { signDisplay: 'exceptZero' })
-const dateFormatter = new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' })
 const observeCost = 10
 const observePending = ref(false)
 const observeError = ref<string | null>(null)
 const observeSuccess = ref<string | null>(null)
 
-const pageSize = 100
+const pageSize = 10
 const currentPage = ref(1)
 const totalHistory = computed(() => historyItems.value.length)
 const totalPages = computed(() => Math.ceil(totalHistory.value / pageSize))
@@ -100,9 +136,57 @@ const pagedHistory = computed(() => {
 })
 const historyTableHeaderRef = ref<HTMLDivElement | null>(null)
 const canObserve = computed(() => Boolean(mid.value && author.value) && !observePending.value)
+const aggregationSkeletonRows = Array.from({ length: 10 }, (_, index) => index)
+const aggregationTableHeaderRef = ref<HTMLDivElement | null>(null)
+
+const aggregationPageSize = 10
+const aggregationCurrentPage = ref(1)
+const aggregationTotal = computed(() => aggregationItems.value.length)
+const aggregationTotalPages = computed(() => Math.ceil(aggregationTotal.value / aggregationPageSize))
+const aggregationPagedItems = computed(() => {
+  if (aggregationItems.value.length === 0) {
+    return []
+  }
+  const start = (aggregationCurrentPage.value - 1) * aggregationPageSize
+  return aggregationItems.value.slice(start, start + aggregationPageSize)
+})
+
+const columnLabelMap: Record<string, string> = {
+  bucketstart: '时间',
+  timestamp: '时间',
+  createdat: '时间',
+  giftid: '礼物ID',
+  giftname: '礼物',
+  giftamount: '礼物金额',
+  giftcount: '礼物数量',
+  giftnum: '礼物数量',
+  gifts: '礼物数量',
+  guardamount: '大航海金额',
+  scamount: 'SC金额',
+  price: '单价',
+  count: '数量',
+  amount: '金额',
+  totalamount: '总金额',
+  totalprice: '总金额',
+  totalvalue: '总金额',
+  total: '总计',
+  value: '金额',
+  roomid: '直播间',
+  uid: '用户ID',
+  mid: 'UP主ID',
+  name: '名称',
+}
+
+function normalizeAggregationColumnKey(value: string): string {
+  return value.replaceAll(/[^a-z0-9]/gi, '').toLowerCase()
+}
 
 watch(historyItems, () => {
   currentPage.value = 1
+})
+
+watch(aggregationItems, () => {
+  aggregationCurrentPage.value = 1
 })
 
 watch(mid, () => {
@@ -120,6 +204,16 @@ watch(totalPages, (value) => {
   }
 })
 
+watch(aggregationTotalPages, (value) => {
+  if (value <= 0) {
+    aggregationCurrentPage.value = 1
+    return
+  }
+  if (aggregationCurrentPage.value > value) {
+    aggregationCurrentPage.value = value
+  }
+})
+
 function formatCount(value: number | null | undefined): string {
   if (value === null || value === undefined) {
     return '--'
@@ -131,24 +225,226 @@ function formatDelta(value: number | null | undefined): string {
   if (value === null || value === undefined || !Number.isFinite(value)) {
     return '--'
   }
-  return deltaFormatter.format(value)
+  return deltaFormatter.format(Math.round(value))
+}
+
+function normalizeColumnLabel(key: string): string {
+  const normalized = normalizeAggregationColumnKey(key)
+  return columnLabelMap[normalized] ?? `字段 ${key}`
+}
+
+function isNumericColumn(key: string, value: string | number | null): boolean {
+  if (value === null) {
+    return false
+  }
+  const numericKeys = new Set(['price', 'count', 'amount', 'gifts', 'total', 'value'])
+  if (numericKeys.has(key)) {
+    return true
+  }
+  if (typeof value === 'number') {
+    return Number.isFinite(value)
+  }
+  if (typeof value === 'string') {
+    const parsed = Number.parseFloat(value)
+    return Number.isFinite(parsed) && /^[+-]?\d+(?:\.\d+)?$/.test(value.trim())
+  }
+  return false
+}
+
+function parseAggregationNumber(value: string | number): number | null {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null
+  }
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return null
+  }
+  const parsed = Number.parseFloat(trimmed)
+  return Number.isFinite(parsed) && /^[+-]?\d+(?:\.\d+)?$/.test(trimmed) ? parsed : null
+}
+
+function pickAggregationAmountColumn(columns: string[]): string | null {
+  if (columns.length === 0) {
+    return null
+  }
+  const normalizedMap = new Map<string, string>()
+  for (const column of columns) {
+    normalizedMap.set(normalizeAggregationColumnKey(column), column)
+  }
+  const preferredKeys = ['totalamount', 'totalprice', 'totalvalue', 'amount', 'total', 'value']
+  for (const key of preferredKeys) {
+    const match = normalizedMap.get(key)
+    if (match) {
+      return match
+    }
+  }
+  for (const column of columns) {
+    const normalized = normalizeAggregationColumnKey(column)
+    if (normalized.includes('amount') || normalized.includes('total') || normalized.includes('value')) {
+      return column
+    }
+  }
+  return null
+}
+
+function isTimeColumn(key: string): boolean {
+  const normalized = normalizeAggregationColumnKey(key)
+  if (normalized === 'bucketstart') {
+    return true
+  }
+  if (normalized === 'timestamp' || normalized === 'createdat' || normalized === 'createdtime') {
+    return true
+  }
+  if (normalized === 'updatedat' || normalized === 'updatetime' || normalized === 'time' || normalized === 'date') {
+    return true
+  }
+  return /time|date/.test(normalized)
+}
+
+const aggregationTimeColumn = computed(() => {
+  return aggregationColumns.value.find(column => normalizeAggregationColumnKey(column) === 'bucketstart') ?? null
+})
+
+const aggregationAmountColumn = computed(() => {
+  return pickAggregationAmountColumn(aggregationColumns.value)
+})
+
+const aggregationTotals = computed(() => {
+  const amountColumn = aggregationAmountColumn.value
+  const timeColumn = aggregationTimeColumn.value
+  if (!amountColumn || !timeColumn) {
+    return null
+  }
+  let latestTs = -Infinity
+  const parsedRows: Array<{ ts: number, amount: number }> = []
+  for (const row of aggregationItems.value) {
+    const timeValue = row[timeColumn]
+    const amountValue = row[amountColumn]
+    if (timeValue === null || timeValue === undefined || amountValue === null || amountValue === undefined) {
+      continue
+    }
+    if (typeof timeValue !== 'string' && typeof timeValue !== 'number') {
+      continue
+    }
+    if (typeof amountValue !== 'string' && typeof amountValue !== 'number') {
+      continue
+    }
+    const parsedTime = parseAggregationTime(timeValue)
+    const parsedAmount = parseAggregationNumber(amountValue)
+    if (!parsedTime || parsedAmount === null) {
+      continue
+    }
+    const dayStart = new Date(parsedTime)
+    dayStart.setHours(0, 0, 0, 0)
+    const ts = dayStart.getTime()
+    if (!Number.isFinite(ts)) {
+      continue
+    }
+    latestTs = Math.max(latestTs, ts)
+    parsedRows.push({ ts, amount: parsedAmount })
+  }
+  if (!Number.isFinite(latestTs) || parsedRows.length === 0) {
+    return null
+  }
+  const oneDay = 24 * 60 * 60 * 1000
+  const sumWithinDays = (days: number) => {
+    const threshold = latestTs - (days - 1) * oneDay
+    let sum = 0
+    for (const row of parsedRows) {
+      if (row.ts >= threshold) {
+        sum += row.amount
+      }
+    }
+    return sum
+  }
+  return {
+    day: sumWithinDays(1),
+    week: sumWithinDays(7),
+    month: sumWithinDays(30),
+  }
+})
+
+function parseAggregationTime(value: string | number): Date | null {
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) {
+      return null
+    }
+    const millis = value > 10_000_000_000 ? value : value * 1000
+    const date = new Date(millis)
+    return Number.isNaN(date.getTime()) ? null : date
+  }
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return null
+  }
+  if (/^\d+$/.test(trimmed)) {
+    const numeric = Number.parseInt(trimmed, 10)
+    if (Number.isFinite(numeric)) {
+      return parseAggregationTime(numeric)
+    }
+  }
+  const direct = new Date(trimmed)
+  if (!Number.isNaN(direct.getTime())) {
+    return direct
+  }
+  const match = trimmed.match(
+    /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[ T](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/,
+  )
+  if (!match) {
+    return null
+  }
+  const year = Number(match[1])
+  const month = Number(match[2]) - 1
+  const day = Number(match[3])
+  const hour = Number(match[4] ?? 0)
+  const minute = Number(match[5] ?? 0)
+  const second = Number(match[6] ?? 0)
+  const date = new Date(year, month, day, hour, minute, second)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+function formatAggregationValue(key: string, value: string | number | null): string {
+  if (value === null || value === undefined) {
+    return '--'
+  }
+  if (isTimeColumn(key) && (typeof value === 'string' || typeof value === 'number')) {
+    const parsed = parseAggregationTime(value)
+    if (parsed) {
+      return formatDateTime(parsed, { fallback: '--', useRawOnInvalid: false })
+    }
+  }
+  if (typeof value === 'string') {
+    const parsed = Number.parseFloat(value)
+    if (Number.isFinite(parsed) && /^[+-]?\d+(?:\.\d+)?$/.test(value.trim())) {
+      return formatter.format(parsed)
+    }
+    return value
+  }
+  if (typeof value === 'number') {
+    return formatter.format(value)
+  }
+  return String(value)
+}
+
+function formatAmountValue(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) {
+    return '--'
+  }
+  return amountFormatter.format(value)
+}
+
+function liveRoomLink(roomId: string): string {
+  return `https://live.bilibili.com/${roomId}`
 }
 
 function formatTimestamp(value: string | null | undefined): string {
-  if (!value) {
-    return '--'
-  }
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) {
-    return value
-  }
-  return dateFormatter.format(parsed)
+  return formatDateTime(value, { fallback: '--' })
 }
 
 const seoDescriptionMaxLength = 120
 
 function normalizeSeoText(value: string): string {
-  return value.replace(/\s+/g, ' ').trim()
+  return value.replaceAll(/\s+/g, ' ').trim()
 }
 
 function trimSeoText(value: string, maxLength: number): string {
@@ -208,7 +504,7 @@ function formatCsvValue(value: string | number | null | undefined): string {
 function buildHistoryCsv(items: AuthorHistoryItem[]): string {
   const header = ['时间', '粉丝', '7日变化', '1日变化']
   const rows = items.map(item => [
-    item.createdAt ?? '',
+    formatDateTime(item.createdAt, { fallback: '' }),
     item.fans ?? '',
     item.rate7 ?? '',
     item.rate1 ?? '',
@@ -242,6 +538,14 @@ function scrollToHistoryHeader() {
   target.scrollIntoView({ block: 'start' })
 }
 
+function scrollToAggregationHeader() {
+  const target = aggregationTableHeaderRef.value
+  if (!target) {
+    return
+  }
+  target.scrollIntoView({ block: 'start' })
+}
+
 async function goPrevPage() {
   if (currentPage.value <= 1) {
     return
@@ -258,6 +562,24 @@ async function goNextPage() {
   currentPage.value += 1
   await nextTick()
   scrollToHistoryHeader()
+}
+
+async function goPrevAggregationPage() {
+  if (aggregationCurrentPage.value <= 1) {
+    return
+  }
+  aggregationCurrentPage.value -= 1
+  await nextTick()
+  scrollToAggregationHeader()
+}
+
+async function goNextAggregationPage() {
+  if (aggregationCurrentPage.value >= aggregationTotalPages.value) {
+    return
+  }
+  aggregationCurrentPage.value += 1
+  await nextTick()
+  scrollToAggregationHeader()
 }
 
 function displayAuthorName(value: AuthorDetailItem | null): string {
@@ -328,7 +650,7 @@ const historyHeaders = [
   { key: 'rate1', label: '1日变化', align: 'text-right' },
 ]
 
-const historySkeletonRows = Array.from({ length: 100 }, (_, index) => index)
+const historySkeletonRows = Array.from({ length: 10 }, (_, index) => index)
 const recentStorageKey = 'bilibili_recent_authors'
 const recentLimit = 16
 
@@ -387,7 +709,7 @@ watch(author, (value) => {
 <template>
   <section class="flex flex-col items-center border-b-0">
     <div class="w-full max-w-3xl border-b border-[var(--auxline-line)]">
-      <div class="flex items-center justify-between gap-4 border-x border-[var(--auxline-line)] pr-2">
+      <div class="flex items-center justify-between gap-4 border-x border-[var(--auxline-line)]">
         <div class="flex min-w-0 items-center gap-4">
           <div
             class="flex h-16 w-16 items-center justify-center overflow-hidden border border-[var(--auxline-line)]
@@ -437,7 +759,7 @@ watch(author, (value) => {
             >
               登录后观测
             </AuxlineBtn>
-            <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+            <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)] px-2">
               观测消耗 {{ observeCost }} 积分
             </span>
           </template>
@@ -503,22 +825,17 @@ watch(author, (value) => {
               <span class="text-sm font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
                 共 {{ totalHistory }} 条
               </span>
-              <button
-                type="button"
-                class="flex h-7 w-7 items-center justify-center hover:bg-[var(--auxline-bg-hover)]
-                  focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)]"
-                aria-label="说明"
-                title="历史数据按时间倒序展示，每页 100 条。"
-              >
-                <span class="text-base i-heroicons-information-circle-20-solid" aria-hidden="true" />
-              </button>
             </div>
           </div>
-          <div class="border-[var(--auxline-line)] border-b">
+          <div class="border-[var(--auxline-line)] border-b divide-y divide-[var(--auxline-line)]">
             <BilibiliAuthorFansHistoryChart
               :items="historyItems"
               :loading="historyPending"
               :height="220"
+            />
+            <BilibiliAuthorFansHistoryHeatmap
+              :items="historyItems"
+              :loading="historyPending"
             />
           </div>
           <div class="overflow-x-auto border-[var(--auxline-line)]">
@@ -607,6 +924,141 @@ watch(author, (value) => {
           </div>
           <p v-if="historyError" class="mt-4 text-xs font-mono uppercase tracking-[0.12em] text-red-500">
             历史数据加载失败
+          </p>
+        </div>
+        <div class="border h-4 auxline-stripe-mask border-[var(--auxline-line)]" />
+        <div class="sm:border-x border-[var(--auxline-line)]">
+          <div class="flex flex-col gap-2 sm:flex-row border-b border-[var(--auxline-line)] sm:items-center sm:justify-between">
+            <div class="flex flex-wrap items-center gap-2">
+              <p class="text-sm px-2 font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                直播礼物聚合
+              </p>
+              <template v-if="aggregationRoomId">
+                <a
+                  :href="liveRoomLink(aggregationRoomId)"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="px-2 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]
+                    hover:text-[var(--auxline-fg)]"
+                >
+                  ROOM {{ aggregationRoomId }}
+                </a>
+              </template>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 px-2 justify-end">
+              <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                日合计金额 {{ formatAmountValue(aggregationTotals?.day ?? null) }}
+              </span>
+              <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                周合计金额 {{ formatAmountValue(aggregationTotals?.week ?? null) }}
+              </span>
+              <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                月合计金额 {{ formatAmountValue(aggregationTotals?.month ?? null) }}
+              </span>
+              <span
+                v-if="aggregationTotal > 0"
+                class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
+              >
+                共 {{ aggregationTotal }} 条
+              </span>
+            </div>
+          </div>
+          <div class="border-[var(--auxline-line)] border-b divide-y divide-[var(--auxline-line)]">
+            <template v-if="aggregationPending">
+              <div
+                v-for="index in aggregationSkeletonRows"
+                :key="index"
+                class="grid gap-3 px-3 py-2"
+                :style="{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }"
+              >
+                <span
+                  v-for="cellIndex in 4"
+                  :key="cellIndex"
+                  class="h-4 w-full bg-[var(--auxline-bg-emphasis)]"
+                  aria-hidden="true"
+                />
+              </div>
+            </template>
+            <div
+              v-else-if="!aggregationRoomId"
+              class="px-3 py-6 text-center text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
+            >
+              暂无直播间数据
+            </div>
+            <div
+              v-else-if="aggregationColumns.length === 0"
+              class="px-3 py-6 text-center text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
+            >
+              暂无礼物聚合数据
+            </div>
+            <template v-else>
+              <div
+                ref="aggregationTableHeaderRef"
+                class="grid gap-3 px-3 py-2 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
+                :style="{ gridTemplateColumns: `repeat(${aggregationColumns.length}, minmax(0, 1fr))` }"
+              >
+                <span v-for="column in aggregationColumns" :key="column">
+                  {{ normalizeColumnLabel(column) }}
+                </span>
+              </div>
+              <template v-if="aggregationItems.length === 0">
+                <div
+                  class="px-3 py-6 text-center text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
+                >
+                  暂无礼物聚合数据
+                </div>
+              </template>
+              <template v-else>
+                <div
+                  v-for="(row, rowIndex) in aggregationPagedItems"
+                  :key="rowIndex"
+                  class="grid gap-3 px-3 py-2 text-xs"
+                  :style="{ gridTemplateColumns: `repeat(${aggregationColumns.length}, minmax(0, 1fr))` }"
+                >
+                  <span
+                    v-for="column in aggregationColumns"
+                    :key="column"
+                    :class="[
+                      isNumericColumn(column, row[column] ?? null) ? 'text-right tabular-nums' : 'text-left',
+                      isTimeColumn(column) ? 'whitespace-nowrap' : '',
+                    ]"
+                  >
+                    {{ formatAggregationValue(column, row[column] ?? null) }}
+                  </span>
+                </div>
+              </template>
+            </template>
+          </div>
+          <div
+            v-if="aggregationTotal > 0"
+            class="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--auxline-line)]"
+          >
+            <button
+              type="button"
+              class="border-r border-[var(--auxline-line)] px-3 py-1 text-xs font-mono uppercase tracking-[0.12em]
+                text-[var(--auxline-fg)] transition-colors hover:bg-[var(--auxline-bg-hover)]
+                disabled:cursor-not-allowed disabled:opacity-50"
+              :disabled="aggregationCurrentPage <= 1"
+              @click="goPrevAggregationPage"
+            >
+              上一页
+            </button>
+            <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+              第 {{ aggregationTotalPages === 0 ? 0 : aggregationCurrentPage }} / {{ aggregationTotalPages }} 页
+            </span>
+            <button
+              type="button"
+              class="border-l border-[var(--auxline-line)] px-3 py-1 text-xs font-mono uppercase tracking-[0.12em]
+                text-[var(--auxline-fg)] transition-colors hover:bg-[var(--auxline-bg-hover)]
+                disabled:cursor-not-allowed disabled:opacity-50"
+              :disabled="aggregationTotalPages === 0 || aggregationCurrentPage >= aggregationTotalPages"
+              @click="goNextAggregationPage"
+            >
+              下一页
+            </button>
+          </div>
+          <p v-if="aggregationError" class="mt-4 text-xs font-mono uppercase tracking-[0.12em] text-red-500">
+            直播礼物聚合加载失败
           </p>
         </div>
       </template>

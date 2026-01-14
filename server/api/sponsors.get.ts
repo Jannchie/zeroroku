@@ -83,7 +83,7 @@ async function loadSponsors(): Promise<SponsorResponse> {
     order by max(sponsored_at) desc nulls last, sum(amount) desc nulls last
   `)
 
-  const items = result.rows.map(row => {
+  const items = result.rows.map((row) => {
     const name = row.name ?? ''
     const id = name ? toText(name) : 'anonymous'
     return {

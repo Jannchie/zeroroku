@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 type AuxlineBtnVariant = 'solid' | 'contrast'
-type AuxlineBtnSize = 'sm' | 'md' | 'lg'
+type AuxlineBtnSize = 'xs' | 'sm' | 'md' | 'lg'
 
 const props = withDefaults(defineProps<{
   variant?: AuxlineBtnVariant
@@ -28,6 +28,7 @@ const variantClasses: Record<AuxlineBtnVariant, string> = {
 }
 
 const sizeClasses: Record<AuxlineBtnSize, string> = {
+  xs: 'h-6 px-2',
   sm: 'h-8 px-3',
   md: 'h-9 px-4',
   lg: 'h-10 px-5',

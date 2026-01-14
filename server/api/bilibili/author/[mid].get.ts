@@ -38,8 +38,8 @@ interface AuthorDetailRow extends Record<string, unknown> {
   rate1: string | number | null
 }
 
-const MIN_MID = BigInt('0')
-const MAX_MID = BigInt('9223372036854775807')
+const MIN_MID = 0n
+const MAX_MID = 9_223_372_036_854_775_807n
 
 function parseNumber(value: string | number | null | undefined): number | null {
   if (value === null || value === undefined) {

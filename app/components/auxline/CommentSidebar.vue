@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { authClient } from '~~/lib/client'
+import { formatDateTime } from '~~/lib/formatDateTime'
 
 interface CommentItem {
   id: string
@@ -88,22 +89,11 @@ const maxLengthHint = computed(() => {
   return props.maxLengthLabel.replace('{max}', String(MAX_CONTENT_LENGTH))
 })
 
-const dateFormatter = new Intl.DateTimeFormat('zh-CN', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-})
 const countFormatter = new Intl.NumberFormat('zh-CN')
 const skeletonRows = Array.from({ length: 8 }, (_, index) => index)
 
 function formatDate(value: string | null | undefined): string {
-  if (!value) {
-    return '--'
-  }
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) {
-    return value
-  }
-  return dateFormatter.format(parsed)
+  return formatDateTime(value, { fallback: '--' })
 }
 
 function formatCount(value: number | null | undefined): string {
@@ -240,7 +230,7 @@ watch(path, () => {
           <div
             class="flex flex-col gap-2 border-b border-[var(--auxline-line)] px-2 py-2"
           >
-            <div class="flex items-center justify-between text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+            <div class="flex items-center justify-between text-xs font-mono tracking-[0.12em] text-[var(--auxline-fg-muted)]">
               <span class="truncate">{{ displayName(item) }}</span>
               <span class="shrink-0">{{ formatDate(item.createdAt) }}</span>
             </div>
