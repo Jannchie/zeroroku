@@ -31,6 +31,10 @@
 - Use 2-space indentation and prefer single quotes where applicable.
 - Vue components use PascalCase filenames in `app/components/` and route files use kebab-case under `app/pages/`.
 
+## Language Guidelines
+
+- Use Chinese for user-facing text and changelog entries.
+
 ## Testing Guidelines
 
 - No test runner is configured yet. If adding tests, use Vitest and place files as `*.test.ts` or `*.spec.ts` near the code they cover.
@@ -45,3 +49,7 @@
 
 - Store secrets and DB credentials in `.env`; do not commit them.
 - When working with remote databases, prefer introspection and avoid destructive schema sync.
+
+## Changelog
+
+You should maintain a `CHANGELOG.md` file following Keep a Changelog format for significant changes, new features, and bug fixes. Use Chinese for entries.

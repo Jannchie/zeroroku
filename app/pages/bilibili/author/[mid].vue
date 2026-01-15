@@ -15,6 +15,12 @@ interface AuthorDetailItem {
   fans: number | null
   rate7: number | null
   rate1: number | null
+  fansRank: number | null
+  fansTotal: number | null
+  rate7Rank: number | null
+  rate7Total: number | null
+  rate1Rank: number | null
+  rate1Total: number | null
 }
 
 interface AuthorDetailResponse {
@@ -117,6 +123,7 @@ const aggregationRoomId = computed(() => aggregationData.value?.roomId ?? null)
 const formatter = new Intl.NumberFormat('zh-CN')
 const amountFormatter = new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 })
 const deltaFormatter = new Intl.NumberFormat('zh-CN', { signDisplay: 'exceptZero' })
+const percentFormatter = new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 })
 const observeCost = 10
 const observePending = ref(false)
 const observeError = ref<string | null>(null)
@@ -226,6 +233,25 @@ function formatDelta(value: number | null | undefined): string {
     return '--'
   }
   return deltaFormatter.format(Math.round(value))
+}
+
+function formatRankMeta(rank: number | null | undefined, total: number | null | undefined): string | null {
+  if (rank === null || rank === undefined || total === null || total === undefined) {
+    return null
+  }
+  if (!Number.isFinite(rank) || !Number.isFinite(total) || rank <= 0 || total <= 0) {
+    return null
+  }
+  const percent = (rank / total) * 100
+  if (!Number.isFinite(percent)) {
+    return null
+  }
+  const normalizedPercent = Math.min(percent, 100)
+  const segments = [`前 ${percentFormatter.format(normalizedPercent)}%`]
+  if (rank <= 100) {
+    segments.push(`第 ${formatter.format(Math.round(rank))} 名`)
+  }
+  return segments.join(' · ')
 }
 
 function normalizeColumnLabel(key: string): string {
@@ -637,9 +663,21 @@ const infoRows = computed(() => {
     return []
   }
   return [
-    { label: '粉丝', value: formatCount(item.fans) },
-    { label: '7日变化', value: formatDelta(item.rate7) },
-    { label: '1日变化', value: formatDelta(item.rate1) },
+    {
+      label: '粉丝',
+      value: formatCount(item.fans),
+      meta: formatRankMeta(item.fansRank, item.fansTotal),
+    },
+    {
+      label: '7日变化',
+      value: formatDelta(item.rate7),
+      meta: formatRankMeta(item.rate7Rank, item.rate7Total),
+    },
+    {
+      label: '1日变化',
+      value: formatDelta(item.rate1),
+      meta: formatRankMeta(item.rate1Rank, item.rate1Total),
+    },
   ]
 })
 
@@ -804,6 +842,9 @@ watch(author, (value) => {
             <span class="px-2 text-lg">
               {{ item.value }}
             </span>
+            <span v-if="item.meta" class="px-2 text-xs text-[var(--auxline-fg-muted)]">
+              {{ item.meta }}
+            </span>
           </div>
         </div>
         <div class="sm:border-x border-[var(--auxline-line)]">
@@ -901,8 +942,8 @@ watch(author, (value) => {
             <button
               type="button"
               class="border-r border-[var(--auxline-line)] px-3 py-1 text-xs font-mono uppercase tracking-[0.12em]
-                text-[var(--auxline-fg)] transition-colors hover:bg-[var(--auxline-bg-hover)]
-                disabled:cursor-not-allowed disabled:opacity-50"
+                text-[var(--auxline-fg)] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              :class="currentPage > 1 ? 'hover:bg-[var(--auxline-bg-hover)]' : ''"
               :disabled="currentPage <= 1"
               @click="goPrevPage"
             >
@@ -914,8 +955,8 @@ watch(author, (value) => {
             <button
               type="button"
               class="border-l border-[var(--auxline-line)] px-3 py-1 text-xs font-mono uppercase tracking-[0.12em]
-                text-[var(--auxline-fg)] transition-colors hover:bg-[var(--auxline-bg-hover)]
-                disabled:cursor-not-allowed disabled:opacity-50"
+                text-[var(--auxline-fg)] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              :class="totalPages > 0 && currentPage < totalPages ? 'hover:bg-[var(--auxline-bg-hover)]' : ''"
               :disabled="totalPages === 0 || currentPage >= totalPages"
               @click="goNextPage"
             >
@@ -1036,8 +1077,8 @@ watch(author, (value) => {
             <button
               type="button"
               class="border-r border-[var(--auxline-line)] px-3 py-1 text-xs font-mono uppercase tracking-[0.12em]
-                text-[var(--auxline-fg)] transition-colors hover:bg-[var(--auxline-bg-hover)]
-                disabled:cursor-not-allowed disabled:opacity-50"
+                text-[var(--auxline-fg)] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              :class="aggregationCurrentPage > 1 ? 'hover:bg-[var(--auxline-bg-hover)]' : ''"
               :disabled="aggregationCurrentPage <= 1"
               @click="goPrevAggregationPage"
             >
@@ -1049,8 +1090,8 @@ watch(author, (value) => {
             <button
               type="button"
               class="border-l border-[var(--auxline-line)] px-3 py-1 text-xs font-mono uppercase tracking-[0.12em]
-                text-[var(--auxline-fg)] transition-colors hover:bg-[var(--auxline-bg-hover)]
-                disabled:cursor-not-allowed disabled:opacity-50"
+                text-[var(--auxline-fg)] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              :class="aggregationTotalPages > 0 && aggregationCurrentPage < aggregationTotalPages ? 'hover:bg-[var(--auxline-bg-hover)]' : ''"
               :disabled="aggregationTotalPages === 0 || aggregationCurrentPage >= aggregationTotalPages"
               @click="goNextAggregationPage"
             >

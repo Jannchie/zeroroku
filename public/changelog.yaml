@@ -1,4 +1,12 @@
 changelog:
+  - date: 2026-01-15
+    version: 0.3.1
+    summary: 性能与功能更新
+    entries:
+      - type: 优化
+        text: 并行化 UP 主详情查询，并合并排名查询以降低响应耗时。
+      - type: 特性
+        text: 新增 UP 主粉丝数及 7 日/1 日变化的百分位与排名展示。
   - date: 2026-01-13
     version: 0.3.0
     summary: 特性与修复
