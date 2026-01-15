@@ -97,6 +97,7 @@ export default defineEventHandler(async (event): Promise<AuthorFansHistoryRespon
   const historyTable = getTableIdentifier(authorFansStatMaster)
   const result = await db.execute<AuthorFansHistoryRow>(sql`
     select
+      distinct on (date_trunc('day', created_at))
       id::text as id,
       mid::text as mid,
       fans::bigint as fans,
@@ -105,7 +106,8 @@ export default defineEventHandler(async (event): Promise<AuthorFansHistoryRespon
       rate7::bigint as rate7
     from ${historyTable}
     where mid = ${numericMid}
-    order by created_at desc nulls last, id desc
+      and created_at is not null
+    order by date_trunc('day', created_at) desc, created_at desc, id desc
   `)
 
   const items = result.rows.map(row => ({
