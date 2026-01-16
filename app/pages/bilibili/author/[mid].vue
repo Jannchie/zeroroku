@@ -142,6 +142,12 @@ const formatter = new Intl.NumberFormat('zh-CN')
 const amountFormatter = new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 })
 const deltaFormatter = new Intl.NumberFormat('zh-CN', { signDisplay: 'exceptZero' })
 const percentFormatter = new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 })
+const aggregationDateFormatter = new Intl.DateTimeFormat('zh-CN', {
+  timeZone: 'Asia/Shanghai',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
 const observeCost = 10
 const observePending = ref(false)
 const observeError = ref<string | null>(null)
@@ -277,22 +283,11 @@ function normalizeColumnLabel(key: string): string {
   return columnLabelMap[normalized] ?? `字段 ${key}`
 }
 
-function isNumericColumn(key: string, value: string | number | null): boolean {
-  if (value === null) {
-    return false
+function aggregationColumnClass(key: string): string {
+  if (isTimeColumn(key)) {
+    return 'text-left whitespace-nowrap'
   }
-  const numericKeys = new Set(['price', 'count', 'amount', 'gifts', 'total', 'value'])
-  if (numericKeys.has(key)) {
-    return true
-  }
-  if (typeof value === 'number') {
-    return Number.isFinite(value)
-  }
-  if (typeof value === 'string') {
-    const parsed = Number.parseFloat(value)
-    return Number.isFinite(parsed) && /^[+-]?\d+(?:\.\d+)?$/.test(value.trim())
-  }
-  return false
+  return 'text-right tabular-nums'
 }
 
 function parseAggregationNumber(value: string | number): number | null {
@@ -359,8 +354,8 @@ const aggregationTotals = computed(() => {
   if (!amountColumn || !timeColumn) {
     return null
   }
-  let latestTs = -Infinity
-  const parsedRows: Array<{ ts: number, amount: number }> = []
+  let latestDayIndex = -Infinity
+  const parsedRows: Array<{ dayIndex: number, amount: number }> = []
   for (const row of aggregationItems.value) {
     const timeValue = row[timeColumn]
     const amountValue = row[amountColumn]
@@ -373,29 +368,29 @@ const aggregationTotals = computed(() => {
     if (typeof amountValue !== 'string' && typeof amountValue !== 'number') {
       continue
     }
-    const parsedTime = parseAggregationTime(timeValue)
     const parsedAmount = parseAggregationNumber(amountValue)
-    if (!parsedTime || parsedAmount === null) {
+    if (parsedAmount === null) {
       continue
     }
-    const dayStart = new Date(parsedTime)
-    dayStart.setHours(0, 0, 0, 0)
-    const ts = dayStart.getTime()
-    if (!Number.isFinite(ts)) {
+    const dateKey = toAggregationDateKey(timeValue)
+    if (!dateKey) {
       continue
     }
-    latestTs = Math.max(latestTs, ts)
-    parsedRows.push({ ts, amount: parsedAmount })
+    const dayIndex = parseAggregationDayIndex(dateKey)
+    if (dayIndex === null) {
+      continue
+    }
+    latestDayIndex = Math.max(latestDayIndex, dayIndex)
+    parsedRows.push({ dayIndex, amount: parsedAmount })
   }
-  if (!Number.isFinite(latestTs) || parsedRows.length === 0) {
+  if (!Number.isFinite(latestDayIndex) || parsedRows.length === 0) {
     return null
   }
-  const oneDay = 24 * 60 * 60 * 1000
   const sumWithinDays = (days: number) => {
-    const threshold = latestTs - (days - 1) * oneDay
+    const threshold = latestDayIndex - (days - 1)
     let sum = 0
     for (const row of parsedRows) {
-      if (row.ts >= threshold) {
+      if (row.dayIndex >= threshold) {
         sum += row.amount
       }
     }
@@ -447,15 +442,49 @@ function parseAggregationTime(value: string | number): Date | null {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
+function toAggregationDateKey(value: string | number): string | null {
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      return trimmed
+    }
+  }
+  const parsed = parseAggregationTime(value)
+  if (!parsed) {
+    return null
+  }
+  return aggregationDateFormatter.format(parsed).replaceAll('/', '-')
+}
+
+function parseAggregationDayIndex(value: string): number | null {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!match) {
+    return null
+  }
+  const year = Number(match[1])
+  const month = Number(match[2]) - 1
+  const day = Number(match[3])
+  const utc = Date.UTC(year, month, day)
+  if (!Number.isFinite(utc)) {
+    return null
+  }
+  return Math.floor(utc / 86_400_000)
+}
+
+function formatAggregationDateValue(value: string | number): string {
+  const dateKey = toAggregationDateKey(value)
+  if (dateKey) {
+    return dateKey
+  }
+  return typeof value === 'string' ? value : '--'
+}
+
 function formatAggregationValue(key: string, value: string | number | null): string {
   if (value === null || value === undefined) {
     return '--'
   }
   if (isTimeColumn(key) && (typeof value === 'string' || typeof value === 'number')) {
-    const parsed = parseAggregationTime(value)
-    if (parsed) {
-      return formatDateTime(parsed, { fallback: '--', useRawOnInvalid: false })
-    }
+    return formatAggregationDateValue(value)
   }
   if (typeof value === 'string') {
     const parsed = Number.parseFloat(value)
@@ -1068,7 +1097,7 @@ onMounted(() => {
                 class="grid gap-3 px-3 py-2 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
                 :style="{ gridTemplateColumns: `repeat(${aggregationColumns.length}, minmax(0, 1fr))` }"
               >
-                <span v-for="column in aggregationColumns" :key="column">
+                <span v-for="column in aggregationColumns" :key="column" :class="aggregationColumnClass(column)">
                   {{ normalizeColumnLabel(column) }}
                 </span>
               </div>
@@ -1089,10 +1118,7 @@ onMounted(() => {
                   <span
                     v-for="column in aggregationColumns"
                     :key="column"
-                    :class="[
-                      isNumericColumn(column, row[column] ?? null) ? 'text-right tabular-nums' : 'text-left',
-                      isTimeColumn(column) ? 'whitespace-nowrap' : '',
-                    ]"
+                    :class="aggregationColumnClass(column)"
                   >
                     {{ formatAggregationValue(column, row[column] ?? null) }}
                   </span>

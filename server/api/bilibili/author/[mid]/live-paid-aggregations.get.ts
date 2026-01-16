@@ -27,6 +27,7 @@ interface RoomRow {
 const TABLE_NAME = 'live_paid_event_aggregations'
 const TABLE_SCHEMA = 'public'
 const CACHE_TTL_MS = 60_000
+const AGGREGATION_TIMEZONE = 'Asia/Shanghai'
 
 const cachedResults = new Map<string, { data: LivePaidEventAggregationResponse, expiresAt: number }>()
 const inFlight = new Map<string, Promise<LivePaidEventAggregationResponse>>()
@@ -210,22 +211,73 @@ async function loadAggregations(mid: bigint): Promise<LivePaidEventAggregationRe
   const roomIdentifier = sql.identifier(roomColumn)
 
   const roomFilter = sql`${roomIdentifier} = ${roomId}`
-  const groupByExpr = sql`date_trunc('day', ${timeIdentifier})`
-  const selectFragments = [
-    sql`${groupByExpr} as ${sql.identifier(BUCKET_START_ALIAS)}`,
-    ...numericColumns.map(column => sql`sum(${sql.identifier(column)}) as ${sql.identifier(column)}`),
-  ]
-
-  const result = await db.execute<Record<string, unknown>>(sql`
-    select ${sql.join(selectFragments, sql`, `)}
-    from ${tableIdentifier}
-    where ${roomFilter}
-    group by ${groupByExpr}
-    order by ${groupByExpr} desc nulls last
-  `)
+  const timeColumnRow = columnRows.find(row => row.column_name === timeColumn)
+  const timeDataType = timeColumnRow?.data_type?.toLowerCase() ?? ''
+  const timeUdtName = timeColumnRow?.udt_name?.toLowerCase() ?? ''
+  const isDateType = timeDataType === 'date'
+  const isTimestampWithoutTimeZone = timeDataType === 'timestamp without time zone' || timeUdtName === 'timestamp'
+  const isTimestampWithTimeZone = timeDataType === 'timestamp with time zone' || timeUdtName === 'timestamptz'
+  const isTextType = timeDataType === 'text'
+    || timeDataType === 'character varying'
+    || timeDataType === 'character'
+  const isNumericTimeType = NUMERIC_DATA_TYPES.has(timeDataType) || NUMERIC_UDT_TYPES.has(timeUdtName)
+  let timeExpression = sql`${timeIdentifier}`
+  if (!isDateType) {
+    if (isNumericTimeType) {
+      timeExpression = sql`to_timestamp(
+        case
+          when ${timeIdentifier} > 1000000000000 then ${timeIdentifier} / 1000.0
+          else ${timeIdentifier}
+        end
+      ) AT TIME ZONE ${AGGREGATION_TIMEZONE}`
+    }
+    else if (isTimestampWithoutTimeZone) {
+      timeExpression = sql`(${timeIdentifier} AT TIME ZONE 'UTC') AT TIME ZONE ${AGGREGATION_TIMEZONE}`
+    }
+    else if (isTimestampWithTimeZone) {
+      timeExpression = sql`${timeIdentifier} AT TIME ZONE ${AGGREGATION_TIMEZONE}`
+    }
+    else if (isTextType) {
+      timeExpression = sql`(${timeIdentifier})::timestamptz AT TIME ZONE ${AGGREGATION_TIMEZONE}`
+    }
+    else {
+      timeExpression = sql`${timeIdentifier} AT TIME ZONE ${AGGREGATION_TIMEZONE}`
+    }
+  }
+  const groupByExpr = isDateType ? sql`${timeIdentifier}` : sql`date(${timeExpression})`
 
   const outputColumns = [BUCKET_START_ALIAS, ...numericColumns]
-  const items = result.rows.map((row) => {
+  const runQuery = async (groupByClause: typeof groupByExpr) => {
+    const selectFragments = [
+      sql`to_char(${groupByClause}, 'YYYY-MM-DD') as ${sql.identifier(BUCKET_START_ALIAS)}`,
+      ...numericColumns.map(column => sql`sum(${sql.identifier(column)}) as ${sql.identifier(column)}`),
+    ]
+    return db.execute<Record<string, unknown>>(sql`
+      select ${sql.join(selectFragments, sql`, `)}
+      from ${tableIdentifier}
+      where ${roomFilter}
+      group by ${groupByClause}
+      order by ${groupByClause} desc nulls last
+    `)
+  }
+
+  let rows: Record<string, unknown>[] = []
+  try {
+    const result = await runQuery(groupByExpr)
+    rows = result.rows
+  }
+  catch {
+    try {
+      const fallbackGroupByExpr = sql`date_trunc('day', ${timeIdentifier})`
+      const result = await runQuery(fallbackGroupByExpr)
+      rows = result.rows
+    }
+    catch {
+      return { roomId, columns: outputColumns, items: [] }
+    }
+  }
+
+  const items = rows.map((row) => {
     const normalized: AggregationItem = {}
     for (const column of outputColumns) {
       normalized[column] = normalizeValue(row[column])
