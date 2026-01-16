@@ -1,5 +1,6 @@
 changelog:
-  - date: 未发布
+  - date: 2026-01-16
+    version: 0.5.0
     entries:
       - type: 新增
         text: 新增站点地图配置并在 robots 中限制私有页面。
@@ -10,7 +11,7 @@ changelog:
       - type: 优化
         text: UP 主详情页将排名百分比查询拆分为独立接口，避免 SSR 阶段耗时。
   - date: 2026-01-15
-    version: 0.3.1
+    version: 0.4.0
     summary: 性能与功能更新
     entries:
       - type: 优化
