@@ -13,6 +13,11 @@ type GlobalWindow = Window & {
   Live2DCubismCore?: unknown
 }
 
+type CoreModel = {
+  setParameterValueById: (parameterId: string, value: number) => void
+  getParameterValueById?: (parameterId: string) => number
+}
+
 const containerRef = ref<HTMLDivElement | null>(null)
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const canvasVisible = ref(false)
@@ -41,6 +46,22 @@ const logFlushInterval = 60
 const logStreamUrl = '/api/logs/stream'
 let cubismCorePromise: Promise<void> | null = null
 const logBuffer: string[] = []
+const eyeOpenParamIds = ['ParamEyeLOpen', 'ParamEyeROpen'] as const
+const eyeClosedValue = 0
+const eyeOpenValue = 1
+const eyeTransitionDuration = 260
+let eyeOpenCurrent = eyeOpenValue
+let eyeOpenTarget = eyeOpenValue
+let eyeTransitionStart: number | null = null
+let eyeTransitionFrom = eyeOpenValue
+let eyeTransitionTo = eyeOpenValue
+let eyeHoldClosed = false
+let pendingEyeBlinkRestore = false
+let pendingEyeBlinkEnabled: boolean | null = null
+let eyeClosureHandler: (() => void) | null = null
+let eyeClosureAttached = false
+let initialAutoFocus: boolean | null = null
+let initialEyeBlinkEnabled: boolean | null = null
 
 function resetLogState() {
   if (logFlushTimer) {
@@ -49,6 +70,164 @@ function resetLogState() {
   }
   logBuffer.length = 0
   logLines.value = []
+}
+
+function getCoreModel(): CoreModel | null {
+  const internalModel = live2dModel?.internalModel
+  if (!internalModel) {
+    return null
+  }
+  const coreModel = internalModel.coreModel as CoreModel
+  if (typeof coreModel?.setParameterValueById !== 'function') {
+    return null
+  }
+  return coreModel
+}
+
+function getNow() {
+  return globalThis.performance?.now ? globalThis.performance.now() : Date.now()
+}
+
+function getEyeOpenValueFromModel() {
+  const coreModel = getCoreModel()
+  if (!coreModel || typeof coreModel.getParameterValueById !== 'function') {
+    return eyeOpenCurrent
+  }
+  const value = coreModel.getParameterValueById(eyeOpenParamIds[0])
+  if (!Number.isFinite(value)) {
+    return eyeOpenCurrent
+  }
+  return value
+}
+
+function setParameterValues(paramIds: readonly string[], value: number) {
+  const coreModel = getCoreModel()
+  if (!coreModel) {
+    return
+  }
+  for (const paramId of paramIds) {
+    coreModel.setParameterValueById(paramId, value)
+  }
+}
+
+function setEyeOpenValue(value: number) {
+  setParameterValues(eyeOpenParamIds, value)
+}
+
+function startEyeTransition(target: number, fromValue?: number) {
+  const current = fromValue ?? getEyeOpenValueFromModel()
+  eyeOpenCurrent = current
+  eyeOpenTarget = target
+  eyeTransitionFrom = current
+  eyeTransitionTo = target
+  if (Math.abs(current - target) < 0.001) {
+    eyeTransitionStart = null
+    return false
+  }
+  eyeTransitionStart = getNow()
+  return true
+}
+
+function restoreEyeBlinkIfPending() {
+  if (!pendingEyeBlinkRestore || !live2dModel) {
+    return
+  }
+  live2dModel.setEyeBlinkEnabled(pendingEyeBlinkEnabled ?? true)
+  pendingEyeBlinkRestore = false
+  pendingEyeBlinkEnabled = null
+}
+
+function updateEyeOpenValue() {
+  if (eyeTransitionStart === null) {
+    eyeOpenCurrent = eyeOpenTarget
+  }
+  else {
+    const progress = Math.min(1, (getNow() - eyeTransitionStart) / eyeTransitionDuration)
+    const eased = progress * (2 - progress)
+    eyeOpenCurrent = eyeTransitionFrom + (eyeTransitionTo - eyeTransitionFrom) * eased
+    if (progress >= 1) {
+      eyeTransitionStart = null
+      eyeOpenCurrent = eyeTransitionTo
+      if (!eyeHoldClosed) {
+        restoreEyeBlinkIfPending()
+        if (!logEnabled.value) {
+          detachEyeClosure()
+        }
+      }
+    }
+  }
+  setEyeOpenValue(eyeOpenCurrent)
+}
+
+function attachEyeClosure() {
+  const internalModel = live2dModel?.internalModel
+  if (!internalModel) {
+    return
+  }
+  if (!eyeClosureHandler) {
+    eyeClosureHandler = () => {
+      if (!eyeHoldClosed && eyeTransitionStart === null) {
+        return
+      }
+      updateEyeOpenValue()
+    }
+  }
+  if (!eyeClosureAttached) {
+    internalModel.on('beforeModelUpdate', eyeClosureHandler)
+    eyeClosureAttached = true
+  }
+}
+
+function detachEyeClosure() {
+  const internalModel = live2dModel?.internalModel
+  if (!internalModel || !eyeClosureHandler || !eyeClosureAttached) {
+    return
+  }
+  internalModel.off('beforeModelUpdate', eyeClosureHandler)
+  eyeClosureAttached = false
+}
+
+function applyLogLive2DState(enabled: boolean) {
+  if (!live2dModel) {
+    return
+  }
+  if (initialAutoFocus === null) {
+    initialAutoFocus = live2dModel.automator.autoFocus
+  }
+  if (initialEyeBlinkEnabled === null) {
+    initialEyeBlinkEnabled = live2dModel.isEyeBlinkEnabled()
+  }
+
+  if (enabled) {
+    live2dModel.automator.autoFocus = false
+    live2dModel.setEyeBlinkEnabled(false)
+    live2dModel.internalModel?.focusController.focus(0, 0, false)
+    pendingEyeBlinkRestore = false
+    pendingEyeBlinkEnabled = null
+    eyeHoldClosed = true
+    startEyeTransition(eyeClosedValue)
+    attachEyeClosure()
+    return
+  }
+
+  live2dModel.automator.autoFocus = initialAutoFocus ?? true
+  const wasHoldingClosed = eyeHoldClosed
+  eyeHoldClosed = false
+  if (wasHoldingClosed) {
+    pendingEyeBlinkRestore = true
+    pendingEyeBlinkEnabled = initialEyeBlinkEnabled ?? true
+    live2dModel.setEyeBlinkEnabled(false)
+    const transitionStarted = startEyeTransition(eyeOpenValue, eyeOpenCurrent)
+    if (transitionStarted) {
+      attachEyeClosure()
+      return
+    }
+    restoreEyeBlinkIfPending()
+    detachEyeClosure()
+    return
+  }
+  live2dModel.setEyeBlinkEnabled(initialEyeBlinkEnabled ?? true)
+  detachEyeClosure()
 }
 
 async function loadCubismCore() {
@@ -215,10 +394,12 @@ function toggleLogStream() {
 watch(logEnabled, (enabled) => {
   if (enabled) {
     connectLogStream()
-    return
   }
-  disconnectLogStream()
-  resetLogState()
+  else {
+    disconnectLogStream()
+    resetLogState()
+  }
+  applyLogLive2DState(enabled)
 })
 
 function fitModel() {
@@ -311,6 +492,8 @@ onMounted(async () => {
     return
   }
 
+  applyLogLive2DState(logEnabled.value)
+
   live2dModel.setRenderer(app.renderer as PixiRenderer)
   app.stage.addChild(live2dModel)
 
@@ -332,6 +515,7 @@ onBeforeUnmount(() => {
 
   disconnectLogStream()
   resetLogState()
+  detachEyeClosure()
 
   if (fadeTimer) {
     globalThis.clearTimeout(fadeTimer)
