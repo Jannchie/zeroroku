@@ -7,6 +7,8 @@ changelog:
         text: 首页日志流改为手动开启后才会连接并显示。
       - type: 变更
         text: 开启日志流时，首页 Live2D 角色不再鼠标追踪并以闭眼过渡维持目视前方。
+      - type: 优化
+        text: UP 主详情页将排名百分比查询拆分为独立接口，避免 SSR 阶段耗时。
   - date: 2026-01-15
     version: 0.3.1
     summary: 性能与功能更新

@@ -13,7 +13,7 @@ type GlobalWindow = Window & {
   Live2DCubismCore?: unknown
 }
 
-type CoreModel = {
+interface CoreModel {
   setParameterValueById: (parameterId: string, value: number) => void
   getParameterValueById?: (parameterId: string) => number
 }

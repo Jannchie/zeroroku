@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { authClient } from '~~/lib/client'
 import { formatDateTime } from '~~/lib/formatDateTime'
@@ -15,6 +15,13 @@ interface AuthorDetailItem {
   fans: number | null
   rate7: number | null
   rate1: number | null
+}
+
+interface AuthorDetailResponse {
+  item: AuthorDetailItem | null
+}
+
+interface AuthorRankingItem {
   fansRank: number | null
   fansTotal: number | null
   rate7Rank: number | null
@@ -23,8 +30,8 @@ interface AuthorDetailItem {
   rate1Total: number | null
 }
 
-interface AuthorDetailResponse {
-  item: AuthorDetailItem | null
+interface AuthorRankingResponse {
+  item: AuthorRankingItem | null
 }
 
 interface AuthorHistoryItem {
@@ -71,6 +78,14 @@ const { data, pending, error } = useFetch<AuthorDetailResponse>(
   },
 )
 
+const { data: rankingData, pending: rankingPending } = useFetch<AuthorRankingResponse>(
+  () => `/api/bilibili/author/${encodeURIComponent(mid.value)}/ranking`,
+  {
+    watch: [mid],
+    server: false,
+  },
+)
+
 const { data: historyData, pending: historyPending, error: historyError } = useFetch<AuthorHistoryResponse>(
   () => `/api/bilibili/author/${encodeURIComponent(mid.value)}/history`,
   {
@@ -86,6 +101,9 @@ const { data: aggregationData, pending: aggregationPending, error: aggregationEr
 )
 
 const author = computed(() => data.value?.item ?? null)
+const ranking = computed(() => rankingData.value?.item ?? null)
+const hydrated = ref(false)
+const showRankingSkeleton = computed(() => !hydrated.value || rankingPending.value)
 const pageTitle = computed(() => {
   const name = author.value?.name?.trim()
   if (name) {
@@ -662,21 +680,22 @@ const infoRows = computed(() => {
   if (!item) {
     return []
   }
+  const rankingItem = ranking.value
   return [
     {
       label: '粉丝',
       value: formatCount(item.fans),
-      meta: formatRankMeta(item.fansRank, item.fansTotal),
+      meta: formatRankMeta(rankingItem?.fansRank, rankingItem?.fansTotal),
     },
     {
       label: '7日变化',
       value: formatDelta(item.rate7),
-      meta: formatRankMeta(item.rate7Rank, item.rate7Total),
+      meta: formatRankMeta(rankingItem?.rate7Rank, rankingItem?.rate7Total),
     },
     {
       label: '1日变化',
       value: formatDelta(item.rate1),
-      meta: formatRankMeta(item.rate1Rank, item.rate1Total),
+      meta: formatRankMeta(rankingItem?.rate1Rank, rankingItem?.rate1Total),
     },
   ]
 })
@@ -741,6 +760,10 @@ watch(author, (value) => {
     name: value.name ?? null,
     face: value.face ?? null,
   })
+})
+
+onMounted(() => {
+  hydrated.value = true
 })
 </script>
 
@@ -835,18 +858,25 @@ watch(author, (value) => {
           </p>
         </div>
         <div class="grid grid-cols-1 gap-4 border-b border-[var(--auxline-line)] sm:border-x sm:grid-cols-3">
-          <div v-for="item in infoRows" :key="item.label" class="flex flex-col gap-1">
-            <span class="px-2 text-sm tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-              {{ item.label }}
-            </span>
-            <span class="px-2 text-lg">
-              {{ item.value }}
-            </span>
-            <span v-if="item.meta" class="px-2 text-xs text-[var(--auxline-fg-muted)]">
-              {{ item.meta }}
-            </span>
-          </div>
+        <div v-for="item in infoRows" :key="item.label" class="flex flex-col gap-1">
+          <span class="px-2 text-sm tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+            {{ item.label }}
+          </span>
+          <span class="px-2 text-lg">
+            {{ item.value }}
+          </span>
+          <span
+            v-if="showRankingSkeleton"
+            class="px-2"
+            aria-hidden="true"
+          >
+            <span class="block h-4 w-28 bg-[var(--auxline-bg-emphasis)]" />
+          </span>
+          <span v-else-if="item.meta" class="px-2 text-xs text-[var(--auxline-fg-muted)]">
+            {{ item.meta }}
+          </span>
         </div>
+      </div>
         <div class="sm:border-x border-[var(--auxline-line)]">
           <div class="flex flex-col gap-2 sm:flex-row border-b border-[var(--auxline-line)] sm:items-center sm:justify-between">
             <div class="flex flex-wrap items-center gap-2">
