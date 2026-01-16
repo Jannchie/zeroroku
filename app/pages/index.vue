@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { formatDateTime } from '~~/lib/formatDateTime'
 
 type PixiModule = typeof import('pixi.js')
@@ -16,8 +16,10 @@ type GlobalWindow = Window & {
 const containerRef = ref<HTMLDivElement | null>(null)
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const canvasVisible = ref(false)
+const logEnabled = ref(false)
 const logLines = ref<string[]>([])
 const modelPath = '/l2d/06-v2.1024/06-v2.model3.json'
+const logToggleLabel = computed(() => (logEnabled.value ? '关闭日志' : '开启日志'))
 
 useSeoMeta({
   title: '首页',
@@ -39,6 +41,15 @@ const logFlushInterval = 60
 const logStreamUrl = '/api/logs/stream'
 let cubismCorePromise: Promise<void> | null = null
 const logBuffer: string[] = []
+
+function resetLogState() {
+  if (logFlushTimer) {
+    globalThis.clearTimeout(logFlushTimer)
+    logFlushTimer = null
+  }
+  logBuffer.length = 0
+  logLines.value = []
+}
 
 async function loadCubismCore() {
   if (globalThis.window === undefined) {
@@ -179,7 +190,7 @@ function appendLogLines(raw: string, eventType?: string) {
 }
 
 function connectLogStream() {
-  if (logSource || globalThis.EventSource === undefined) {
+  if (!logEnabled.value || logSource || globalThis.EventSource === undefined) {
     return
   }
 
@@ -196,6 +207,19 @@ function disconnectLogStream() {
   logSource?.close()
   logSource = null
 }
+
+function toggleLogStream() {
+  logEnabled.value = !logEnabled.value
+}
+
+watch(logEnabled, (enabled) => {
+  if (enabled) {
+    connectLogStream()
+    return
+  }
+  disconnectLogStream()
+  resetLogState()
+})
 
 function fitModel() {
   if (!app || !app.renderer || !live2dModel) {
@@ -220,8 +244,6 @@ function fitModel() {
 }
 
 onMounted(async () => {
-  connectLogStream()
-
   if (!containerRef.value || !canvasRef.value) {
     return
   }
@@ -309,12 +331,7 @@ onBeforeUnmount(() => {
   disposed = true
 
   disconnectLogStream()
-
-  if (logFlushTimer) {
-    globalThis.clearTimeout(logFlushTimer)
-    logFlushTimer = null
-  }
-  logBuffer.length = 0
+  resetLogState()
 
   if (fadeTimer) {
     globalThis.clearTimeout(fadeTimer)
@@ -348,7 +365,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="relative h-[70vh] w-full overflow-hidden">
     <div class="pointer-events-none absolute inset-0 z-0">
-      <div class="w-full max-h-[46rem] overflow-hidden">
+      <div v-if="logEnabled" class="w-full max-h-[46rem] overflow-hidden">
         <div class="flex flex-col gap-0 px-6 py-6 text-xs leading-5 text-zinc-500/50 font-mono uppercase">
           <div
             v-for="(line, index) in logLines"
@@ -359,6 +376,16 @@ onBeforeUnmount(() => {
           </div>
         </div>
       </div>
+    </div>
+    <div class="absolute right-6 top-6 z-20">
+      <AuxlineBtn
+        size="xs"
+        :variant="logEnabled ? 'contrast' : 'solid'"
+        :aria-pressed="logEnabled"
+        @click="toggleLogStream"
+      >
+        {{ logToggleLabel }}
+      </AuxlineBtn>
     </div>
     <div ref="containerRef" class="relative z-10 h-full w-full">
       <canvas

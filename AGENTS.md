@@ -52,4 +52,4 @@
 
 ## Changelog
 
-You should maintain a `CHANGELOG.md` file following Keep a Changelog format for significant changes, new features, and bug fixes. Use Chinese for entries.
+You should maintain a `public/changelog.yaml` file for significant changes, new features, and bug fixes. Use Chinese for entries.

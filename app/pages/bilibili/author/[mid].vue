@@ -826,7 +826,7 @@ watch(author, (value) => {
         </div>
       </template>
       <template v-else-if="author">
-        <div class="border-b border-[var(--auxline-line)] px-2 py-2 border-x border-[var(--auxline-line)]">
+        <div class="border-b border-[var(--auxline-line)] px-2 py-2 sm:border-x border-[var(--auxline-line)]">
           <p class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
             简介
           </p>

@@ -60,6 +60,14 @@ export default defineNuxtConfig({
     name: 'ZeroRoku · 06数据观测站',
     description: 'ZeroRoku 06数据观测站',
   },
+  sitemap: {
+    sitemapName: 'sitemap.xml',
+    exclude: ['/_**', /^\/login(?:\/|$)/, /^\/settings(?:\/|$)/, /^\/me(?:\/|$)/],
+  },
+  robots: {
+    sitemap: ['/sitemap.xml'],
+    disallow: ['/login', '/settings', '/me'],
+  },
   eslint: {
     config: {
       standalone: false,
