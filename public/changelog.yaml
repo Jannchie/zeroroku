@@ -7,6 +7,8 @@ changelog:
         text: UP 主详情页外链增加跳转图标，直播中可直达直播间，无直播间不再显示状态。
       - type: 新增
         text: UP 主详情页支持跳转 B站个人主页，并区分未开播与无直播间。
+      - type: 优化
+        text: 优化 Bilibili 入口页 SEO 描述信息。
       - type: 修复
         text: 无直播间时不再显示直播礼物聚合模块。
       - type: 修复

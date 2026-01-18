@@ -36,8 +36,14 @@ interface RecentAuthorItem {
   face: string | null
 }
 
+const pageTitle = 'Bilibili'
+const pageDescription = 'ZeroRoku 06数据观测站的 Bilibili 分区，提供 UP 主粉丝总榜、1/7 日涨粉与掉粉榜、UP 主搜索与观测入口、最近访问与热门账号速览。'
+
 useSeoMeta({
-  title: 'Bilibili',
+  title: pageTitle,
+  description: pageDescription,
+  ogTitle: pageTitle,
+  ogDescription: pageDescription,
 })
 
 const searchQuery = ref('')
