@@ -1,6 +1,20 @@
 changelog:
-  - date: 2026-01-16
-    version: 0.5.0
+  - version: 0.6.0
+    date: 2026-01-18
+    summary: 新增与修复
+    entries:
+      - type: 新增
+        text: UP 主详情页外链增加跳转图标，直播中可直达直播间，无直播间不再显示状态。
+      - type: 新增
+        text: UP 主详情页支持跳转 B站个人主页，并区分未开播与无直播间。
+      - type: 修复
+        text: 无直播间时不再显示直播礼物聚合模块。
+      - type: 修复
+        text: 消耗积分的操作后立即刷新账户积分。
+      - type: 修复
+        text: 未找到 UP 主时，详情页仍可触发观测。
+  - version: 0.5.0
+    date: 2026-01-16
     entries:
       - type: 新增
         text: 新增站点地图配置并在 robots 中限制私有页面。
@@ -12,39 +26,39 @@ changelog:
         text: UP 主详情页将排名百分比查询拆分为独立接口，避免 SSR 阶段耗时。
       - type: 修复
         text: 修复直播礼物聚合表格对齐，并按北京时间聚合日期，避免误判为无直播间数据。
-  - date: 2026-01-15
-    version: 0.4.0
+  - version: 0.4.0
+    date: 2026-01-15
     summary: 性能与功能更新
     entries:
       - type: 优化
         text: 并行化 UP 主详情查询，并合并排名查询以降低响应耗时。
-      - type: 特性
+      - type: 新增
         text: 新增 UP 主粉丝数及 7 日/1 日变化的百分位与排名展示。
-  - date: 2026-01-13
-    version: 0.3.0
+  - version: 0.3.0
+    date: 2026-01-13
     summary: 特性与修复
     entries:
-      - type: 特性
+      - type: 新增
         text: 添加了首页酷炫的日志展示。
       - type: 优化
-        text: 改善了文本大小
-  - date: 2026-01-12
-    version: 0.2.0
+        text: 改善了文本大小。
+  - version: 0.2.0
+    date: 2026-01-12
     summary: 新增页面与展示
     entries:
-      - type: 特性
+      - type: 新增
         text: 添加了赞助者相关的页面。
-      - type: 特性
+      - type: 新增
         text: 添加了最近访问的显示。
-      - type: 特性
+      - type: 新增
         text: 添加了更新日志页面。
-      - type: 特性
+      - type: 新增
         text: 添加了修改密码的功能。
-      - type: 特性
-        text: 添加评论功能。
-  - date: 2026-01-11
-    version: 0.1.0
+      - type: 新增
+        text: 添加了评论功能。
+  - version: 0.1.0
+    date: 2026-01-11
     summary: 网站重写
     entries:
-      - type: 杂项
+      - type: 其他
         text: 重写整个网站。
