@@ -1,5 +1,7 @@
 # Repository Guidelines
 
+这个项目的 README 或者注释，可以使用中文。
+
 ## Project Structure & Module Organization
 
 - `app/` holds the Nuxt app source (pages, layouts, components). Routes live under `app/pages/` (e.g., `app/pages/login.vue`).

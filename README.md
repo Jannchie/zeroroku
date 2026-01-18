@@ -1,50 +1,29 @@
 # Zeroroku
 
-Nuxt 4 application with a Nitro server, Drizzle ORM, and Better Auth.
+Zeroroku（06 数据观测站）是一个面向 Bilibili 的数据观察与排行站点，提供粉丝趋势、榜单与观测等能力，帮助你快速了解 UP 主与直播间的动态。
 
-## Requirements
+## 你可以做什么
 
-- Node.js (use the version required by Nuxt 4)
-- pnpm 10.x
+- 查看粉丝总数排行榜，以及 1 日 / 7 日涨粉、掉粉榜单。
+- 浏览 UP 主详情，查看粉丝趋势、历史数据与直播礼物聚合。
+- 查看直播礼物排行榜，并按时间窗口浏览热度变化。
+- 搜索 UP 主，查看最近访问与焦点 UP 主。
+- 观测 UP 主：输入 MID 加入观测队列（会消耗积分，以页面提示为准）。
+- 登录后查看个人资料、经验与积分，进行账户安全设置。
 
-## Quick start
+## 使用指引
 
-```bash
-pnpm install
-pnpm dev
-```
+1. 打开站点首页，进入 Bilibili 数据观测区。
+2. 通过搜索或输入 MID 进入 UP 主详情。
+3. 在排行榜中切换不同维度，查看趋势变化。
+4. 需要观测或账户功能时先登录。
 
-The dev server runs at <http://localhost:6066>.
+## 登录与账户
 
-## Scripts
+- 支持用户名/邮箱 + 密码登录，也支持 GitHub 授权登录。
+- 注册功能如有更新以站内提示为准。
 
-```bash
-pnpm dev
-pnpm build
-pnpm preview
-pnpm generate
-```
+## 数据说明
 
-## Environment variables
-
-- `DATABASE_URL`: Postgres connection string used by Drizzle and auth.
-- `NUXT_PUBLIC_SITE_URL`: Base URL for SEO metadata (defaults to <http://localhost:6066>).
-
-## Project structure
-
-- `app/`: Nuxt app source (pages, layouts, components).
-- `app/components/auxline/`: Auxline UI components.
-- `server/`: Nitro server routes and plugins.
-- `lib/`: Shared runtime utilities (auth, database).
-- `drizzle/`: Generated schema artifacts.
-- `public/`: Static assets served as-is.
-
-## Database workflow
-
-- Create migrations: `pnpm drizzle-kit generate --config drizzle.config.ts --name <migration>`.
-- Avoid `pnpm drizzle-kit push`; review SQL before applying.
-- Partitioned tables use numeric suffixes and are excluded by `tablesFilter` in `drizzle.config.ts`.
-
-## Testing
-
-No test runner is configured yet. If you add tests, use Vitest and name files `*.test.ts` or `*.spec.ts`.
+- 数据为站内统计与整理结果，可能存在缺失或延迟；请以平台最终展示为准。
+- 如页面提示暂无数据或加载失败，请稍后重试。
