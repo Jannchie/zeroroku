@@ -15,6 +15,8 @@ interface AuthorDetailItem {
   fans: number | null
   rate7: number | null
   rate1: number | null
+  liveStatus: number | null
+  liveRoomId: string | null
 }
 
 interface AuthorDetailResponse {
@@ -115,6 +117,34 @@ const pageTitle = computed(() => {
   return 'Bilibili UP 主数据'
 })
 
+const bilibiliProfileLink = computed(() => {
+  const targetMid = author.value?.mid ?? mid.value
+  const trimmed = targetMid?.trim()
+  if (!trimmed) {
+    return null
+  }
+  return `https://space.bilibili.com/${encodeURIComponent(trimmed)}`
+})
+
+const isLive = computed(() => {
+  const status = author.value?.liveStatus
+  if (status === null || status === undefined) {
+    return false
+  }
+  return status > 0
+})
+
+const liveRoomId = computed(() => author.value?.liveRoomId ?? null)
+const liveRoomUrl = computed(() => (liveRoomId.value ? liveRoomLink(liveRoomId.value) : null))
+const showLiveStatus = computed(() => Boolean(author.value && liveRoomId.value))
+const showAggregation = computed(() => Boolean(liveRoomId.value))
+const liveStatusLabel = computed(() => {
+  return isLive.value ? '直播中' : '未开播'
+})
+const liveStatusClass = computed(() => {
+  return isLive.value ? 'text-blue-600' : 'text-[var(--auxline-fg-muted)]'
+})
+
 const historyItems = computed(() => historyData.value?.items ?? [])
 const hiddenAggregationColumnKeys = new Set(['id', 'roomid', 'updateat', 'updatedat', 'updatetime', 'updatedtime'])
 const aggregationColumns = computed(() => {
@@ -138,6 +168,7 @@ const aggregationColumns = computed(() => {
 })
 const aggregationItems = computed(() => aggregationData.value?.items ?? [])
 const aggregationRoomId = computed(() => aggregationData.value?.roomId ?? null)
+const aggregationRoomLabel = computed(() => aggregationRoomId.value ?? liveRoomId.value ?? '')
 const formatter = new Intl.NumberFormat('zh-CN')
 const amountFormatter = new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 })
 const deltaFormatter = new Intl.NumberFormat('zh-CN', { signDisplay: 'exceptZero' })
@@ -152,6 +183,8 @@ const observeCost = 10
 const observePending = ref(false)
 const observeError = ref<string | null>(null)
 const observeSuccess = ref<string | null>(null)
+const observeTarget = computed(() => mid.value.trim())
+const isObserveMidValid = computed(() => /^\d+$/.test(observeTarget.value))
 
 const pageSize = 10
 const currentPage = ref(1)
@@ -166,7 +199,8 @@ const pagedHistory = computed(() => {
   return historyItems.value.slice(start, start + pageSize)
 })
 const historyTableHeaderRef = ref<HTMLDivElement | null>(null)
-const canObserve = computed(() => Boolean(mid.value && author.value) && !observePending.value)
+const canObserve = computed(() => observeTarget.value.length > 0 && isObserveMidValid.value && !observePending.value)
+
 const aggregationSkeletonRows = Array.from({ length: 10 }, (_, index) => index)
 const aggregationTableHeaderRef = ref<HTMLDivElement | null>(null)
 
@@ -677,6 +711,11 @@ async function observeAuthor(): Promise<void> {
     observeSuccess.value = null
     return
   }
+  if (!isObserveMidValid.value) {
+    observeError.value = 'MID 必须是数字。'
+    observeSuccess.value = null
+    return
+  }
 
   observePending.value = true
   observeError.value = null
@@ -684,12 +723,13 @@ async function observeAuthor(): Promise<void> {
 
   try {
     const response = await $fetch<ObserveResponse>(
-      `/api/bilibili/author/${encodeURIComponent(mid.value)}/observe`,
+      `/api/bilibili/author/${encodeURIComponent(observeTarget.value)}/observe`,
       {
         method: 'POST',
       },
     )
     observeSuccess.value = `观测已加入队列，剩余 ${formatCount(response.credit)} 积分。`
+    authClient.$store.notify('$sessionSignal')
   }
   catch (error) {
     if (error && typeof error === 'object' && 'data' in error) {
@@ -819,12 +859,58 @@ onMounted(() => {
             </span>
           </div>
           <div class="flex min-w-0 flex-col">
-            <h1 class="text-2xl  truncate">
+            <h1 class="text-2xl truncate">
               {{ displayAuthorName(author) }}
             </h1>
-            <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-              UP {{ mid }}
-            </span>
+            <div
+              class="flex flex-wrap items-center gap-2 text-xs font-mono uppercase tracking-[0.12em]
+                text-[var(--auxline-fg-muted)]"
+            >
+              <span>UP {{ mid }}</span>
+              <span
+                v-if="bilibiliProfileLink"
+                class="h-3 w-px bg-[var(--auxline-line)]"
+                aria-hidden="true"
+              />
+              <a
+                v-if="bilibiliProfileLink"
+                :href="bilibiliProfileLink"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1 hover:text-[var(--auxline-fg)]"
+                title="打开B站主页"
+              >
+                <span>B站主页</span>
+                <span
+                  class="text-[0.7rem] i-heroicons-arrow-top-right-on-square-20-solid"
+                  aria-hidden="true"
+                />
+              </a>
+              <span
+                v-if="showLiveStatus"
+                class="h-3 w-px bg-[var(--auxline-line)]"
+                aria-hidden="true"
+              />
+              <template v-if="showLiveStatus">
+                <a
+                  v-if="isLive && liveRoomUrl"
+                  :href="liveRoomUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-1 hover:text-blue-500" :class="[liveStatusClass]"
+                  title="打开直播间"
+                >
+                  <span>直播中</span>
+                  <span
+                    class="text-[0.7rem] i-heroicons-arrow-top-right-on-square-20-solid"
+                    aria-hidden="true"
+                  />
+                </a>
+                <span v-else :class="liveStatusClass">
+                  {{ liveStatusLabel }}
+                </span>
+              </template>
+            </div>
           </div>
         </div>
         <div class="flex flex-col items-end gap-1">
@@ -863,7 +949,7 @@ onMounted(() => {
       </p>
       <p
         v-else-if="observeSuccess"
-        class="border-x border-[var(--auxline-line)] px-2 py-2 text-xs text-blue-600"
+        class="border-x border-[var(--auxline-line)] px-2 py-2 text-xs text-green-600"
       >
         {{ observeSuccess }}
       </p>
@@ -887,25 +973,25 @@ onMounted(() => {
           </p>
         </div>
         <div class="grid grid-cols-1 gap-4 border-b border-[var(--auxline-line)] sm:border-x sm:grid-cols-3">
-        <div v-for="item in infoRows" :key="item.label" class="flex flex-col gap-1">
-          <span class="px-2 text-sm tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-            {{ item.label }}
-          </span>
-          <span class="px-2 text-lg">
-            {{ item.value }}
-          </span>
-          <span
-            v-if="showRankingSkeleton"
-            class="px-2"
-            aria-hidden="true"
-          >
-            <span class="block h-4 w-28 bg-[var(--auxline-bg-emphasis)]" />
-          </span>
-          <span v-else-if="item.meta" class="px-2 text-xs text-[var(--auxline-fg-muted)]">
-            {{ item.meta }}
-          </span>
+          <div v-for="item in infoRows" :key="item.label" class="flex flex-col gap-1">
+            <span class="px-2 text-sm tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+              {{ item.label }}
+            </span>
+            <span class="px-2 text-lg">
+              {{ item.value }}
+            </span>
+            <span
+              v-if="showRankingSkeleton"
+              class="px-2"
+              aria-hidden="true"
+            >
+              <span class="block h-4 w-28 bg-[var(--auxline-bg-emphasis)]" />
+            </span>
+            <span v-else-if="item.meta" class="px-2 text-xs text-[var(--auxline-fg-muted)]">
+              {{ item.meta }}
+            </span>
+          </div>
         </div>
-      </div>
         <div class="sm:border-x border-[var(--auxline-line)]">
           <div class="flex flex-col gap-2 sm:flex-row border-b border-[var(--auxline-line)] sm:items-center sm:justify-between">
             <div class="flex flex-wrap items-center gap-2">
@@ -1026,138 +1112,134 @@ onMounted(() => {
             历史数据加载失败
           </p>
         </div>
-        <div class="border h-4 auxline-stripe-mask border-[var(--auxline-line)]" />
-        <div class="sm:border-x border-[var(--auxline-line)]">
-          <div class="flex flex-col gap-2 sm:flex-row border-b border-[var(--auxline-line)] sm:items-center sm:justify-between">
-            <div class="flex flex-wrap items-center gap-2">
-              <p class="text-sm px-2 font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                直播礼物聚合
-              </p>
-              <template v-if="aggregationRoomId">
+        <template v-if="showAggregation">
+          <div class="border h-4 auxline-stripe-mask border-[var(--auxline-line)]" />
+          <div class="sm:border-x border-[var(--auxline-line)]">
+            <div class="flex flex-col gap-2 sm:flex-row border-b border-[var(--auxline-line)] sm:items-center sm:justify-between">
+              <div class="flex flex-wrap items-center gap-2">
+                <p class="text-sm px-2 font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                  直播礼物聚合
+                </p>
                 <a
-                  :href="liveRoomLink(aggregationRoomId)"
+                  :href="liveRoomLink(aggregationRoomLabel)"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="px-2 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]
                     hover:text-[var(--auxline-fg)]"
                 >
-                  ROOM {{ aggregationRoomId }}
+                  ROOM {{ aggregationRoomLabel }}
                 </a>
-              </template>
-            </div>
-            <div class="flex flex-wrap items-center gap-3 px-2 justify-end">
-              <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                日合计金额 {{ formatAmountValue(aggregationTotals?.day ?? null) }}
-              </span>
-              <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                周合计金额 {{ formatAmountValue(aggregationTotals?.week ?? null) }}
-              </span>
-              <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                月合计金额 {{ formatAmountValue(aggregationTotals?.month ?? null) }}
-              </span>
-              <span
-                v-if="aggregationTotal > 0"
-                class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-              >
-                共 {{ aggregationTotal }} 条
-              </span>
-            </div>
-          </div>
-          <div class="border-[var(--auxline-line)] border-b divide-y divide-[var(--auxline-line)]">
-            <template v-if="aggregationPending">
-              <div
-                v-for="index in aggregationSkeletonRows"
-                :key="index"
-                class="grid gap-3 px-3 py-2"
-                :style="{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }"
-              >
-                <span
-                  v-for="cellIndex in 4"
-                  :key="cellIndex"
-                  class="h-4 w-full bg-[var(--auxline-bg-emphasis)]"
-                  aria-hidden="true"
-                />
               </div>
-            </template>
-            <div
-              v-else-if="!aggregationRoomId"
-              class="px-3 py-6 text-center text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-            >
-              暂无直播间数据
-            </div>
-            <div
-              v-else-if="aggregationColumns.length === 0"
-              class="px-3 py-6 text-center text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-            >
-              暂无礼物聚合数据
-            </div>
-            <template v-else>
-              <div
-                ref="aggregationTableHeaderRef"
-                class="grid gap-3 px-3 py-2 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-                :style="{ gridTemplateColumns: `repeat(${aggregationColumns.length}, minmax(0, 1fr))` }"
-              >
-                <span v-for="column in aggregationColumns" :key="column" :class="aggregationColumnClass(column)">
-                  {{ normalizeColumnLabel(column) }}
+              <div class="flex flex-wrap items-center gap-3 px-2 justify-end">
+                <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                  日合计金额 {{ formatAmountValue(aggregationTotals?.day ?? null) }}
+                </span>
+                <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                  周合计金额 {{ formatAmountValue(aggregationTotals?.week ?? null) }}
+                </span>
+                <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                  月合计金额 {{ formatAmountValue(aggregationTotals?.month ?? null) }}
+                </span>
+                <span
+                  v-if="aggregationTotal > 0"
+                  class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
+                >
+                  共 {{ aggregationTotal }} 条
                 </span>
               </div>
-              <template v-if="aggregationItems.length === 0">
+            </div>
+            <div class="border-[var(--auxline-line)] border-b divide-y divide-[var(--auxline-line)]">
+              <template v-if="aggregationPending">
                 <div
-                  class="px-3 py-6 text-center text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-                >
-                  暂无礼物聚合数据
-                </div>
-              </template>
-              <template v-else>
-                <div
-                  v-for="(row, rowIndex) in aggregationPagedItems"
-                  :key="rowIndex"
-                  class="grid gap-3 px-3 py-2 text-xs"
-                  :style="{ gridTemplateColumns: `repeat(${aggregationColumns.length}, minmax(0, 1fr))` }"
+                  v-for="index in aggregationSkeletonRows"
+                  :key="index"
+                  class="grid gap-3 px-3 py-2"
+                  :style="{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }"
                 >
                   <span
-                    v-for="column in aggregationColumns"
-                    :key="column"
-                    :class="aggregationColumnClass(column)"
-                  >
-                    {{ formatAggregationValue(column, row[column] ?? null) }}
-                  </span>
+                    v-for="cellIndex in 4"
+                    :key="cellIndex"
+                    class="h-4 w-full bg-[var(--auxline-bg-emphasis)]"
+                    aria-hidden="true"
+                  />
                 </div>
               </template>
-            </template>
-          </div>
-          <div
-            v-if="aggregationTotal > 0"
-            class="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--auxline-line)]"
-          >
-            <button
-              type="button"
-              class="border-r border-[var(--auxline-line)] px-3 py-1 text-xs font-mono uppercase tracking-[0.12em]
-                text-[var(--auxline-fg)] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-              :class="aggregationCurrentPage > 1 ? 'hover:bg-[var(--auxline-bg-hover)]' : ''"
-              :disabled="aggregationCurrentPage <= 1"
-              @click="goPrevAggregationPage"
+              <div
+                v-else-if="aggregationColumns.length === 0"
+                class="px-3 py-6 text-center text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
+              >
+                暂无礼物聚合数据
+              </div>
+              <template v-else>
+                <div
+                  ref="aggregationTableHeaderRef"
+                  class="grid gap-3 px-3 py-2 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
+                  :style="{ gridTemplateColumns: `repeat(${aggregationColumns.length}, minmax(0, 1fr))` }"
+                >
+                  <span v-for="column in aggregationColumns" :key="column" :class="aggregationColumnClass(column)">
+                    {{ normalizeColumnLabel(column) }}
+                  </span>
+                </div>
+                <template v-if="aggregationItems.length === 0">
+                  <div
+                    class="px-3 py-6 text-center text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
+                  >
+                    暂无礼物聚合数据
+                  </div>
+                </template>
+                <template v-else>
+                  <div
+                    v-for="(row, rowIndex) in aggregationPagedItems"
+                    :key="rowIndex"
+                    class="grid gap-3 px-3 py-2 text-xs"
+                    :style="{ gridTemplateColumns: `repeat(${aggregationColumns.length}, minmax(0, 1fr))` }"
+                  >
+                    <span
+                      v-for="column in aggregationColumns"
+                      :key="column"
+                      :class="aggregationColumnClass(column)"
+                    >
+                      {{ formatAggregationValue(column, row[column] ?? null) }}
+                    </span>
+                  </div>
+                </template>
+              </template>
+            </div>
+            <div
+              v-if="aggregationTotal > 0"
+              class="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--auxline-line)]"
             >
-              上一页
-            </button>
-            <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-              第 {{ aggregationTotalPages === 0 ? 0 : aggregationCurrentPage }} / {{ aggregationTotalPages }} 页
-            </span>
-            <button
-              type="button"
-              class="border-l border-[var(--auxline-line)] px-3 py-1 text-xs font-mono uppercase tracking-[0.12em]
-                text-[var(--auxline-fg)] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-              :class="aggregationTotalPages > 0 && aggregationCurrentPage < aggregationTotalPages ? 'hover:bg-[var(--auxline-bg-hover)]' : ''"
-              :disabled="aggregationTotalPages === 0 || aggregationCurrentPage >= aggregationTotalPages"
-              @click="goNextAggregationPage"
-            >
-              下一页
-            </button>
+              <button
+                type="button"
+                class="border-r border-[var(--auxline-line)] px-3 py-1 text-xs font-mono uppercase tracking-[0.12em]
+                  text-[var(--auxline-fg)] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                :class="aggregationCurrentPage > 1 ? 'hover:bg-[var(--auxline-bg-hover)]' : ''"
+                :disabled="aggregationCurrentPage <= 1"
+                @click="goPrevAggregationPage"
+              >
+                上一页
+              </button>
+              <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+                第 {{ aggregationTotalPages === 0 ? 0 : aggregationCurrentPage }} / {{ aggregationTotalPages }} 页
+              </span>
+              <button
+                type="button"
+                class="border-l border-[var(--auxline-line)] px-3 py-1 text-xs font-mono uppercase tracking-[0.12em]
+                  text-[var(--auxline-fg)] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                :class="aggregationTotalPages > 0 && aggregationCurrentPage < aggregationTotalPages
+                  ? 'hover:bg-[var(--auxline-bg-hover)]'
+                  : ''"
+                :disabled="aggregationTotalPages === 0 || aggregationCurrentPage >= aggregationTotalPages"
+                @click="goNextAggregationPage"
+              >
+                下一页
+              </button>
+            </div>
+            <p v-if="aggregationError" class="mt-4 text-xs font-mono uppercase tracking-[0.12em] text-red-500">
+              直播礼物聚合加载失败
+            </p>
           </div>
-          <p v-if="aggregationError" class="mt-4 text-xs font-mono uppercase tracking-[0.12em] text-red-500">
-            直播礼物聚合加载失败
-          </p>
-        </div>
+        </template>
       </template>
       <div
         v-else

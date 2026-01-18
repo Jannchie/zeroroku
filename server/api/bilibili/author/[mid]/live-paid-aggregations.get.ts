@@ -18,10 +18,12 @@ interface ColumnRow {
   column_name: string | null
   data_type: string | null
   udt_name: string | null
+  [key: string]: unknown
 }
 
 interface RoomRow {
   room_id: string | number | null
+  [key: string]: unknown
 }
 
 const TABLE_NAME = 'live_paid_event_aggregations'
@@ -224,12 +226,14 @@ async function loadAggregations(mid: bigint): Promise<LivePaidEventAggregationRe
   let timeExpression = sql`${timeIdentifier}`
   if (!isDateType) {
     if (isNumericTimeType) {
-      timeExpression = sql`to_timestamp(
-        case
-          when ${timeIdentifier} > 1000000000000 then ${timeIdentifier} / 1000.0
-          else ${timeIdentifier}
-        end
-      ) AT TIME ZONE ${AGGREGATION_TIMEZONE}`
+      timeExpression = sql`
+        to_timestamp(
+                case
+                  when ${timeIdentifier} > 1000000000000 then ${timeIdentifier} / 1000.0
+                  else ${timeIdentifier}
+                end
+              ) AT TIME ZONE ${AGGREGATION_TIMEZONE}
+      `
     }
     else if (isTimestampWithoutTimeZone) {
       timeExpression = sql`(${timeIdentifier} AT TIME ZONE 'UTC') AT TIME ZONE ${AGGREGATION_TIMEZONE}`

@@ -149,7 +149,7 @@ async function changePassword() {
       <p v-if="passwordError" class="text-xs text-red-600">
         {{ passwordError }}
       </p>
-      <p v-else-if="passwordSuccess" class="text-xs text-blue-600">
+      <p v-else-if="passwordSuccess" class="text-xs text-green-600">
         {{ passwordSuccess }}
       </p>
     </form>

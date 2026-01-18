@@ -214,6 +214,7 @@ async function observeAuthor() {
     )
     observeSuccess.value = `观测已加入队列，剩余 ${formatCount(response.credit)} 积分。`
     observeMid.value = ''
+    authClient.$store.notify('$sessionSignal')
   }
   catch (error) {
     if (error && typeof error === 'object' && 'data' in error) {
@@ -426,7 +427,7 @@ onMounted(() => {
           <p v-if="observeError" class="px-1 py-2 text-xs text-red-600">
             {{ observeError }}
           </p>
-          <p v-else-if="observeSuccess" class="px-1 py-2 text-xs text-blue-600">
+          <p v-else-if="observeSuccess" class="px-1 py-2 text-xs text-green-600">
             {{ observeSuccess }}
           </p>
         </div>

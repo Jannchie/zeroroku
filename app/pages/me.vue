@@ -213,7 +213,7 @@ async function updateName() {
           <p v-if="nameError" class="text-xs text-red-600">
             {{ nameError }}
           </p>
-          <p v-else-if="nameSuccess" class="text-xs text-blue-600">
+          <p v-else-if="nameSuccess" class="text-xs text-green-600">
             {{ nameSuccess }}
           </p>
           <span class="text-xs px-2 font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">

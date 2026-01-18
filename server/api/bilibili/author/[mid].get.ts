@@ -4,7 +4,7 @@ import type { H3Event } from 'h3'
 import { sql } from 'drizzle-orm'
 import { getTableConfig } from 'drizzle-orm/pg-core'
 import { getRequestIP, getRouterParam } from 'h3'
-import { authorInfoMaster, authorLatestFans, authorVisitRecords } from '~~/drizzle/schema'
+import { authorInfoMaster, authorLatestFans, authorVisitRecords, livers } from '~~/drizzle/schema'
 import { auth } from '~~/lib/auth'
 import { db } from '~~/server/index'
 
@@ -19,6 +19,8 @@ interface AuthorDetailItem {
   fans: number | null
   rate7: number | null
   rate1: number | null
+  liveStatus: number | null
+  liveRoomId: string | null
 }
 
 interface AuthorDetailResponse {
@@ -36,6 +38,8 @@ interface AuthorDetailRow extends Record<string, unknown> {
   fans: string | number | null
   rate7: string | number | null
   rate1: string | number | null
+  live_status: string | number | null
+  room_id: string | number | null
 }
 
 const MIN_MID = 0n
@@ -57,6 +61,20 @@ function toText(value: string | number | null): string {
     return ''
   }
   return String(value)
+}
+
+function normalizeRoomId(value: string | number | null | undefined): string | null {
+  if (value === null || value === undefined) {
+    return null
+  }
+  const text = String(value).trim()
+  if (!text || text === '0') {
+    return null
+  }
+  if (!/^\d+$/.test(text)) {
+    return null
+  }
+  return text
 }
 
 function parseMid(value: string | null | undefined): bigint | null {
@@ -130,6 +148,7 @@ export default defineEventHandler(async (event): Promise<AuthorDetailResponse> =
 
   const infoTable = getTableIdentifier(authorInfoMaster)
   const fansTable = getTableIdentifier(authorLatestFans)
+  const liversTable = getTableIdentifier(livers)
   const detailResult = await db.execute<AuthorDetailRow>(sql`
     select
       i.mid::text as mid,
@@ -141,9 +160,12 @@ export default defineEventHandler(async (event): Promise<AuthorDetailResponse> =
       i.top_photo as top_photo,
       f.fans::bigint as fans,
       f.rate7::bigint as rate7,
-      f.rate1::bigint as rate1
+      f.rate1::bigint as rate1,
+      l.live_status::bigint as live_status,
+      l.room_id::text as room_id
     from ${infoTable} as i
     left join ${fansTable} as f on f.mid = i.mid
+    left join ${liversTable} as l on l.mid = i.mid
     where i.mid = ${numericMid}
     limit 1
   `)
@@ -156,6 +178,8 @@ export default defineEventHandler(async (event): Promise<AuthorDetailResponse> =
   const fansValue = parseNumber(row.fans)
   const rate7Value = parseNumber(row.rate7)
   const rate1Value = parseNumber(row.rate1)
+  const liveStatusValue = parseNumber(row.live_status)
+  const liveRoomIdValue = normalizeRoomId(row.room_id)
 
   await recordVisit(event, numericMid)
 
@@ -171,6 +195,8 @@ export default defineEventHandler(async (event): Promise<AuthorDetailResponse> =
       fans: fansValue,
       rate7: rate7Value,
       rate1: rate1Value,
+      liveStatus: liveStatusValue,
+      liveRoomId: liveRoomIdValue,
     },
   }
 })

@@ -139,6 +139,7 @@ async function submitComment(): Promise<void> {
         content: trimmed,
       },
     })
+    authClient.$store.notify('$sessionSignal')
     commentDraft.value = ''
     await refresh()
   }
