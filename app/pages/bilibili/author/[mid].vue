@@ -142,7 +142,7 @@ const liveStatusLabel = computed(() => {
   return isLive.value ? '直播中' : '未开播'
 })
 const liveStatusClass = computed(() => {
-  return isLive.value ? 'text-blue-600' : 'text-[var(--auxline-fg-muted)]'
+  return isLive.value ? 'text-green-600' : 'text-[var(--auxline-fg-muted)]'
 })
 
 const historyItems = computed(() => historyData.value?.items ?? [])
