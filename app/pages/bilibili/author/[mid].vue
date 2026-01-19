@@ -222,20 +222,20 @@ const columnLabelMap: Record<string, string> = {
   createdat: '时间',
   giftid: '礼物ID',
   giftname: '礼物',
-  giftamount: '礼物金额',
+  giftamount: '礼物',
   giftcount: '礼物数量',
   giftnum: '礼物数量',
   gifts: '礼物数量',
-  guardamount: '大航海金额',
-  scamount: 'SC金额',
+  guardamount: '大航海',
+  scamount: 'SC',
   price: '单价',
   count: '数量',
-  amount: '金额',
-  totalamount: '总金额',
-  totalprice: '总金额',
-  totalvalue: '总金额',
+  amount: '价值',
+  totalamount: '总',
+  totalprice: '总',
+  totalvalue: '总',
   total: '总计',
-  value: '金额',
+  value: '价值',
   roomid: '直播间',
   uid: '用户ID',
   mid: 'UP主ID',
@@ -1025,7 +1025,7 @@ onMounted(() => {
             />
           </div>
           <div class="overflow-x-auto border-[var(--auxline-line)]">
-            <div class="min-w-[560px] divide-y divide-[var(--auxline-line)]">
+            <div class="min-w-[480px] sm:min-w-[560px] divide-y divide-[var(--auxline-line)]">
               <div
                 ref="historyTableHeaderRef"
                 class="grid grid-cols-4 gap-3 px-3 py-2 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
@@ -1132,13 +1132,13 @@ onMounted(() => {
               </div>
               <div class="flex flex-wrap items-center gap-3 px-2 justify-end">
                 <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                  日合计金额 {{ formatAmountValue(aggregationTotals?.day ?? null) }}
+                  日合计 {{ formatAmountValue(aggregationTotals?.day ?? null) }}
                 </span>
                 <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                  周合计金额 {{ formatAmountValue(aggregationTotals?.week ?? null) }}
+                  周合计 {{ formatAmountValue(aggregationTotals?.week ?? null) }}
                 </span>
                 <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                  月合计金额 {{ formatAmountValue(aggregationTotals?.month ?? null) }}
+                  月合计 {{ formatAmountValue(aggregationTotals?.month ?? null) }}
                 </span>
                 <span
                   v-if="aggregationTotal > 0"

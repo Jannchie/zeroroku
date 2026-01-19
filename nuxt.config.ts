@@ -16,8 +16,12 @@ export default defineNuxtConfig({
     '@nuxt/fonts',
     '@nuxt/eslint',
     '@nuxtjs/seo',
+    'nuxt-gtag',
     '@unocss/nuxt',
   ],
+  gtag: {
+    id: 'G-BKT69PTJLE',
+  },
   image: {
     provider: 'ipx',
     domains: [
