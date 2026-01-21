@@ -1,4 +1,10 @@
 changelog:
+  - version: 0.6.1
+    date: 2026-01-21
+    summary: 新增
+    entries:
+      - type: 新增
+        text: 新增 Bilibili UP 主粉丝数 Shield 接口，支持 Bilibili 图标。
   - version: 0.6.0
     date: 2026-01-18
     summary: 新增与修复
