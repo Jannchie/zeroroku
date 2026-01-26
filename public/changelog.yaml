@@ -1,4 +1,12 @@
 changelog:
+  - version: 0.6.3
+    date: 2026-01-26
+    summary: 修复
+    entries:
+      - type: 修复
+        text: 修复布局中的移动端评论面板导致的 Hydration 不一致警告。
+      - type: 修复
+        text: 修复作者粉丝历史查询在按天聚合时的数据库报错。
   - version: 0.6.2
     date: 2026-01-26
     summary: 修复

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { authClient } from '~~/lib/client'
 import { formatDateTime } from '~~/lib/formatDateTime'
@@ -58,8 +58,9 @@ const MAX_LIMIT = 100
 
 const route = useRoute()
 const session = authClient.useSession()
+const isHydrated = ref(false)
 const path = computed(() => route.path || '/')
-const isLoggedIn = computed(() => Boolean(session.value?.data?.user))
+const isLoggedIn = computed(() => isHydrated.value && Boolean(session.value?.data?.user))
 
 const limit = computed(() => {
   const raw = props.limit
@@ -159,6 +160,10 @@ async function submitComment(): Promise<void> {
 watch(path, () => {
   commentDraft.value = ''
   submitError.value = null
+})
+
+onMounted(() => {
+  isHydrated.value = true
 })
 </script>
 

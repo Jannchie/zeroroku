@@ -4,6 +4,8 @@ import { useRoute } from 'vue-router'
 import { authClient } from '~~/lib/client'
 
 const session = authClient.useSession()
+const isHydrated = ref(false)
+const isLoggedIn = computed(() => isHydrated.value && Boolean(session.value?.data?.user))
 const displayName = computed(() => session.value?.data?.user?.name ?? session.value?.data?.user?.email ?? '用户')
 const avatarUrl = computed(() => session.value?.data?.user?.image || null)
 const avatarInitial = computed(() => displayName.value.slice(0, 1).toUpperCase())
@@ -56,11 +58,11 @@ const isSponsorsPage = computed(() => route.path.startsWith('/sponsors'))
 const showSponsorsAside = computed(() => !isSponsorsPage.value && showSponsorsSidebar.value)
 
 const navItems = computed(() => {
-  const isLoggedIn = Boolean(session.value?.data)
+  const authed = isLoggedIn.value
   const items = [
     { label: '首页', to: '/', disabled: false },
     { label: '排行榜', to: '/rank', disabled: false },
-    { label: '个人', to: '/me', disabled: !isLoggedIn },
+    { label: '个人', to: '/me', disabled: !authed },
     { label: '哔哩哔哩', to: '/bilibili', disabled: false },
     { label: '设置', to: '/settings', disabled: false },
   ]
@@ -103,6 +105,7 @@ function closeMobileCommentPanel(): void {
 }
 
 onMounted(() => {
+  isHydrated.value = true
   watch(
     () => session.value?.data?.user?.id,
     async (userId) => {
@@ -167,7 +170,7 @@ watch(
       >
         <span class="text-base" :class="[themeIcon]" aria-hidden="true" />
       </button>
-      <template v-if="session?.data">
+      <template v-if="isLoggedIn">
         <div class="border-l-0">
           <AuxlineMenu align="right">
             <template #trigger>
@@ -360,55 +363,57 @@ watch(
           <slot />
         </div>
       </div>
-      <Teleport to=".auxline-root">
-        <div
-          v-if="isMobileCommentOpen"
-          class="fixed inset-0 z-50 flex 2xl:hidden"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="mobile-comment-panel-title"
-          aria-describedby="mobile-comment-panel"
-        >
-          <button
-            type="button"
-            class="absolute inset-0 bg-black/40"
-            aria-label="关闭评论面板"
-            @click="closeMobileCommentPanel"
-          />
+      <ClientOnly>
+        <Teleport to=".auxline-root">
           <div
-            class="relative z-10 mt-auto w-full border-t border-[var(--auxline-line)] bg-[var(--auxline-bg)]"
-            @click.stop
+            v-if="isMobileCommentOpen"
+            class="fixed inset-0 z-50 flex 2xl:hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="mobile-comment-panel-title"
+            aria-describedby="mobile-comment-panel"
           >
+            <button
+              type="button"
+              class="absolute inset-0 bg-black/40"
+              aria-label="关闭评论面板"
+              @click="closeMobileCommentPanel"
+            />
             <div
-              class="flex items-center justify-between border-b border-[var(--auxline-line)] px-2 py-2 text-xs
-                font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
+              class="relative z-10 mt-auto w-full border-t border-[var(--auxline-line)] bg-[var(--auxline-bg)]"
+              @click.stop
             >
-              <span id="mobile-comment-panel-title">评论</span>
-              <AuxlineBtn size="xs" type="button" @click="closeMobileCommentPanel">
-                关闭
-              </AuxlineBtn>
-            </div>
-            <div id="mobile-comment-panel" class="max-h-[85vh] overflow-y-auto bg-[var(--auxline-bg)]">
-              <AuxlineCommentSidebar
-                title="评论"
-                path-label="当前页面"
-                note-label="登录后可评论"
-                empty-label="暂无评论"
-                error-label="评论加载失败"
-                placeholder-label="写下你的评论…"
-                placeholder-logged-out-label="登录后可评论"
-                login-hint-label="登录后可评论"
-                max-length-label="最多 {max} 字"
-                submit-label="发送"
-                unauthenticated-label="请先登录。"
-                empty-content-label="评论内容不能为空。"
-                submit-failed-label="评论提交失败。"
-                :limit="30"
-              />
+              <div
+                class="flex items-center justify-between border-b border-[var(--auxline-line)] px-2 py-2 text-xs
+                  font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
+              >
+                <span id="mobile-comment-panel-title">评论</span>
+                <AuxlineBtn size="xs" type="button" @click="closeMobileCommentPanel">
+                  关闭
+                </AuxlineBtn>
+              </div>
+              <div id="mobile-comment-panel" class="max-h-[85vh] overflow-y-auto bg-[var(--auxline-bg)]">
+                <AuxlineCommentSidebar
+                  title="评论"
+                  path-label="当前页面"
+                  note-label="登录后可评论"
+                  empty-label="暂无评论"
+                  error-label="评论加载失败"
+                  placeholder-label="写下你的评论…"
+                  placeholder-logged-out-label="登录后可评论"
+                  login-hint-label="登录后可评论"
+                  max-length-label="最多 {max} 字"
+                  submit-label="发送"
+                  unauthenticated-label="请先登录。"
+                  empty-content-label="评论内容不能为空。"
+                  submit-failed-label="评论提交失败。"
+                  :limit="30"
+                />
+              </div>
             </div>
           </div>
-        </div>
-      </Teleport>
+        </Teleport>
+      </ClientOnly>
     </template>
     <template #footer>
       <p class="text-sm py-2 text-center text-[var(--auxline-fg-muted)]">

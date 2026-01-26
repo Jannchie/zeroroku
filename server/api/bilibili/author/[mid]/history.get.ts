@@ -96,7 +96,8 @@ export default defineEventHandler(async (event): Promise<AuthorFansHistoryRespon
   }
 
   const historyTable = getTableIdentifier(authorFansStatMaster)
-  const timeExpression = sql`(created_at AT TIME ZONE ${AGGREGATION_TIMEZONE})`
+  const timezoneLiteral = sql.raw(`'${AGGREGATION_TIMEZONE}'`)
+  const timeExpression = sql`(created_at AT TIME ZONE ${timezoneLiteral})`
   const dayExpression = sql`date_trunc('day', ${timeExpression})`
   const result = await db.execute<AuthorFansHistoryRow>(sql`
     select
