@@ -30,6 +30,7 @@ interface AuthorFansHistoryRow extends Record<string, unknown> {
 
 const MIN_MID = 0n
 const MAX_MID = 9_223_372_036_854_775_807n
+const AGGREGATION_TIMEZONE = 'Asia/Shanghai'
 
 function parseNumber(value: string | number | null | undefined): number | null {
   if (value === null || value === undefined) {
@@ -95,9 +96,11 @@ export default defineEventHandler(async (event): Promise<AuthorFansHistoryRespon
   }
 
   const historyTable = getTableIdentifier(authorFansStatMaster)
+  const timeExpression = sql`(created_at AT TIME ZONE ${AGGREGATION_TIMEZONE})`
+  const dayExpression = sql`date_trunc('day', ${timeExpression})`
   const result = await db.execute<AuthorFansHistoryRow>(sql`
     select
-      distinct on (date_trunc('day', created_at))
+      distinct on (${dayExpression})
       id::text as id,
       mid::text as mid,
       fans::bigint as fans,
@@ -107,7 +110,7 @@ export default defineEventHandler(async (event): Promise<AuthorFansHistoryRespon
     from ${historyTable}
     where mid = ${numericMid}
       and created_at is not null
-    order by date_trunc('day', created_at) desc, created_at desc, id desc
+    order by ${dayExpression} desc, created_at desc, id desc
   `)
 
   const items = result.rows.map(row => ({
