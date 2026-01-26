@@ -1,4 +1,10 @@
 changelog:
+  - version: 0.6.2
+    date: 2026-01-26
+    summary: 修复
+    entries:
+      - type: 修复
+        text: 移动端增加评论面板入口。
   - version: 0.6.1
     date: 2026-01-21
     summary: 新增

@@ -36,6 +36,7 @@ const { data: sponsorsData, pending: sponsorsPending, error: sponsorsError } = u
 const sponsorItems = computed(() => sponsorsData.value?.items ?? [])
 const sponsorSkeletons = Array.from({ length: 6 }, (_, index) => index)
 const amountFormatter = new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 })
+const isMobileCommentOpen = ref(false)
 
 const themeIcon = computed(() => {
   return activeScheme.value === 'dark' ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'
@@ -93,6 +94,14 @@ function displaySponsorName(name: string): string {
   return trimmed.length > 0 ? trimmed : '匿名'
 }
 
+function openMobileCommentPanel(): void {
+  isMobileCommentOpen.value = true
+}
+
+function closeMobileCommentPanel(): void {
+  isMobileCommentOpen.value = false
+}
+
 onMounted(() => {
   watch(
     () => session.value?.data?.user?.id,
@@ -115,6 +124,13 @@ onMounted(() => {
     { immediate: true },
   )
 })
+
+watch(
+  () => route.path,
+  () => {
+    isMobileCommentOpen.value = false
+  },
+)
 </script>
 
 <template>
@@ -315,17 +331,84 @@ onMounted(() => {
           </p>
         </section>
 
-        <div v-if="!isSponsorsPage" class="flex w-full justify-center lg:hidden">
+        <div class="flex w-full justify-center lg:hidden children:border-r first:children:border-l">
           <AuxlineBtn
+            v-if="!isSponsorsPage"
             to="/sponsors" size="sm" class="w-full justify-center"
           >
             赞助者
+          </AuxlineBtn>
+          <AuxlineBtn
+            v-else
+            size="sm"
+            class="w-full justify-center"
+            :disabled="true"
+          >
+            赞助者
+          </AuxlineBtn>
+          <AuxlineBtn
+            size="sm"
+            class="w-full justify-center"
+            :aria-expanded="isMobileCommentOpen ? 'true' : 'false'"
+            aria-controls="mobile-comment-panel"
+            @click="openMobileCommentPanel"
+          >
+            评论
           </AuxlineBtn>
         </div>
         <div class="w-full">
           <slot />
         </div>
       </div>
+      <Teleport to=".auxline-root">
+        <div
+          v-if="isMobileCommentOpen"
+          class="fixed inset-0 z-50 flex 2xl:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="mobile-comment-panel-title"
+          aria-describedby="mobile-comment-panel"
+        >
+          <button
+            type="button"
+            class="absolute inset-0 bg-black/40"
+            aria-label="关闭评论面板"
+            @click="closeMobileCommentPanel"
+          />
+          <div
+            class="relative z-10 mt-auto w-full border-t border-[var(--auxline-line)] bg-[var(--auxline-bg)]"
+            @click.stop
+          >
+            <div
+              class="flex items-center justify-between border-b border-[var(--auxline-line)] px-2 py-2 text-xs
+                font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
+            >
+              <span id="mobile-comment-panel-title">评论</span>
+              <AuxlineBtn size="xs" type="button" @click="closeMobileCommentPanel">
+                关闭
+              </AuxlineBtn>
+            </div>
+            <div id="mobile-comment-panel" class="max-h-[85vh] overflow-y-auto bg-[var(--auxline-bg)]">
+              <AuxlineCommentSidebar
+                title="评论"
+                path-label="当前页面"
+                note-label="登录后可评论"
+                empty-label="暂无评论"
+                error-label="评论加载失败"
+                placeholder-label="写下你的评论…"
+                placeholder-logged-out-label="登录后可评论"
+                login-hint-label="登录后可评论"
+                max-length-label="最多 {max} 字"
+                submit-label="发送"
+                unauthenticated-label="请先登录。"
+                empty-content-label="评论内容不能为空。"
+                submit-failed-label="评论提交失败。"
+                :limit="30"
+              />
+            </div>
+          </div>
+        </div>
+      </Teleport>
     </template>
     <template #footer>
       <p class="text-sm py-2 text-center text-[var(--auxline-fg-muted)]">
