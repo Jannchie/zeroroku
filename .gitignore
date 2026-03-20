@@ -12,6 +12,7 @@ node_modules
 # Logs
 logs
 *.log
+audit
 !server/api/logs/
 !server/api/logs/**
 
