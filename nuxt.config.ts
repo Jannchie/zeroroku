@@ -14,7 +14,6 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@nuxt/icon',
     '@nuxt/fonts',
-    '@nuxt/eslint',
     '@nuxtjs/seo',
     'nuxt-gtag',
     '@unocss/nuxt',
@@ -71,10 +70,5 @@ export default defineNuxtConfig({
   robots: {
     sitemap: ['/sitemap.xml'],
     disallow: ['/login', '/settings', '/me'],
-  },
-  eslint: {
-    config: {
-      standalone: false,
-    },
   },
 })

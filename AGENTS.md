@@ -29,7 +29,7 @@
 ## Coding Style & Naming Conventions
 
 - Use TypeScript for all new code.
-- Follow the ESLint configuration in `eslint.config.mjs` (based on `@jannchie/eslint-config`).
+- Follow the Oxlint configuration in `.oxlintrc.json`.
 - Use 2-space indentation and prefer single quotes where applicable.
 - Vue components use PascalCase filenames in `app/components/` and route files use kebab-case under `app/pages/`.
 
@@ -44,7 +44,7 @@
 
 ## Commit & Pull Request Guidelines
 
-- Commit messages follow Conventional Commits with scopes, e.g., `feat(auth): add login flow` or `chore(eslint): update config`.
+- Commit messages follow Conventional Commits with scopes, e.g., `feat(auth): add login flow` or `chore(lint): update config`.
 - PRs should include a summary, screenshots for UI changes, and DB/schema impact notes.
 
 ## Security & Configuration Tips

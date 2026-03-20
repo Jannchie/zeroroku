@@ -34,7 +34,7 @@ const trustedOrigins = [
         'http://localhost:6066',
         'http://127.0.0.1:6066',
       ]),
-].filter((origin): origin is string => Boolean(origin))
+].filter(Boolean)
 
 if (!githubClientId || !githubClientSecret) {
   throw new Error('Missing GitHub OAuth credentials.')

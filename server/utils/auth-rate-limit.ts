@@ -1,8 +1,8 @@
 import type { H3Event } from 'h3'
+import type { RedisClient } from '~~/server/utils/redis'
 import * as process from 'node:process'
 import { createError, getRequestIP } from 'h3'
 import { getRedisClient } from '~~/server/utils/redis'
-import type { RedisClient } from '~~/server/utils/redis'
 
 interface RateLimitBucket {
   count: number

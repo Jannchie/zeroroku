@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "oxc",
+    "typescript",
+    "unicorn",
+    "import",
+    "node",
+    "vue"
+  ],
+  "env": {
+    "builtin": true,
+    "browser": true,
+    "node": true,
+    "es2026": true
+  },
+  "ignorePatterns": [
+    ".nuxt/**",
+    ".output/**",
+    "dist/**",
+    "drizzle/**",
+    "node_modules/**"
+  ]
+}

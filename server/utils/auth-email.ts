@@ -79,16 +79,16 @@ export async function sendResetPasswordEmail(email: string, resetUrl: string): P
     },
     Message: {
       Subject: {
-        Charset: 'UTF-8',
+        Charset: 'utf8',
         Data: `${appName} 密码重置`,
       },
       Body: {
         Html: {
-          Charset: 'UTF-8',
+          Charset: 'utf8',
           Data: createResetPasswordHtml(appName, resetUrl),
         },
         Text: {
-          Charset: 'UTF-8',
+          Charset: 'utf8',
           Data: createResetPasswordText(appName, resetUrl),
         },
       },

@@ -1,4 +1,16 @@
 changelog:
+  - version: 0.6.7
+    date: 2026-03-20
+    summary: 安全排查
+    entries:
+      - type: 新增
+        text: 新增服务端请求审计快照输出，会在根目录 audit 中持续写出访问 IP TOP 100 与请求次数，便于排查异常流量。
+  - version: 0.6.6
+    date: 2026-03-20
+    summary: 工程维护
+    entries:
+      - type: 变更
+        text: 移除 ESLint 与 Nuxt ESLint 模块，统一改为使用 Oxlint 进行代码检查。
   - version: 0.6.5
     date: 2026-03-20
     summary: 安全增强
