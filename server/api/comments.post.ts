@@ -14,7 +14,7 @@ interface CreateCommentBody {
   parentId?: unknown
 }
 
-interface InsertedCommentRow {
+interface InsertedCommentRow extends Record<string, unknown> {
   id: string | number | null
 }
 

@@ -36,7 +36,7 @@ interface CommentRow extends Record<string, unknown> {
   dislikes: string | number | null
 }
 
-interface CountRow {
+interface CountRow extends Record<string, unknown> {
   count: string | number | null
 }
 

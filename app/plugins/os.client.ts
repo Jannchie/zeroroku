@@ -1,5 +1,10 @@
 export default defineNuxtPlugin(() => {
-  const platform = navigator.userAgentData?.platform ?? navigator.platform ?? ''
+  const navigatorWithUserAgentData = navigator as Navigator & {
+    userAgentData?: {
+      platform?: string
+    }
+  }
+  const platform = navigatorWithUserAgentData.userAgentData?.platform ?? navigator.platform ?? ''
   const userAgent = navigator.userAgent ?? ''
   const isWindows = /win/i.test(platform) || /windows/i.test(userAgent)
 

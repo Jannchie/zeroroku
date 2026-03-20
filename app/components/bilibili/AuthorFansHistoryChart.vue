@@ -75,7 +75,7 @@ function buildOptions(
   height: number,
   palette: ReturnType<typeof readPalette>,
   pathBuilder?: uPlot.Series.PathBuilder,
-) {
+): uPlot.Options {
   const axisBase = {
     stroke: palette.fgMuted,
     font: axisFont,
@@ -88,7 +88,7 @@ function buildOptions(
     height,
     class: 'auxline-uplot',
     pxAlign: false,
-    padding: [8, 0, 4, 0],
+    padding: [8, 0, 4, 0] as [number, number, number, number],
     scales: {
       x: { time: true },
       y: { auto: true },
@@ -124,7 +124,13 @@ function buildOptions(
     ],
     legend: { show: false },
     cursor: { show: false },
-    select: { show: false },
+    select: {
+      show: false,
+      left: 0,
+      top: 0,
+      width: 0,
+      height: 0,
+    },
   }
 }
 

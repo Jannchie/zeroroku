@@ -101,13 +101,18 @@ function formatCompactCount(value: number): string {
   const abs = Math.abs(value)
   for (let index = 0; index < COMPACT_UNITS.length; index += 1) {
     const unit = COMPACT_UNITS[index]
+    if (!unit) {
+      continue
+    }
     if (abs >= unit.value) {
       const scaled = value / unit.value
       const rounded = Number(scaled.toFixed(1))
       if (rounded >= 1000 && index > 0) {
         const nextUnit = COMPACT_UNITS[index - 1]
-        const nextScaled = value / nextUnit.value
-        return `${trimTrailingZero(nextScaled.toFixed(1))}${nextUnit.suffix}`
+        if (nextUnit) {
+          const nextScaled = value / nextUnit.value
+          return `${trimTrailingZero(nextScaled.toFixed(1))}${nextUnit.suffix}`
+        }
       }
       return `${trimTrailingZero(scaled.toFixed(1))}${unit.suffix}`
     }

@@ -26,11 +26,10 @@ function getChinaNoonDayKey(date: Date): string {
 
 function getChinaNoonDayStart(date: Date): Date {
   const dayKey = getChinaNoonDayKey(date)
-  const [
-    year,
-    month,
-    day,
-  ] = dayKey.split('-').map(Number)
+  const [yearPart = '1970', monthPart = '01', dayPart = '01'] = dayKey.split('-')
+  const year = Number.parseInt(yearPart, 10)
+  const month = Number.parseInt(monthPart, 10)
+  const day = Number.parseInt(dayPart, 10)
   return new Date(Date.UTC(year, month - 1, day, 4, 0, 0))
 }
 
