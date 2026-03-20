@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
   const identifier = body.identifier?.trim()
   const password = body.password ?? ''
 
-  enforceSignInRateLimit(event, identifier)
+  await enforceSignInRateLimit(event, identifier)
 
   if (!identifier || !password) {
     throw createError({

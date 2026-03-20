@@ -1,4 +1,18 @@
 changelog:
+  - version: 0.6.5
+    date: 2026-03-20
+    summary: 安全增强
+    entries:
+      - type: 优化
+        text: 登录限流改为同时覆盖用户名和邮箱登录入口，并支持复用 Redis 提升跨实例稳定性。
+      - type: 优化
+        text: 找回密码增加按邮箱冷却与按 IP 限流，降低重置邮件被频繁触发的风险。
+  - version: 0.6.4
+    date: 2026-03-20
+    summary: 新增
+    entries:
+      - type: 新增
+        text: 新增基于 Better Auth 和 Amazon SES 的找回密码与重置密码流程。
   - version: 0.6.3
     date: 2026-01-26
     summary: 修复

@@ -11,6 +11,9 @@ const isCredentialSigningIn = ref(false)
 const isSocialSigningIn = ref(false)
 const route = useRoute()
 const router = useRouter()
+const resetSuccessMessage = computed(() => {
+  return route.query.reset === 'success' ? '密码已重置，请使用新密码登录。' : null
+})
 const redirectTarget = computed(() => {
   const redirect = route.query.redirect ?? route.query.next
   if (typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//')) {
@@ -128,6 +131,9 @@ async function signInWithPassword() {
       class="w-full max-w-sm flex flex-col gap-3"
       @submit.prevent="signInWithPassword"
     >
+      <p v-if="resetSuccessMessage" class="text-xs text-green-600">
+        {{ resetSuccessMessage }}
+      </p>
       <label class="flex flex-col gap-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
         用户名或邮箱
         <input
@@ -162,6 +168,12 @@ async function signInWithPassword() {
       <span v-if="credentialError" class="text-xs text-red-600">
         {{ credentialError }}
       </span>
+      <NuxtLink
+        to="/forgot-password"
+        class="text-xs text-[var(--auxline-fg-muted)] underline underline-offset-2"
+      >
+        忘记密码
+      </NuxtLink>
     </form>
     <div class="flex w-full max-w-sm items-center gap-3 pt-2 text-xs font-mono uppercase tracking-[0.2em] text-[var(--auxline-fg-muted)]">
       <span class="h-px flex-1 bg-[var(--auxline-line)]" aria-hidden="true" />

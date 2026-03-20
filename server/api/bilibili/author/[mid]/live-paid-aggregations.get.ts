@@ -34,8 +34,8 @@ const AGGREGATION_TIMEZONE = 'Asia/Shanghai'
 const cachedResults = new Map<string, { data: LivePaidEventAggregationResponse, expiresAt: number }>()
 const inFlight = new Map<string, Promise<LivePaidEventAggregationResponse>>()
 
-const MIN_MID = 0n
-const MAX_MID = 9_223_372_036_854_775_807n
+const MIN_MID = BigInt(0)
+const MAX_MID = BigInt('9223372036854775807')
 const HIDDEN_COLUMN_KEYS = new Set(['id', 'roomid'])
 const BUCKET_START_ALIAS = 'bucket_start'
 const NUMERIC_DATA_TYPES = new Set([

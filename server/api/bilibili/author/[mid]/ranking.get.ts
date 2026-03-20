@@ -43,8 +43,8 @@ interface RankingPositions {
   rate1Rank: number | null
 }
 
-const MIN_MID = 0n
-const MAX_MID = 9_223_372_036_854_775_807n
+const MIN_MID = BigInt(0)
+const MAX_MID = BigInt('9223372036854775807')
 const RANKING_CACHE_TTL_MS = 60_000
 
 let cachedRankingTotals: RankingTotals | null = null

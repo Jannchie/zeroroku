@@ -24,8 +24,8 @@ interface CacheEntry {
   expiresAt: number
 }
 
-const MIN_MID = 0n
-const MAX_MID = 9_223_372_036_854_775_807n
+const MIN_MID = BigInt(0)
+const MAX_MID = BigInt('9223372036854775807')
 const DEFAULT_LABEL = '哔哩哔哩'
 const DEFAULT_MESSAGE = '无数据'
 const NAMED_LOGO = 'bilibili'
