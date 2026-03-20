@@ -1,10 +1,9 @@
-import type { AnyPgTable } from 'drizzle-orm/pg-core'
-
 import { sql } from 'drizzle-orm'
-import { getTableConfig } from 'drizzle-orm/pg-core'
 import { getQuery } from 'h3'
 import { authorInfoMaster, authorLatestFans } from '~~/drizzle/schema'
 import { db } from '~~/server/index'
+import { parseNumberOrZero, parseUnsignedBigInt, toText } from '~~/server/utils/parsers'
+import { getTableIdentifier } from '~~/server/utils/table'
 
 interface AuthorSearchItem {
   mid: string
@@ -25,30 +24,6 @@ interface AuthorSearchRow extends Record<string, unknown> {
 }
 
 const SEARCH_LIMIT = 20
-
-function parseNumber(value: string | number | null | undefined): number {
-  if (value === null || value === undefined) {
-    return 0
-  }
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : 0
-  }
-  const parsed = Number.parseInt(value, 10)
-  return Number.isNaN(parsed) ? 0 : parsed
-}
-
-function toText(value: string | number | null): string {
-  if (value === null) {
-    return ''
-  }
-  return String(value)
-}
-
-function getTableIdentifier(table: AnyPgTable) {
-  const config = getTableConfig(table)
-  const schemaName = config.schema ?? 'public'
-  return sql`${sql.identifier(schemaName)}.${sql.identifier(config.name)}`
-}
 
 function normalizeQueryValue(value: unknown): string | undefined {
   if (Array.isArray(value)) {
@@ -87,19 +62,9 @@ export default defineEventHandler(async (event): Promise<AuthorSearchResponse> =
   const isNumeric = /^\d+$/.test(keyword)
   const infoTable = getTableIdentifier(authorInfoMaster)
   const fansTable = getTableIdentifier(authorLatestFans)
-  const maxMid = BigInt('9223372036854775807')
-  const minMid = BigInt(0)
-  let numericMid: bigint | null = null
-  if (isNumeric) {
-    try {
-      numericMid = BigInt(keyword)
-    }
-    catch {
-      return { items: [] }
-    }
-    if (numericMid < minMid || numericMid > maxMid) {
-      return { items: [] }
-    }
+  const numericMid = isNumeric ? parseUnsignedBigInt(keyword) : null
+  if (isNumeric && numericMid === null) {
+    return { items: [] }
   }
 
   const whereClause = isNumeric && numericMid !== null
@@ -131,7 +96,7 @@ export default defineEventHandler(async (event): Promise<AuthorSearchResponse> =
     mid: toText(row.mid),
     name: row.name,
     face: row.face,
-    fans: parseNumber(row.fans),
+    fans: parseNumberOrZero(row.fans),
   }))
 
   return { items }

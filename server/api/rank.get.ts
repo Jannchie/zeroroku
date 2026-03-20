@@ -1,9 +1,8 @@
-import type { AnyPgTable } from 'drizzle-orm/pg-core'
-
 import { sql } from 'drizzle-orm'
-import { getTableConfig } from 'drizzle-orm/pg-core'
 import { user } from '~~/lib/database/auth-schema'
 import { db } from '~~/server/index'
+import { parseNumberOrZero, toText } from '~~/server/utils/parsers'
+import { getTableIdentifier } from '~~/server/utils/table'
 
 interface UserExpRankItem {
   id: string
@@ -38,30 +37,6 @@ function getCachedRanking(): UserExpRankResponse | null {
   return cachedRanking
 }
 
-function parseNumber(value: string | number | null | undefined): number {
-  if (value === null || value === undefined) {
-    return 0
-  }
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : 0
-  }
-  const parsed = Number.parseFloat(value)
-  return Number.isNaN(parsed) ? 0 : parsed
-}
-
-function toText(value: string | number | null): string {
-  if (value === null) {
-    return ''
-  }
-  return String(value)
-}
-
-function getTableIdentifier(table: AnyPgTable) {
-  const config = getTableConfig(table)
-  const schemaName = config.schema ?? 'public'
-  return sql`${sql.identifier(schemaName)}.${sql.identifier(config.name)}`
-}
-
 async function loadRanking(): Promise<UserExpRankResponse> {
   const userTable = getTableIdentifier(user)
   const result = await db.execute<UserExpRankRow>(sql`
@@ -77,7 +52,7 @@ async function loadRanking(): Promise<UserExpRankResponse> {
   const items = result.rows.map(row => ({
     id: toText(row.id),
     name: row.name,
-    exp: parseNumber(row.exp),
+    exp: parseNumberOrZero(row.exp),
   }))
 
   return { items }

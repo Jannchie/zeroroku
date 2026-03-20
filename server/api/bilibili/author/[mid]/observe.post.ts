@@ -1,12 +1,11 @@
-import type { AnyPgTable } from 'drizzle-orm/pg-core'
-
 import { sql } from 'drizzle-orm'
-import { getTableConfig } from 'drizzle-orm/pg-core'
 import { createError, getRouterParam } from 'h3'
 import { authorFansSchedules, authorInfoSchedules, authorVideoSchedules } from '~~/drizzle/schema'
 import { auth } from '~~/lib/auth'
 import { db } from '~~/server/index'
 import { applyCreditChange } from '~~/server/utils/credit'
+import { parseUnsignedBigInt } from '~~/server/utils/parsers'
+import { getTableIdentifier } from '~~/server/utils/table'
 
 interface ObserveResponse {
   ok: boolean
@@ -15,29 +14,6 @@ interface ObserveResponse {
 }
 
 const OBSERVE_COST = 10
-const MIN_MID = BigInt(0)
-const MAX_MID = BigInt('9223372036854775807')
-
-function parseMid(value: string | null | undefined): bigint | null {
-  if (!value) {
-    return null
-  }
-  const trimmed = value.trim()
-  if (!/^\d+$/.test(trimmed)) {
-    return null
-  }
-  let numeric: bigint
-  try {
-    numeric = BigInt(trimmed)
-  }
-  catch {
-    return null
-  }
-  if (numeric < MIN_MID || numeric > MAX_MID) {
-    return null
-  }
-  return numeric
-}
 
 function parseUserId(value: unknown): number | null {
   if (typeof value === 'number' && Number.isSafeInteger(value) && value > 0) {
@@ -50,12 +26,6 @@ function parseUserId(value: unknown): number | null {
     }
   }
   return null
-}
-
-function getTableIdentifier(table: AnyPgTable) {
-  const config = getTableConfig(table)
-  const schemaName = config.schema ?? 'public'
-  return sql`${sql.identifier(schemaName)}.${sql.identifier(config.name)}`
 }
 
 export default defineEventHandler(async (event): Promise<ObserveResponse> => {
@@ -71,7 +41,7 @@ export default defineEventHandler(async (event): Promise<ObserveResponse> => {
   }
 
   const midParam = getRouterParam(event, 'mid')
-  const numericMid = parseMid(midParam)
+  const numericMid = parseUnsignedBigInt(midParam)
   if (numericMid === null) {
     throw createError({
       statusCode: 400,

@@ -1,11 +1,10 @@
-import type { AnyPgTable } from 'drizzle-orm/pg-core'
-
 import { sql } from 'drizzle-orm'
-import { getTableConfig } from 'drizzle-orm/pg-core'
 import { getQuery } from 'h3'
 import { comments } from '~~/drizzle/schema'
 import { user } from '~~/lib/database/auth-schema'
 import { db } from '~~/server/index'
+import { parseNumberOrZero } from '~~/server/utils/parsers'
+import { getTableIdentifier } from '~~/server/utils/table'
 
 interface CommentItem {
   id: string
@@ -92,17 +91,6 @@ function normalizeLimit(value: unknown): number {
   return Math.min(Math.max(parsed, 1), MAX_LIMIT)
 }
 
-function parseNumber(value: string | number | null | undefined): number {
-  if (value === null || value === undefined) {
-    return 0
-  }
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : 0
-  }
-  const parsed = Number.parseFloat(value)
-  return Number.isNaN(parsed) ? 0 : parsed
-}
-
 function toText(value: string | number | null): string | null {
   if (value === null) {
     return null
@@ -127,12 +115,6 @@ function buildDedupeKey(row: CommentRow): string {
   return `${uid}\n${parentId}\n${content}`
 }
 
-function getTableIdentifier(table: AnyPgTable) {
-  const config = getTableConfig(table)
-  const schemaName = config.schema ?? 'public'
-  return sql`${sql.identifier(schemaName)}.${sql.identifier(config.name)}`
-}
-
 export default defineEventHandler(async (event): Promise<CommentsResponse> => {
   const query = getQuery(event)
   const path = normalizePath(query.path)
@@ -150,7 +132,7 @@ export default defineEventHandler(async (event): Promise<CommentsResponse> => {
     from ${commentsTable}
     where path = ${path}
   `)
-  const total = parseNumber(totalResult.rows[0]?.count ?? 0)
+  const total = parseNumberOrZero(totalResult.rows[0]?.count ?? 0)
 
   const result = await db.execute<CommentRow>(sql`
     select
@@ -185,8 +167,8 @@ export default defineEventHandler(async (event): Promise<CommentsResponse> => {
       avatar: row.avatar,
       content: row.content,
       createdAt: formatTimestamp(row.created_at),
-      likes: parseNumber(row.likes),
-      dislikes: parseNumber(row.dislikes),
+      likes: parseNumberOrZero(row.likes),
+      dislikes: parseNumberOrZero(row.dislikes),
     })
     if (items.length >= limit) {
       break

@@ -1,10 +1,9 @@
-import type { AnyPgTable } from 'drizzle-orm/pg-core'
-
 import { sql } from 'drizzle-orm'
-import { getTableConfig } from 'drizzle-orm/pg-core'
 import { getRouterParam } from 'h3'
 import { authorFansStatMaster } from '~~/drizzle/schema'
 import { db } from '~~/server/index'
+import { parseNumberOrNull, parseUnsignedBigInt, toText } from '~~/server/utils/parsers'
+import { getTableIdentifier } from '~~/server/utils/table'
 
 interface AuthorFansHistoryItem {
   id: string
@@ -28,27 +27,7 @@ interface AuthorFansHistoryRow extends Record<string, unknown> {
   rate7: string | number | null
 }
 
-const MIN_MID = BigInt(0)
-const MAX_MID = BigInt('9223372036854775807')
 const AGGREGATION_TIMEZONE = 'Asia/Shanghai'
-
-function parseNumber(value: string | number | null | undefined): number | null {
-  if (value === null || value === undefined) {
-    return null
-  }
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : null
-  }
-  const parsed = Number.parseFloat(value)
-  return Number.isNaN(parsed) ? null : parsed
-}
-
-function toText(value: string | number | null): string {
-  if (value === null) {
-    return ''
-  }
-  return String(value)
-}
 
 function toTimestamp(value: string | Date | null): string | null {
   if (value === null) {
@@ -61,36 +40,9 @@ function toTimestamp(value: string | Date | null): string | null {
   return trimmed.length > 0 ? trimmed : null
 }
 
-function parseMid(value: string | null | undefined): bigint | null {
-  if (!value) {
-    return null
-  }
-  const trimmed = value.trim()
-  if (!/^\d+$/.test(trimmed)) {
-    return null
-  }
-  let numeric: bigint
-  try {
-    numeric = BigInt(trimmed)
-  }
-  catch {
-    return null
-  }
-  if (numeric < MIN_MID || numeric > MAX_MID) {
-    return null
-  }
-  return numeric
-}
-
-function getTableIdentifier(table: AnyPgTable) {
-  const config = getTableConfig(table)
-  const schemaName = config.schema ?? 'public'
-  return sql`${sql.identifier(schemaName)}.${sql.identifier(config.name)}`
-}
-
 export default defineEventHandler(async (event): Promise<AuthorFansHistoryResponse> => {
   const midParam = getRouterParam(event, 'mid')
-  const numericMid = parseMid(midParam)
+  const numericMid = parseUnsignedBigInt(midParam)
   if (numericMid === null) {
     return { items: [] }
   }
@@ -117,10 +69,10 @@ export default defineEventHandler(async (event): Promise<AuthorFansHistoryRespon
   const items = result.rows.map(row => ({
     id: toText(row.id),
     mid: toText(row.mid),
-    fans: parseNumber(row.fans),
+    fans: parseNumberOrNull(row.fans),
     createdAt: toTimestamp(row.created_at),
-    rate1: parseNumber(row.rate1),
-    rate7: parseNumber(row.rate7),
+    rate1: parseNumberOrNull(row.rate1),
+    rate7: parseNumberOrNull(row.rate7),
   }))
 
   return { items }

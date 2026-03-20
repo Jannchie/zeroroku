@@ -1,10 +1,9 @@
-import type { AnyPgTable } from 'drizzle-orm/pg-core'
-
 import { sql } from 'drizzle-orm'
-import { getTableConfig } from 'drizzle-orm/pg-core'
 import { getRouterParam } from 'h3'
 import { authorLatestFans } from '~~/drizzle/schema'
 import { db } from '~~/server/index'
+import { parseNumberOrNull, parseUnsignedBigInt } from '~~/server/utils/parsers'
+import { getTableIdentifier } from '~~/server/utils/table'
 
 interface AuthorRankingItem {
   fansRank: number | null
@@ -43,51 +42,11 @@ interface RankingPositions {
   rate1Rank: number | null
 }
 
-const MIN_MID = BigInt(0)
-const MAX_MID = BigInt('9223372036854775807')
 const RANKING_CACHE_TTL_MS = 60_000
 
 let cachedRankingTotals: RankingTotals | null = null
 let rankingTotalsExpiresAt = 0
 let rankingTotalsInFlight: Promise<RankingTotals> | null = null
-
-function parseNumber(value: string | number | null | undefined): number | null {
-  if (value === null || value === undefined) {
-    return null
-  }
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : null
-  }
-  const parsed = Number.parseFloat(value)
-  return Number.isNaN(parsed) ? null : parsed
-}
-
-function parseMid(value: string | null | undefined): bigint | null {
-  if (!value) {
-    return null
-  }
-  const trimmed = value.trim()
-  if (!/^\d+$/.test(trimmed)) {
-    return null
-  }
-  let numeric: bigint
-  try {
-    numeric = BigInt(trimmed)
-  }
-  catch {
-    return null
-  }
-  if (numeric < MIN_MID || numeric > MAX_MID) {
-    return null
-  }
-  return numeric
-}
-
-function getTableIdentifier(table: AnyPgTable) {
-  const config = getTableConfig(table)
-  const schemaName = config.schema ?? 'public'
-  return sql`${sql.identifier(schemaName)}.${sql.identifier(config.name)}`
-}
 
 function getCachedRankingTotals(): RankingTotals | null {
   if (!cachedRankingTotals) {
@@ -110,9 +69,9 @@ async function loadRankingTotals(): Promise<RankingTotals> {
   `)
   const row = result.rows[0]
   return {
-    fansTotal: parseNumber(row?.fans_total) ?? 0,
-    rate7Total: parseNumber(row?.rate7_total) ?? 0,
-    rate1Total: parseNumber(row?.rate1_total) ?? 0,
+    fansTotal: parseNumberOrNull(row?.fans_total) ?? 0,
+    rate7Total: parseNumberOrNull(row?.rate7_total) ?? 0,
+    rate1Total: parseNumberOrNull(row?.rate1_total) ?? 0,
   }
 }
 
@@ -171,15 +130,15 @@ async function loadRankingPositions(mid: bigint): Promise<RankingPositions> {
   `)
   const row = result.rows[0]
   return {
-    fansRank: parseNumber(row?.fans_rank),
-    rate7Rank: parseNumber(row?.rate7_rank),
-    rate1Rank: parseNumber(row?.rate1_rank),
+    fansRank: parseNumberOrNull(row?.fans_rank),
+    rate7Rank: parseNumberOrNull(row?.rate7_rank),
+    rate1Rank: parseNumberOrNull(row?.rate1_rank),
   }
 }
 
 export default defineEventHandler(async (event): Promise<AuthorRankingResponse> => {
   const midParam = getRouterParam(event, 'mid')
-  const numericMid = parseMid(midParam)
+  const numericMid = parseUnsignedBigInt(midParam)
   if (numericMid === null) {
     return { item: null }
   }
