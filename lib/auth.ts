@@ -3,7 +3,7 @@ import { compare, hash } from 'bcryptjs'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { db } from '../server/index'
-import { sendResetPasswordEmail } from '../server/utils/auth-email'
+import { sendResetPasswordEmail, sendVerificationEmail } from '../server/utils/auth-email'
 import * as schema from './database/schema'
 
 const githubClientId = process.env.GITHUB_CLIENT_ID
@@ -52,6 +52,7 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
     revokeSessionsOnPasswordReset: true,
     password: {
       hash: async password => hash(password, 10),
@@ -59,6 +60,14 @@ export const auth = betterAuth({
     },
     sendResetPassword: async ({ user, url }) => {
       await sendResetPasswordEmail(user.email, url)
+    },
+  },
+  emailVerification: {
+    sendOnSignUp: true,
+    sendOnSignIn: true,
+    autoSignInAfterVerification: false,
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendVerificationEmail(user.email, url)
     },
   },
   user: {

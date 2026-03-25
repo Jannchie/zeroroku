@@ -1,4 +1,16 @@
 changelog:
+  - version: 0.6.8
+    date: 2026-03-25
+    summary: 认证完善
+    entries:
+      - type: 新增
+        text: 新增邮箱注册、邮箱验证提示页和重新发送验证邮件入口。
+      - type: 优化
+        text: 邮箱密码登录改为强制邮箱验证后才能完成登录，并补充验证邮件模板。
+      - type: 变更
+        text: 站内密码登录入口改为仅支持邮箱登录，不再支持通过用户名登录。
+      - type: 维护
+        text: 升级 better-auth、Amazon SES SDK、yaml、@types/pg 与 oxlint 到最新补丁版本。
   - version: 0.6.7
     date: 2026-03-20
     summary: 安全排查

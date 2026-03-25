@@ -6,7 +6,7 @@ const DEFAULT_APP_NAME = 'ZeroRoku'
 function requireEnv(name: string): string {
   const value = process.env[name]?.trim()
   if (!value) {
-    throw new Error(`${name} is required for password reset emails.`)
+    throw new Error(`${name} is required for auth emails.`)
   }
   return value
 }
@@ -23,9 +23,43 @@ function escapeHtml(value: string): string {
 function createSesClient(): SESClient {
   const region = process.env.AUTH_EMAIL_AWS_REGION?.trim() || process.env.AWS_REGION?.trim()
   if (!region) {
-    throw new Error('AUTH_EMAIL_AWS_REGION or AWS_REGION is required for password reset emails.')
+    throw new Error('AUTH_EMAIL_AWS_REGION or AWS_REGION is required for auth emails.')
   }
   return new SESClient({ region })
+}
+
+interface AuthEmailContent {
+  subject: string
+  html: string
+  text: string
+}
+
+async function sendAuthEmail(email: string, content: AuthEmailContent): Promise<void> {
+  const fromAddress = requireEnv('AUTH_EMAIL_FROM')
+  const sesClient = createSesClient()
+
+  await sesClient.send(new SendEmailCommand({
+    Destination: {
+      ToAddresses: [email],
+    },
+    Message: {
+      Subject: {
+        Charset: 'utf8',
+        Data: content.subject,
+      },
+      Body: {
+        Html: {
+          Charset: 'utf8',
+          Data: content.html,
+        },
+        Text: {
+          Charset: 'utf8',
+          Data: content.text,
+        },
+      },
+    },
+    Source: fromAddress,
+  }))
 }
 
 function createResetPasswordHtml(appName: string, resetUrl: string): string {
@@ -68,31 +102,61 @@ function createResetPasswordText(appName: string, resetUrl: string): string {
   ].join('\n')
 }
 
-export async function sendResetPasswordEmail(email: string, resetUrl: string): Promise<void> {
-  const fromAddress = requireEnv('AUTH_EMAIL_FROM')
-  const appName = process.env.AUTH_EMAIL_APP_NAME?.trim() || DEFAULT_APP_NAME
-  const sesClient = createSesClient()
+function createVerifyEmailHtml(appName: string, verifyUrl: string): string {
+  const safeAppName = escapeHtml(appName)
+  const safeVerifyUrl = escapeHtml(verifyUrl)
+  return [
+    '<!DOCTYPE html>',
+    '<html lang="zh-CN">',
+    '<head>',
+    '  <meta charset="UTF-8">',
+    `  <title>${safeAppName} 验证邮箱</title>`,
+    '</head>',
+    '<body style="margin:0;padding:24px;background:#f8fafc;color:#0f172a;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;">',
+    '  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;">',
+    '    <tr>',
+    '      <td style="padding:32px 28px;">',
+    `        <h1 style="margin:0 0 16px;font-size:22px;line-height:1.4;">${safeAppName} 邮箱验证</h1>`,
+    '        <p style="margin:0 0 12px;font-size:14px;line-height:1.7;">欢迎注册本站。请先验证你的邮箱后再使用邮箱密码登录。</p>',
+    '        <p style="margin:0 0 20px;font-size:14px;line-height:1.7;">点击下面的按钮完成邮箱验证。如果这不是你的操作，可以直接忽略这封邮件。</p>',
+    `        <p style="margin:0 0 24px;"><a href="${safeVerifyUrl}" style="display:inline-block;padding:10px 16px;border:1px solid #0f172a;background:#0f172a;color:#ffffff;text-decoration:none;font-size:14px;">验证邮箱</a></p>`,
+    '        <p style="margin:0 0 12px;font-size:12px;line-height:1.7;color:#475569;">如果按钮无法打开，请复制下面的链接到浏览器：</p>',
+    `        <p style="margin:0;font-size:12px;line-height:1.7;word-break:break-all;color:#334155;">${safeVerifyUrl}</p>`,
+    '      </td>',
+    '    </tr>',
+    '  </table>',
+    '</body>',
+    '</html>',
+  ].join('\n')
+}
 
-  await sesClient.send(new SendEmailCommand({
-    Destination: {
-      ToAddresses: [email],
-    },
-    Message: {
-      Subject: {
-        Charset: 'utf8',
-        Data: `${appName} 密码重置`,
-      },
-      Body: {
-        Html: {
-          Charset: 'utf8',
-          Data: createResetPasswordHtml(appName, resetUrl),
-        },
-        Text: {
-          Charset: 'utf8',
-          Data: createResetPasswordText(appName, resetUrl),
-        },
-      },
-    },
-    Source: fromAddress,
-  }))
+function createVerifyEmailText(appName: string, verifyUrl: string): string {
+  return [
+    `${appName} 邮箱验证`,
+    '',
+    '请打开下面的链接完成邮箱验证：',
+    verifyUrl,
+    '',
+    '如果这不是你的操作，可以直接忽略这封邮件。',
+  ].join('\n')
+}
+
+export async function sendResetPasswordEmail(email: string, resetUrl: string): Promise<void> {
+  const appName = process.env.AUTH_EMAIL_APP_NAME?.trim() || DEFAULT_APP_NAME
+
+  await sendAuthEmail(email, {
+    subject: `${appName} 密码重置`,
+    html: createResetPasswordHtml(appName, resetUrl),
+    text: createResetPasswordText(appName, resetUrl),
+  })
+}
+
+export async function sendVerificationEmail(email: string, verifyUrl: string): Promise<void> {
+  const appName = process.env.AUTH_EMAIL_APP_NAME?.trim() || DEFAULT_APP_NAME
+
+  await sendAuthEmail(email, {
+    subject: `${appName} 邮箱验证`,
+    html: createVerifyEmailHtml(appName, verifyUrl),
+    text: createVerifyEmailText(appName, verifyUrl),
+  })
 }

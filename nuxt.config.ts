@@ -65,10 +65,19 @@ export default defineNuxtConfig({
   },
   sitemap: {
     sitemapName: 'sitemap.xml',
-    exclude: ['/_**', /^\/login(?:\/|$)/, /^\/settings(?:\/|$)/, /^\/me(?:\/|$)/],
+    exclude: [
+      '/_**',
+      /^\/login(?:\/|$)/,
+      /^\/register(?:\/|$)/,
+      /^\/verify-email(?:\/|$)/,
+      /^\/forgot-password(?:\/|$)/,
+      /^\/reset-password(?:\/|$)/,
+      /^\/settings(?:\/|$)/,
+      /^\/me(?:\/|$)/,
+    ],
   },
   robots: {
     sitemap: ['/sitemap.xml'],
-    disallow: ['/login', '/settings', '/me'],
+    disallow: ['/login', '/register', '/verify-email', '/forgot-password', '/reset-password', '/settings', '/me'],
   },
 })

@@ -13,7 +13,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@aws-sdk/client-ses": "^3.1013.0",
+    "@aws-sdk/client-ses": "^3.1016.0",
     "@jannchie/pixi-live2d-display": "^1.2.0",
     "@nuxt/fonts": "0.14.0",
     "@nuxt/icon": "2.2.1",
@@ -23,7 +23,7 @@
     "@roku-ui/preset": "^0.31.0",
     "@roku-ui/vue": "^0.31.0",
     "bcryptjs": "^3.0.3",
-    "better-auth": "^1.5.5",
+    "better-auth": "^1.5.6",
     "cli-table3": "^0.6.5",
     "dotenv": "^17.3.1",
     "drizzle-orm": "^0.45.1",
@@ -36,15 +36,15 @@
     "uplot": "^1.6.32",
     "vue": "^3.5.30",
     "vue-router": "^5.0.4",
-    "yaml": "^2.8.2"
+    "yaml": "^2.8.3"
   },
   "devDependencies": {
     "@iconify-json/heroicons": "^1.2.3",
     "@types/node": "^25.5.0",
-    "@types/pg": "^8.18.0",
+    "@types/pg": "^8.20.0",
     "@unocss/nuxt": "^66.6.7",
     "drizzle-kit": "^0.31.10",
-    "oxlint": "^1.56.0",
+    "oxlint": "^1.57.0",
     "tsx": "^4.21.0",
     "vue-tsc": "^3.2.6"
   }

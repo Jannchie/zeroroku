@@ -49,9 +49,25 @@ export default defineEventHandler(async (event) => {
   catch (error) {
     if (error && typeof error === 'object' && 'statusCode' in error) {
       const typedError = error as AuthApiError
+      const statusCode = typeof typedError.statusCode === 'number' ? typedError.statusCode : 500
+      if (statusCode === 403) {
+        throw createError({
+          statusCode,
+          statusMessage: '邮箱尚未验证，我们已重新发送验证邮件。',
+          data: {
+            email,
+          },
+        })
+      }
+      if (statusCode === 401) {
+        throw createError({
+          statusCode,
+          statusMessage: '邮箱或密码错误。',
+        })
+      }
       throw createError({
-        statusCode: typeof typedError.statusCode === 'number' ? typedError.statusCode : 500,
-        statusMessage: typedError.body?.message ?? 'Sign in failed.',
+        statusCode,
+        statusMessage: typedError.body?.message ?? '登录失败。',
       })
     }
     throw error

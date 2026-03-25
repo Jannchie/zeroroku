@@ -214,9 +214,14 @@ watch(
         </div>
       </template>
       <template v-else>
-        <AuxlineBtn to="/login" class="border-l">
-          登录
-        </AuxlineBtn>
+        <div class="flex">
+          <AuxlineBtn to="/login" class="border-l">
+            登录
+          </AuxlineBtn>
+          <AuxlineBtn to="/register" class="border-l">
+            注册
+          </AuxlineBtn>
+        </div>
       </template>
     </template>
     <template #main>
