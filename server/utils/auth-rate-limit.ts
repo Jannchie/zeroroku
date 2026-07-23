@@ -2,6 +2,7 @@ import type { H3Event } from 'h3'
 import type { RedisClient } from '~~/server/utils/redis'
 import * as process from 'node:process'
 import { createError, getRequestIP } from 'h3'
+import { parsePositiveInt } from '~~/server/utils/parsers'
 import { getRedisClient } from '~~/server/utils/redis'
 
 interface RateLimitBucket {
@@ -20,25 +21,25 @@ interface CooldownResult {
 }
 
 const CLEANUP_INTERVAL_MS = 60_000
-const SIGN_IN_WINDOW_MS = readPositiveInt(process.env.AUTH_SIGN_IN_RATE_LIMIT_WINDOW_MS, 10_000)
-const SIGN_IN_MAX = readPositiveInt(process.env.AUTH_SIGN_IN_RATE_LIMIT_MAX, 3)
-const IDENTIFIER_WINDOW_MS = readPositiveInt(
+const SIGN_IN_WINDOW_MS = parsePositiveInt(process.env.AUTH_SIGN_IN_RATE_LIMIT_WINDOW_MS, 10_000)
+const SIGN_IN_MAX = parsePositiveInt(process.env.AUTH_SIGN_IN_RATE_LIMIT_MAX, 3)
+const IDENTIFIER_WINDOW_MS = parsePositiveInt(
   process.env.AUTH_SIGN_IN_IDENTIFIER_RATE_LIMIT_WINDOW_MS,
   SIGN_IN_WINDOW_MS,
 )
-const IDENTIFIER_MAX = readPositiveInt(
+const IDENTIFIER_MAX = parsePositiveInt(
   process.env.AUTH_SIGN_IN_IDENTIFIER_RATE_LIMIT_MAX,
   SIGN_IN_MAX,
 )
-const PASSWORD_RESET_WINDOW_MS = readPositiveInt(
+const PASSWORD_RESET_WINDOW_MS = parsePositiveInt(
   process.env.AUTH_PASSWORD_RESET_RATE_LIMIT_WINDOW_MS,
   60_000,
 )
-const PASSWORD_RESET_MAX = readPositiveInt(
+const PASSWORD_RESET_MAX = parsePositiveInt(
   process.env.AUTH_PASSWORD_RESET_RATE_LIMIT_MAX,
   3,
 )
-const PASSWORD_RESET_EMAIL_COOLDOWN_MS = readPositiveInt(
+const PASSWORD_RESET_EMAIL_COOLDOWN_MS = parsePositiveInt(
   process.env.AUTH_PASSWORD_RESET_EMAIL_COOLDOWN_MS,
   300_000,
 )
@@ -46,17 +47,6 @@ const PASSWORD_RESET_EMAIL_COOLDOWN_MS = readPositiveInt(
 const buckets = new Map<string, RateLimitBucket>()
 const cooldowns = new Map<string, number>()
 let nextCleanupAt = Date.now() + CLEANUP_INTERVAL_MS
-
-function readPositiveInt(value: string | undefined, fallback: number): number {
-  if (!value) {
-    return fallback
-  }
-  const parsed = Number.parseInt(value, 10)
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    return fallback
-  }
-  return parsed
-}
 
 function normalizeIdentifier(identifier: string | undefined): string | null {
   if (!identifier) {
