@@ -50,6 +50,13 @@
       "when": 1768296515443,
       "tag": "0006_add-author-follows-target-index",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784772337873,
+      "tag": "0007_auth-table-id-defaults",
+      "breakpoints": true
     }
   ]
 }

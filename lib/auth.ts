@@ -47,6 +47,12 @@ export const auth = betterAuth({
     provider: 'pg',
     schema,
   }),
+  advanced: {
+    database: {
+      // `user.id` is a bigserial column, so the database owns id generation.
+      generateId: 'serial',
+    },
+  },
   rateLimit: {
     enabled: true,
   },

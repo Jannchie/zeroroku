@@ -1,4 +1,10 @@
+import { sql } from 'drizzle-orm'
 import { bigint, bigserial, boolean, index, jsonb, numeric, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
+
+// better-auth runs with `generateId: 'serial'` so that `user.id` can stay a
+// bigserial column. That setting disables id generation for every model, so the
+// text-keyed auth tables generate their own ids in the database.
+const textId = sql`gen_random_uuid()::text`
 
 export const user = pgTable('user', {
   id: bigserial({ mode: 'number' }).primaryKey().notNull(),
@@ -41,7 +47,7 @@ export const sponsors = pgTable('sponsors', {
 ])
 
 export const session = pgTable('session', {
-  id: text('id').primaryKey(),
+  id: text('id').primaryKey().default(textId),
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   token: text('token').notNull().unique(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -56,7 +62,7 @@ export const session = pgTable('session', {
 })
 
 export const account = pgTable('account', {
-  id: text('id').primaryKey(),
+  id: text('id').primaryKey().default(textId),
   accountId: text('account_id').notNull(),
   providerId: text('provider_id').notNull(),
   userId: bigint('user_id', { mode: 'number' })
@@ -76,7 +82,7 @@ export const account = pgTable('account', {
 })
 
 export const verification = pgTable('verification', {
-  id: text('id').primaryKey(),
+  id: text('id').primaryKey().default(textId),
   identifier: text('identifier').notNull(),
   value: text('value').notNull(),
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
