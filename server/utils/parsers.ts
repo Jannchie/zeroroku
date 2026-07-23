@@ -40,6 +40,14 @@ export function parseUnsignedBigInt(value: string | null | undefined): bigint | 
   return numeric
 }
 
+export function parsePositiveInt(value: string | undefined, fallback: number): number {
+  const parsed = Number.parseInt(value ?? '', 10)
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return fallback
+  }
+  return parsed
+}
+
 export function toText(value: string | number | null): string {
   if (value === null) {
     return ''

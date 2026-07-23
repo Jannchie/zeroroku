@@ -3,6 +3,7 @@ import { mkdir, rename, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { getMethod, getRequestIP, getRequestPath } from 'h3'
+import { parsePositiveInt } from '~~/server/utils/parsers'
 
 interface RequestAuditEntry {
   count: number
@@ -35,11 +36,11 @@ const IPV4_MAPPED_IPV6_PREFIX = '::ffff:'
 const requestCounts = new Map<string, RequestAuditEntry>()
 const startedAt = Date.now()
 const outputDir = resolveAuditOutputDir()
-const topIpLimit = parsePositiveInteger(
+const topIpLimit = parsePositiveInt(
   process.env.AUDIT_TOP_IP_LIMIT,
   DEFAULT_TOP_IP_LIMIT,
 )
-const flushIntervalMs = parsePositiveInteger(
+const flushIntervalMs = parsePositiveInt(
   process.env.AUDIT_FLUSH_INTERVAL_MS,
   DEFAULT_FLUSH_INTERVAL_MS,
 )
@@ -48,17 +49,6 @@ let totalRequests = 0
 let pendingFlush = false
 let flushTimer: NodeJS.Timeout | null = null
 let activeFlushPromise: Promise<void> | null = null
-
-function parsePositiveInteger(
-  value: string | undefined,
-  fallback: number,
-): number {
-  const parsed = Number.parseInt(value ?? '', 10)
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    return fallback
-  }
-  return parsed
-}
 
 function resolveAuditOutputDir(): string {
   const configuredDir = process.env.AUDIT_OUTPUT_DIR?.trim()

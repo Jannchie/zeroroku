@@ -2,6 +2,7 @@ import type { RedisClientType } from 'redis'
 import { randomUUID } from 'node:crypto'
 import * as process from 'node:process'
 import { createClient } from 'redis'
+import { REDIS_URL } from '~~/server/utils/redis'
 
 interface OnlineUpdatePayload {
   instanceId: string
@@ -10,7 +11,6 @@ interface OnlineUpdatePayload {
 
 type OnlineListener = (count: number) => void
 
-const REDIS_URL = process.env.REDIS_URL ?? 'redis://127.0.0.1:6379'
 const CONNECTIONS_KEY = 'online:connections'
 const UPDATES_CHANNEL = 'online:updates'
 const STALE_MS = 45_000
