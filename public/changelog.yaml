@@ -1,4 +1,12 @@
 changelog:
+  - version: 0.6.9
+    date: 2026-11-08
+    summary: UP 主搜索提速
+    entries:
+      - type: 优化
+        text: UP 主搜索大幅提速（约 8 秒降到 1 秒内），结果按匹配度与粉丝数综合排序，粉丝多的 UP 主优先显示。
+      - type: 优化
+        text: 名字中包含关键词即可命中，一两个字的短关键词也能搜到对应 UP 主；纯数字关键词找不到对应 mid 时改按名字搜索。
   - version: 0.6.8
     date: 2026-03-25
     summary: 认证完善
