@@ -1,40 +1,29 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-
-type TitleWeight = 'normal' | 'bold'
-
 const props = withDefaults(defineProps<{
   title: string
   subtitle?: string
-  titleWeight?: TitleWeight
+  titleWeight?: 'normal' | 'bold'
+  bordered?: boolean
 }>(), {
+  bordered: true,
   subtitle: undefined,
   titleWeight: 'normal',
-})
-
-const wrapperClass = computed(() => {
-  return 'text-center w-full py-12 border-b border-[var(--auxline-line)]'
-})
-
-const titleClass = computed(() => {
-  return [
-    'text-3xl',
-    props.titleWeight === 'bold' ? 'font-bold' : '',
-  ].filter(Boolean).join(' ')
-})
-
-const subtitleClass = computed(() => {
-  return 'text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)] w-full text-center border-[var(--auxline-line)] mt-2'
 })
 </script>
 
 <template>
-  <header :class="wrapperClass">
-    <h1 :class="titleClass">
-      {{ title }}
-    </h1>
-    <p v-if="subtitle" :class="subtitleClass">
-      {{ subtitle }}
-    </p>
+  <!-- 页面标题区：左边标题 + 副标题，右边可放操作；下面紧跟标签栏时不画分隔线（由标签栏画） -->
+  <header class="zr-page-head" :class="props.bordered ? 'border-b border-[var(--auxline-line)]' : 'pb-4'">
+    <div class="min-w-0">
+      <h1 class="zr-page-title" :class="props.titleWeight === 'bold' ? 'font-bold' : ''">
+        {{ props.title }}
+      </h1>
+      <p v-if="props.subtitle" class="zr-page-sub">
+        {{ props.subtitle }}
+      </p>
+    </div>
+    <div v-if="$slots.actions" class="flex flex-wrap items-center gap-2">
+      <slot name="actions" />
+    </div>
   </header>
 </template>

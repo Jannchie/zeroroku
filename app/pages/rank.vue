@@ -23,7 +23,6 @@ const { data, pending, error } = useFetch<UserExpRankResponse>('/api/rank', {
 })
 
 const formatter = new Intl.NumberFormat('zh-CN')
-const stripeOffsetRem = 5.75
 const skeletonRows = Array.from({ length: 12 }, (_, index) => index)
 
 function formatExp(value: number | null | undefined): string {
@@ -51,16 +50,6 @@ function barRatio(item: UserExpRankItem): number {
   return Math.min(value / base, 1)
 }
 
-function barStyle(item: UserExpRankItem): Record<string, string> {
-  const ratio = Math.max(barRatio(item), 0)
-  return {
-    left: `${stripeOffsetRem}rem`,
-    width: ratio <= 0
-      ? '0%'
-      : `calc(${ratio * 100}% - ${ratio * stripeOffsetRem}rem)`,
-  }
-}
-
 function displayName(item: UserExpRankItem): string {
   if (item.name && item.name.trim().length > 0) {
     return item.name
@@ -70,94 +59,51 @@ function displayName(item: UserExpRankItem): string {
 </script>
 
 <template>
-  <section class="flex flex-col items-center pb-12">
+  <section class="flex w-full flex-col pb-12">
     <AuxlinePageHeader
       title="观测者排行榜"
-      subtitle="TOP 100"
+      subtitle="经验值前 100 名"
     />
-    <div class="w-full border-b border-[var(--auxline-line)]">
-      <div class="max-w-3xl mx-auto">
-        <div class="flex items-center justify-between border-b border-l border-r border-[var(--auxline-line)] py-3 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-          <span class="px-1">排名</span>
-          <span class="text-left flex-1 pl-4">用户</span>
-          <span class="px-1">EXP</span>
-        </div>
-        <template v-if="pending">
-          <div
-            v-for="index in skeletonRows"
-            :key="index"
-            class="relative overflow-hidden border-b border-l border-r border-[var(--auxline-line)] last:border-b-0"
-          >
-            <div class="relative z-10 flex w-full items-center justify-between">
-              <span class="w-10 px-1 text-sm font-mono text-transparent">
-                00
-              </span>
-              <div class="flex flex-1 items-center gap-3 pl-4">
-                <div
-                  class="h-9 w-9 bg-[var(--auxline-bg-emphasis)]"
-                  aria-hidden="true"
-                />
-                <div class="flex flex-col">
-                  <span class="h-4 w-32 bg-[var(--auxline-bg-emphasis)]" />
-                  <span class="mt-1 h-3 w-20 bg-[var(--auxline-bg-emphasis)]" />
-                </div>
-              </div>
-              <span class="px-1">
-                <span class="block h-4 w-16 bg-[var(--auxline-bg-emphasis)]" />
-              </span>
-            </div>
-          </div>
-        </template>
-        <template v-else>
-          <div
-            v-for="(item, index) in data?.items ?? []"
-            :key="item.id"
-            class="relative overflow-hidden border-b border-l border-r border-[var(--auxline-line)] last:border-b-0"
-          >
-            <span
-              class="absolute inset-y-0 z-0 pointer-events-none auxline-stripe-mask"
-              :style="barStyle(item)"
-              aria-hidden="true"
-            />
-            <div class="relative z-10 flex w-full items-center justify-between">
-              <span class="w-10 px-1 text-sm font-mono">
-                {{ String(index + 1).padStart(2, '0') }}
-              </span>
-              <div class="flex flex-1 items-center gap-3 pl-4">
-                <div
-                  class="flex h-9 w-9 items-center justify-center overflow-hidden border-x border-[var(--auxline-line)]
-                    bg-[var(--auxline-bg-emphasis)] text-xs font-mono uppercase tracking-[0.12em]"
-                  aria-hidden="true"
-                >
-                  <span>
-                    {{ displayName(item).slice(0, 1) }}
-                  </span>
-                </div>
-                <div class="flex flex-col">
-                  <span class="text-sm">
-                    {{ displayName(item) }}
-                  </span>
-                </div>
-              </div>
-              <span class="text-sm px-1 font-mono">
-                {{ formatExp(item.exp) }}
-              </span>
-            </div>
-          </div>
-          <div
-            v-if="data && data.items.length === 0"
-            class="py-6 text-center text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)] border-l border-r border-[var(--auxline-line)]"
-          >
-            暂无数据
-          </div>
-        </template>
-        <p
-          v-if="error"
-          class="mt-4 text-xs font-mono uppercase tracking-[0.12em] text-red-500"
-        >
-          排行榜加载失败
-        </p>
-      </div>
+    <div class="zr-row-head">
+      <span class="flex items-center gap-3">
+        <span class="zr-rank">#</span>
+        <span>用户</span>
+      </span>
+      <span>经验</span>
     </div>
+    <template v-if="pending">
+      <div v-for="index in skeletonRows" :key="index" class="zr-row">
+        <span class="h-3 w-8 rounded bg-[var(--auxline-bg-emphasis)]" />
+        <span class="h-8 w-8 shrink-0 rounded-full bg-[var(--auxline-bg-emphasis)]" aria-hidden="true" />
+        <span class="h-3.5 flex-1 rounded bg-[var(--auxline-bg-emphasis)]" />
+        <span class="h-3.5 w-16 rounded bg-[var(--auxline-bg-emphasis)]" />
+      </div>
+    </template>
+    <template v-else>
+      <div
+        v-for="(item, index) in data?.items ?? []"
+        :key="item.id"
+        class="zr-row relative overflow-hidden"
+      >
+        <span
+          class="auxline-stripe-mask pointer-events-none absolute inset-y-0 left-0 opacity-50"
+          :style="{ width: `${barRatio(item) * 100}%` }"
+          aria-hidden="true"
+        />
+        <span class="zr-rank relative">{{ index + 1 }}</span>
+        <AuxlineAvatar :name="displayName(item)" :size="32" class="relative" />
+        <span class="zr-row-name relative min-w-0 flex-1 truncate">{{ displayName(item) }}</span>
+        <span class="zr-row-value relative shrink-0">{{ formatExp(item.exp) }}</span>
+      </div>
+      <p
+        v-if="data && data.items.length === 0"
+        class="zr-empty"
+      >
+        暂无数据
+      </p>
+    </template>
+    <p v-if="error" class="px-[var(--zr-gutter)] py-4 text-xs text-red-500">
+      排行榜加载失败
+    </p>
   </section>
 </template>

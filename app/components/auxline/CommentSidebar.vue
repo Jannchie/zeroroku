@@ -22,34 +22,8 @@ interface CommentsResponse {
 }
 
 const props = withDefaults(defineProps<{
-  title?: string
-  pathLabel?: string
-  noteLabel?: string
-  emptyLabel?: string
-  errorLabel?: string
-  placeholderLabel?: string
-  placeholderLoggedOutLabel?: string
-  loginHintLabel?: string
-  maxLengthLabel?: string
-  submitLabel?: string
-  unauthenticatedLabel?: string
-  emptyContentLabel?: string
-  submitFailedLabel?: string
   limit?: number
 }>(), {
-  title: 'Comments',
-  pathLabel: 'Path',
-  noteLabel: 'Read-only for now',
-  emptyLabel: 'No comments yet',
-  errorLabel: 'Failed to load comments',
-  placeholderLabel: 'Write a comment...',
-  placeholderLoggedOutLabel: 'Sign in to comment',
-  loginHintLabel: 'Sign in to comment',
-  maxLengthLabel: 'Max {max} chars',
-  submitLabel: 'Send',
-  unauthenticatedLabel: 'Please sign in.',
-  emptyContentLabel: 'Comment cannot be empty.',
-  submitFailedLabel: 'Failed to submit comment.',
   limit: 30,
 })
 
@@ -78,16 +52,13 @@ const { data, pending, error, refresh } = useFetch<CommentsResponse>(
 const items = computed(() => data.value?.items ?? [])
 const total = computed(() => data.value?.total ?? 0)
 const commentDraft = ref('')
-const submitError = ref<string | null>(null)
+const toast = useToast()
 const isSubmitting = ref(false)
 const canSubmit = computed(() => {
   return isLoggedIn.value && commentDraft.value.trim().length > 0 && !isSubmitting.value
 })
 const inputPlaceholder = computed(() => {
-  return isLoggedIn.value ? props.placeholderLabel : props.placeholderLoggedOutLabel
-})
-const maxLengthHint = computed(() => {
-  return props.maxLengthLabel.replace('{max}', String(MAX_CONTENT_LENGTH))
+  return isLoggedIn.value ? '写下你的评论…' : '登录后可评论'
 })
 
 const countFormatter = new Intl.NumberFormat('zh-CN')
@@ -115,42 +86,25 @@ function displayName(item: CommentItem): string {
 }
 
 async function submitComment(): Promise<void> {
-  if (isSubmitting.value) {
+  // 按钮在未登录、内容为空、提交中时已禁用，这里只是兜底
+  if (!canSubmit.value) {
     return
   }
-  submitError.value = null
-
-  if (!isLoggedIn.value) {
-    submitError.value = props.unauthenticatedLabel
-    return
-  }
-
-  const trimmed = commentDraft.value.trim()
-  if (!trimmed) {
-    submitError.value = props.emptyContentLabel
-    return
-  }
-
   isSubmitting.value = true
   try {
+    // 扣积分的提示由 $fetch 层统一弹出
     await $fetch('/api/comments', {
       method: 'POST',
       body: {
         path: path.value,
-        content: trimmed,
+        content: commentDraft.value.trim(),
       },
     })
-    authClient.$store.notify('$sessionSignal')
     commentDraft.value = ''
     await refresh()
   }
   catch (error) {
-    if (error && typeof error === 'object' && 'data' in error) {
-      const maybeData = error.data as { message?: string, statusMessage?: string }
-      submitError.value = maybeData.message ?? maybeData.statusMessage ?? props.submitFailedLabel
-      return
-    }
-    submitError.value = props.submitFailedLabel
+    toast.error('评论提交失败', error)
   }
   finally {
     isSubmitting.value = false
@@ -159,7 +113,6 @@ async function submitComment(): Promise<void> {
 
 watch(path, () => {
   commentDraft.value = ''
-  submitError.value = null
 })
 
 onMounted(() => {
@@ -168,9 +121,18 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="flex flex-col w-full max-h-[calc(100vh-8rem)] border-b border-[var(--auxline-line)] pb-8">
+  <!-- 评论栏：标题行 → 输入框 → 列表（列表自己滚）；评论之间只用一条细线分隔 -->
+  <section class="flex h-full min-h-0 w-full flex-col">
+    <div class="px-5 pb-3 pt-6">
+      <p class="text-[13px] font-medium text-[var(--auxline-fg-2)]">
+        评论<span v-if="total > 0" class="ml-1.5 font-normal text-[var(--auxline-fg-muted)]">{{ formatCount(total) }}</span>
+      </p>
+      <p class="mt-0.5 truncate text-xs text-[var(--auxline-fg-muted)]" :title="path">
+        本页 {{ path }}
+      </p>
+    </div>
     <form
-      class="border-b border-[var(--auxline-line)] flex flex-col"
+      class="flex flex-col gap-2 border-b border-[var(--auxline-line)] px-5 pb-4"
       @submit.prevent="submitComment"
     >
       <textarea
@@ -179,90 +141,64 @@ onMounted(() => {
         :maxlength="MAX_CONTENT_LENGTH"
         :disabled="!isLoggedIn || isSubmitting"
         rows="3"
-        class="w-full resize-none bg-[var(--auxline-bg-emphasis)] px-2 py-2 text-sm
-          text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)]"
+        class="w-full resize-none rounded-lg border border-[var(--auxline-line-strong)] bg-[var(--auxline-bg)] px-3 py-2 text-[13px]
+          text-[var(--auxline-fg)] outline-none transition-colors focus:border-[var(--auxline-fg-muted)] disabled:cursor-not-allowed disabled:opacity-60"
       />
-      <div class="flex items-center justify-between text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-        <span class="px-2">
-          {{ isLoggedIn ? maxLengthHint : props.loginHintLabel }}
+      <div class="flex items-center justify-between gap-2">
+        <span class="text-xs text-[var(--auxline-fg-muted)]">
+          {{ isLoggedIn ? `最多 ${MAX_CONTENT_LENGTH} 字` : '登录后可评论' }}
         </span>
         <AuxlineBtn
           type="submit"
           size="sm"
+          variant="contrast"
           :loading="isSubmitting"
           :disabled="!canSubmit"
         >
-          {{ props.submitLabel }}
+          发送
         </AuxlineBtn>
       </div>
-      <p v-if="submitError" class="text-xs text-red-600">
-        {{ submitError }}
-      </p>
     </form>
-    <div
-      class="flex items-center justify-between gap-2 border-b border-[var(--auxline-line)] px-2 py-2 text-xs
-        font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-    >
-      <span>{{ props.title }}</span>
-      <span v-if="total > 0">{{ formatCount(total) }}</span>
-    </div>
-    <div
-      class="flex items-center gap-2 border-b border-[var(--auxline-line)] px-2 py-2 text-xs
-        font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-    >
-      <span class="shrink-0">{{ props.pathLabel }}</span>
-      <span class="truncate">{{ path }}</span>
-    </div>
-    <div class="flex-1 min-h-0 overflow-y-auto">
+    <div class="min-h-0 flex-1 overflow-y-auto">
       <template v-if="pending">
         <div
           v-for="index in skeletonRows"
           :key="`comment-skeleton-${index}`"
-          class="flex flex-col gap-2 border-b border-[var(--auxline-line)] px-2 py-2 last:border-b-0"
+          class="flex flex-col gap-2 border-b border-[var(--auxline-line)] px-5 py-4"
         >
           <div class="flex items-center justify-between">
-            <span class="h-3 w-20 bg-[var(--auxline-bg-emphasis)]" />
-            <span class="h-3 w-12 bg-[var(--auxline-bg-emphasis)]" />
+            <span class="h-3 w-20 rounded bg-[var(--auxline-bg-emphasis)]" />
+            <span class="h-3 w-12 rounded bg-[var(--auxline-bg-emphasis)]" />
           </div>
-          <span class="h-4 w-full bg-[var(--auxline-bg-emphasis)]" />
-          <span class="h-3 w-16 bg-[var(--auxline-bg-emphasis)]" />
+          <span class="h-4 w-full rounded bg-[var(--auxline-bg-emphasis)]" />
         </div>
       </template>
       <template v-else>
-        <div
+        <article
           v-for="item in items"
           :key="item.id"
+          class="flex flex-col gap-1.5 border-b border-[var(--auxline-line)] px-5 py-4"
         >
-          <div
-            class="flex flex-col gap-2 border-b border-[var(--auxline-line)] px-2 py-2"
-          >
-            <div class="flex items-center justify-between text-xs font-mono tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-              <span class="truncate">{{ displayName(item) }}</span>
-              <span class="shrink-0">{{ formatDate(item.createdAt) }}</span>
-            </div>
-            <p v-if="item.content" class="text-sm leading-relaxed whitespace-pre-wrap break-words">
-              {{ item.content }}
-            </p>
-            <p v-else class="text-xs text-[var(--auxline-fg-muted)]">
-              --
-            </p>
-          <!-- <div class="flex items-center gap-3 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-            <span>LIKE {{ formatCount(item.likes) }}</span>
-            <span>DISLIKE {{ formatCount(item.dislikes) }}</span>
-          </div> -->
+          <div class="flex items-baseline justify-between gap-2 text-xs">
+            <span class="truncate text-[var(--auxline-fg-2)]">{{ displayName(item) }}</span>
+            <span class="shrink-0 text-[var(--auxline-fg-muted)]">{{ formatDate(item.createdAt) }}</span>
           </div>
-          <div class="h-2 auxline-stripe-mask" />
-          <div class="border-b border-[var(--auxline-line)]" />
-        </div>
-        <div
+          <p v-if="item.content" class="whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[var(--auxline-fg)]">
+            {{ item.content }}
+          </p>
+          <p v-else class="text-xs text-[var(--auxline-fg-muted)]">
+            --
+          </p>
+        </article>
+        <p
           v-if="items.length === 0"
-          class="px-2 py-3 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
+          class="px-5 py-10 text-center text-[13px] text-[var(--auxline-fg-muted)]"
         >
-          {{ props.emptyLabel }}
-        </div>
+          暂无评论
+        </p>
       </template>
-      <p v-if="error" class="px-2 py-2 text-xs text-red-600">
-        {{ props.errorLabel }}
+      <p v-if="error" class="px-4 py-2 text-xs text-red-600">
+        评论加载失败
       </p>
     </div>
   </section>

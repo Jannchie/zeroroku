@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm'
 import { createError } from 'h3'
+import type { CreditChange } from '~~/lib/credit'
 import { creditRecords, user } from '~~/lib/database/auth-schema'
 
 export interface CreditChangeInput {
@@ -10,11 +11,6 @@ export interface CreditChangeInput {
   data?: Record<string, unknown> | null
   createdAt?: Date
   requireCredit?: boolean
-}
-
-export interface CreditChangeResult {
-  credit: number
-  exp: number
 }
 
 interface CreditRow extends Record<string, unknown> {
@@ -38,7 +34,7 @@ function parseNumber(value: string | number | null | undefined): number | null {
 export async function applyCreditChange(
   tx: CreditClient,
   input: CreditChangeInput,
-): Promise<CreditChangeResult> {
+): Promise<CreditChange> {
   const creditDelta = input.creditDelta
   const expDelta = input.expDelta ?? 0
   const requireCredit = input.requireCredit ?? creditDelta < 0
@@ -81,5 +77,5 @@ export async function applyCreditChange(
     data: input.data ?? null,
   })
 
-  return { credit: creditValue, exp: expValue }
+  return { reason: input.text, creditDelta, expDelta, credit: creditValue, exp: expValue }
 }

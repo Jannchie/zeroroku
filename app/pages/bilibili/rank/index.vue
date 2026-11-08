@@ -10,7 +10,7 @@ useSeoMeta({
 <template>
   <BilibiliFansRankingTable
     title="粉丝总数排行榜"
-    subtitle="Bilibili Fans Ranking"
+    subtitle="按当前粉丝数排列的前 50 位 UP 主"
     value-label="粉丝"
     value-key="fans"
     api-url="/api/bilibili/fans-ranking"

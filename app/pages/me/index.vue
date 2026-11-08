@@ -73,32 +73,30 @@ async function resendVerificationEmail(): Promise<void> {
   <div v-if="user">
     <div class="grid grid-cols-1 sm:grid-cols-2">
       <div
-        class="flex items-center justify-between px-4 py-3 text-xs font-mono uppercase tracking-[0.12em]
-          text-[var(--auxline-fg-muted)] border-b border-[var(--auxline-line)] sm:border-b-0 sm:border-r"
+        class="flex items-center justify-between px-[var(--zr-gutter)] py-3 auxline-label text-[var(--auxline-fg-muted)] border-b border-[var(--auxline-line)] sm:border-b-0 sm:border-r"
       >
         <span>经验</span>
-        <span class="text-sm font-mono text-[var(--auxline-fg)]">
+        <span class="text-sm text-[var(--auxline-fg)]">
           {{ formatNumber(user.exp) }}
         </span>
       </div>
       <div
-        class="flex items-center justify-between px-4 py-3 text-xs font-mono uppercase tracking-[0.12em]
-          text-[var(--auxline-fg-muted)]"
+        class="flex items-center justify-between px-[var(--zr-gutter)] py-3 auxline-label text-[var(--auxline-fg-muted)]"
       >
         <span>积分</span>
-        <span class="text-sm font-mono text-[var(--auxline-fg)]">
+        <span class="text-sm text-[var(--auxline-fg)]">
           {{ formatNumber(user.credit) }}
         </span>
       </div>
     </div>
 
     <div class="border-t border-[var(--auxline-line)]">
-      <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--auxline-line)]">
-        <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+      <div class="flex items-center justify-between px-[var(--zr-gutter)] py-3 border-b border-[var(--auxline-line)]">
+        <span class="auxline-label text-[var(--auxline-fg-muted)]">
           邮箱验证
         </span>
         <div class="flex items-center gap-3">
-          <span class="text-sm font-mono text-[var(--auxline-fg)]">
+          <span class="text-sm text-[var(--auxline-fg)]">
             {{ user.emailVerified ? '已验证' : '未验证' }}
           </span>
           <AuxlineBtn
@@ -112,7 +110,7 @@ async function resendVerificationEmail(): Promise<void> {
           </AuxlineBtn>
         </div>
       </div>
-      <div v-if="resendError || resendSuccess" class="px-4 py-2 border-b border-[var(--auxline-line)]">
+      <div v-if="resendError || resendSuccess" class="px-[var(--zr-gutter)] py-2 border-b border-[var(--auxline-line)]">
         <p v-if="resendError" class="text-xs text-red-600">
           {{ resendError }}
         </p>
@@ -120,19 +118,19 @@ async function resendVerificationEmail(): Promise<void> {
           {{ resendSuccess }}
         </p>
       </div>
-      <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--auxline-line)]">
-        <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+      <div class="flex items-center justify-between px-[var(--zr-gutter)] py-3 border-b border-[var(--auxline-line)]">
+        <span class="auxline-label text-[var(--auxline-fg-muted)]">
           注册时间
         </span>
-        <span class="text-sm font-mono text-[var(--auxline-fg)]">
+        <span class="text-sm text-[var(--auxline-fg)]">
           {{ formatDate(user.createdAt) }}
         </span>
       </div>
-      <div class="flex items-center justify-between px-4 py-3">
-        <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+      <div class="flex items-center justify-between px-[var(--zr-gutter)] py-3">
+        <span class="auxline-label text-[var(--auxline-fg-muted)]">
           最近更新
         </span>
-        <span class="text-sm font-mono text-[var(--auxline-fg)]">
+        <span class="text-sm text-[var(--auxline-fg)]">
           {{ formatDate(user.updatedAt) }}
         </span>
       </div>

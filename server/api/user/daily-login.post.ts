@@ -3,13 +3,13 @@ import { createError } from 'h3'
 import { auth } from '~~/lib/auth'
 import { checkIns } from '~~/lib/database/auth-schema'
 import { db } from '~~/server/index'
+import type { CreditChange } from '~~/lib/credit'
 import { applyCreditChange } from '~~/server/utils/credit'
 
 interface DailyLoginResponse {
-  awarded: boolean
-  credit: number
   dayKey: string
-  exp: number
+  // 今天已领过则为 null
+  creditChange: CreditChange | null
 }
 
 const DAILY_REWARD = 10
@@ -74,10 +74,10 @@ export default defineEventHandler(async (event): Promise<DailyLoginResponse> => 
     `)
 
     if (checkInResult.rows.length === 0) {
-      return { awarded: false }
+      return null
     }
 
-    await applyCreditChange(tx, {
+    return applyCreditChange(tx, {
       userId,
       creditDelta: DAILY_REWARD,
       expDelta: DAILY_REWARD,
@@ -87,14 +87,7 @@ export default defineEventHandler(async (event): Promise<DailyLoginResponse> => 
         type: 'login',
       },
     })
-
-    return { awarded: true }
   })
 
-  return {
-    awarded: result.awarded,
-    credit: result.awarded ? DAILY_REWARD : 0,
-    dayKey,
-    exp: result.awarded ? DAILY_REWARD : 0,
-  }
+  return { dayKey, creditChange: result }
 })

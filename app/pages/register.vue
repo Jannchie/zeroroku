@@ -101,57 +101,49 @@ async function register(): Promise<void> {
 </script>
 
 <template>
-  <section class="flex flex-col items-center gap-4">
+  <section class="flex flex-col items-center gap-4 px-5 pb-16">
     <AuxlinePageHeader title="注册" subtitle="创建账号后需要先验证邮箱" />
     <form
       class="w-full max-w-sm flex flex-col gap-3"
       @submit.prevent="register"
     >
-      <label class="flex flex-col gap-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+      <label class="flex flex-col gap-1 auxline-label text-[var(--auxline-fg-muted)]">
         用户名
         <input
           v-model="name"
           type="text"
           autocomplete="username"
-          class="h-9 px-3 border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
-            text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
-            focus-visible:outline-[var(--auxline-line)]"
+          class="zr-input w-full"
           @input="clearFeedback"
         >
       </label>
-      <label class="flex flex-col gap-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+      <label class="flex flex-col gap-1 auxline-label text-[var(--auxline-fg-muted)]">
         邮箱
         <input
           v-model="email"
           type="email"
           autocomplete="email"
-          class="h-9 px-3 border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
-            text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
-            focus-visible:outline-[var(--auxline-line)]"
+          class="zr-input w-full"
           @input="clearFeedback"
         >
       </label>
-      <label class="flex flex-col gap-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+      <label class="flex flex-col gap-1 auxline-label text-[var(--auxline-fg-muted)]">
         密码
         <input
           v-model="password"
           type="password"
           autocomplete="new-password"
-          class="h-9 px-3 border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
-            text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
-            focus-visible:outline-[var(--auxline-line)]"
+          class="zr-input w-full"
           @input="clearFeedback"
         >
       </label>
-      <label class="flex flex-col gap-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+      <label class="flex flex-col gap-1 auxline-label text-[var(--auxline-fg-muted)]">
         确认密码
         <input
           v-model="confirmPassword"
           type="password"
           autocomplete="new-password"
-          class="h-9 px-3 border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
-            text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
-            focus-visible:outline-[var(--auxline-line)]"
+          class="zr-input w-full"
           @input="clearFeedback"
         >
       </label>

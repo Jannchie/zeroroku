@@ -102,119 +102,63 @@ function roomLink(roomId: string): string {
 </script>
 
 <template>
-  <section class="flex flex-col items-center pb-12">
+  <section class="flex w-full flex-col pb-12">
     <AuxlinePageHeader
       title="直播礼物排行榜"
-      subtitle="Live Room Gift Ranking"
+      :subtitle="`近${windowLabel}直播间礼物价值`"
     />
-    <div class="w-full border-b border-[var(--auxline-line)]">
-      <div class="max-w-3xl mx-auto">
-        <div class="flex items-center justify-between border-b sm:border-x border-[var(--auxline-line)] py-3 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-          <span class="px-1">排名</span>
-          <span class="text-left flex-1 pl-4">直播间</span>
-          <span class="px-1">礼物价值</span>
-        </div>
-        <div class="border-b sm:border-x border-[var(--auxline-line)] px-3 py-2 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-          统计窗口：近{{ windowLabel }}
-        </div>
-        <template v-if="pending">
-          <div
-            v-for="index in skeletonRows"
-            :key="index"
-            class="relative overflow-hidden border-b border-[var(--auxline-line)] last:border-b-0 sm:border-x"
-          >
-            <div class="relative z-10 flex w-full items-center justify-between">
-              <span class="w-10 px-1 text-sm font-mono text-transparent">
-                00
-              </span>
-              <div class="flex flex-1 items-center gap-3 pl-4">
-                <div
-                  class="h-9 w-9 bg-[var(--auxline-bg-emphasis)]"
-                  aria-hidden="true"
-                />
-                <div class="flex flex-col">
-                  <span class="h-4 w-32 bg-[var(--auxline-bg-emphasis)]" />
-                  <span class="mt-1 h-3 w-24 bg-[var(--auxline-bg-emphasis)]" />
-                </div>
-              </div>
-              <div class="flex flex-col items-end gap-1 px-1">
-                <span class="block h-4 w-20 bg-[var(--auxline-bg-emphasis)]" />
-                <span class="block h-3 w-12 bg-[var(--auxline-bg-emphasis)]" />
-              </div>
-            </div>
-          </div>
-        </template>
-        <template v-else>
-          <div
-            v-for="(item, index) in items"
-            :key="item.roomId"
-            class="relative overflow-hidden border-b border-[var(--auxline-line)] last:border-b-0 sm:border-x"
-          >
-            <div class="relative z-10 flex w-full items-center justify-between">
-              <span class="w-10 px-1 text-sm font-mono">
-                {{ String(index + 1).padStart(2, '0') }}
-              </span>
-              <div class="flex flex-1 items-center gap-3 pl-4 min-w-0">
-                <div
-                  class="flex h-9 w-9 items-center justify-center overflow-hidden border-x border-[var(--auxline-line)]
-                    bg-[var(--auxline-bg-emphasis)] text-xs font-mono uppercase tracking-[0.12em]"
-                  aria-hidden="true"
-                >
-                  <NuxtImg
-                    v-if="item.face"
-                    :src="item.face"
-                    alt=""
-                    class="h-full w-full object-cover"
-                    width="36"
-                    height="36"
-                  />
-                  <span v-else>
-                    {{ displayName(item).slice(0, 1) }}
-                  </span>
-                </div>
-                <div class="flex flex-col min-w-0">
-                  <span class="text-sm truncate">
-                    {{ displayName(item) }}
-                  </span>
-                  <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                    <a
-                      :href="roomLink(item.roomId)"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="hover:text-[var(--auxline-fg)]"
-                    >
-                      ROOM {{ item.roomId }}
-                    </a>
-                    <template v-if="item.mid">
-                      · MID {{ item.mid }}
-                    </template>
-                  </span>
-                </div>
-              </div>
-              <div class="flex flex-col items-end gap-1 px-1">
-                <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                  {{ formatAmount(item.amount) }}
-                </span>
-                <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                  {{ formatCount(item.gifts) }} gifts
-                </span>
-              </div>
-            </div>
-          </div>
-          <div
-            v-if="items.length === 0"
-            class="py-6 text-center text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)] border-b sm:border-x border-[var(--auxline-line)]"
-          >
-            暂无数据
-          </div>
-        </template>
-        <p
-          v-if="error"
-          class="mt-4 text-xs font-mono uppercase tracking-[0.12em] text-red-500"
-        >
-          直播排行榜加载失败
-        </p>
-      </div>
+    <div class="zr-row-head">
+      <span class="flex items-center gap-3">
+        <span class="zr-rank">#</span>
+        <span>直播间</span>
+      </span>
+      <span>礼物价值</span>
     </div>
+    <template v-if="pending">
+      <div v-for="index in skeletonRows" :key="index" class="zr-row">
+        <span class="h-3 w-8 rounded bg-[var(--auxline-bg-emphasis)]" />
+        <span class="h-10 w-10 shrink-0 rounded-full bg-[var(--auxline-bg-emphasis)]" aria-hidden="true" />
+        <span class="flex flex-1 flex-col gap-1.5">
+          <span class="h-3.5 w-32 rounded bg-[var(--auxline-bg-emphasis)]" />
+          <span class="h-3 w-24 rounded bg-[var(--auxline-bg-emphasis)]" />
+        </span>
+        <span class="h-3.5 w-20 rounded bg-[var(--auxline-bg-emphasis)]" />
+      </div>
+    </template>
+    <template v-else>
+      <div v-for="(item, index) in items" :key="item.roomId" class="zr-row">
+        <span class="zr-rank">{{ index + 1 }}</span>
+        <AuxlineAvatar :src="item.face" :name="displayName(item)" :size="40" />
+        <span class="flex min-w-0 flex-1 flex-col">
+          <NuxtLink
+            v-if="item.mid"
+            :to="`/bilibili/author/${item.mid}`"
+            class="zr-row-name truncate hover:underline"
+          >{{ displayName(item) }}</NuxtLink>
+          <span v-else class="zr-row-name truncate">{{ displayName(item) }}</span>
+          <span class="zr-row-meta">
+            <a
+              :href="roomLink(item.roomId)"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hover:text-[var(--auxline-fg)]"
+            >直播间 <span class="font-mono">{{ item.roomId }}</span></a>
+          </span>
+        </span>
+        <span class="flex shrink-0 flex-col items-end">
+          <span class="zr-row-value">{{ formatAmount(item.amount) }}</span>
+          <span class="zr-row-meta">{{ formatCount(item.gifts) }} 件礼物</span>
+        </span>
+      </div>
+      <p
+        v-if="items.length === 0"
+        class="zr-empty"
+      >
+        暂无数据
+      </p>
+    </template>
+    <p v-if="error" class="px-[var(--zr-gutter)] py-4 text-xs text-red-500">
+      直播排行榜加载失败
+    </p>
   </section>
 </template>

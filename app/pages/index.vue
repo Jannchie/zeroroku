@@ -547,10 +547,32 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+  <div class="flex w-full flex-col">
+  <header class="flex flex-col gap-4 border-b border-[var(--auxline-line)] px-[var(--zr-gutter)] py-8 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <h1 class="text-3xl font-semibold leading-tight tracking-tight">
+        ZeroRoku
+      </h1>
+      <p class="mt-1 text-[13px] text-[var(--auxline-fg-muted)]">
+        06 数据观测站 · 记录 B 站 UP 主的粉丝变化
+      </p>
+    </div>
+    <div class="flex flex-wrap gap-1">
+      <AuxlineBtn to="/bilibili" size="sm" variant="contrast">
+        搜索 UP 主
+      </AuxlineBtn>
+      <AuxlineBtn to="/bilibili/rank" size="sm">
+        粉丝排行
+      </AuxlineBtn>
+      <AuxlineBtn to="/open-letter" size="sm">
+        关于本站
+      </AuxlineBtn>
+    </div>
+  </header>
   <div class="relative h-[70vh] w-full overflow-hidden">
     <div class="pointer-events-none absolute inset-0 z-0">
       <div v-if="logEnabled" class="w-full max-h-[46rem] overflow-hidden">
-        <div class="flex flex-col gap-0 px-6 py-6 text-xs leading-5 text-zinc-500/50 font-mono uppercase">
+        <div class="flex flex-col gap-0 px-[var(--zr-gutter)] py-6 font-mono text-xs leading-5 text-[var(--auxline-fg-muted)] opacity-60">
           <div
             v-for="(line, index) in logLines"
             :key="`log-line-${index}`"
@@ -561,7 +583,7 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </div>
-    <div class="absolute right-6 top-6 z-20">
+    <div class="absolute right-5 top-4 z-20 sm:right-8">
       <AuxlineBtn
         size="xs"
         :variant="logEnabled ? 'contrast' : 'solid'"
@@ -578,5 +600,6 @@ onBeforeUnmount(() => {
         :class="canvasVisible ? 'opacity-100' : 'opacity-0'"
       />
     </div>
+  </div>
   </div>
 </template>

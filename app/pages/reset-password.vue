@@ -117,7 +117,7 @@ async function submitResetPassword(): Promise<void> {
 </script>
 
 <template>
-  <section class="flex flex-col items-center gap-4">
+  <section class="flex flex-col items-center gap-4 px-5 pb-16">
     <AuxlinePageHeader title="重置密码" variant="plain" />
     <form
       class="w-full max-w-sm flex flex-col gap-3"
@@ -126,29 +126,25 @@ async function submitResetPassword(): Promise<void> {
       <p class="text-xs text-[var(--auxline-fg-muted)]">
         请输入新的登录密码。重置后其他会话会自动失效。
       </p>
-      <label class="flex flex-col gap-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+      <label class="flex flex-col gap-1 auxline-label text-[var(--auxline-fg-muted)]">
         新密码
         <input
           v-model="newPassword"
           type="password"
           autocomplete="new-password"
           :disabled="Boolean(tokenErrorMessage) || isSubmitting"
-          class="h-9 px-3 border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
-            text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
-            focus-visible:outline-[var(--auxline-line)]"
+          class="zr-input w-full"
           @input="onPasswordInput"
         >
       </label>
-      <label class="flex flex-col gap-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+      <label class="flex flex-col gap-1 auxline-label text-[var(--auxline-fg-muted)]">
         确认新密码
         <input
           v-model="confirmPassword"
           type="password"
           autocomplete="new-password"
           :disabled="Boolean(tokenErrorMessage) || isSubmitting"
-          class="h-9 px-3 border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
-            text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
-            focus-visible:outline-[var(--auxline-line)]"
+          class="zr-input w-full"
           @input="onPasswordInput"
         >
       </label>

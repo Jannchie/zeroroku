@@ -15,8 +15,8 @@ export default defineConfig({
   },
   theme: {
     fontFamily: {
-      sans: '"Berkeley Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-      mono: '"Berkeley Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+      sans: 'var(--font-sans)',
+      mono: 'var(--font-mono)',
     },
   },
   preflights: [

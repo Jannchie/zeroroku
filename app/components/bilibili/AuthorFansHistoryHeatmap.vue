@@ -237,15 +237,15 @@ const gridStyle = computed(() => ({
 </script>
 
 <template>
-  <div class="heatmap-root flex flex-col gap-3 px-2 py-3">
+  <div class="heatmap-root flex flex-col gap-3 px-[var(--zr-gutter)] py-4">
     <div class="flex flex-wrap items-center justify-between gap-2">
-      <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+      <span class="auxline-label text-[var(--auxline-fg-muted)]">
         粉丝日变化
       </span>
     </div>
 
     <div v-if="props.loading" class="flex min-h-[120px] items-center justify-center bg-[var(--auxline-bg-emphasis)]">
-      <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+      <span class="auxline-label text-[var(--auxline-fg-muted)]">
         加载中
       </span>
     </div>
@@ -253,7 +253,7 @@ const gridStyle = computed(() => ({
       v-else-if="!calendarData.hasData"
       class="flex min-h-[120px] items-center justify-center bg-[var(--auxline-bg-emphasis)]"
     >
-      <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+      <span class="auxline-label text-[var(--auxline-fg-muted)]">
         暂无数据
       </span>
     </div>

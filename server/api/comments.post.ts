@@ -6,6 +6,7 @@ import { createError, readBody } from 'h3'
 import { comments } from '~~/drizzle/schema'
 import { auth } from '~~/lib/auth'
 import { db } from '~~/server/index'
+import type { CreditChange } from '~~/lib/credit'
 import { applyCreditChange } from '~~/server/utils/credit'
 
 interface CreateCommentBody {
@@ -104,7 +105,7 @@ function getTableIdentifier(table: AnyPgTable) {
   return sql`${sql.identifier(schemaName)}.${sql.identifier(config.name)}`
 }
 
-export default defineEventHandler(async (event): Promise<{ ok: boolean, id: string }> => {
+export default defineEventHandler(async (event): Promise<{ ok: boolean, id: string, creditChange: CreditChange }> => {
   const session = await auth.api.getSession({
     headers: event.headers,
   })
@@ -132,7 +133,7 @@ export default defineEventHandler(async (event): Promise<{ ok: boolean, id: stri
   const now = new Date()
 
   const result = await db.transaction(async (tx) => {
-    await applyCreditChange(tx, {
+    const creditChange = await applyCreditChange(tx, {
       userId,
       creditDelta: -COMMENT_COST,
       expDelta: COMMENT_EXP,
@@ -145,14 +146,14 @@ export default defineEventHandler(async (event): Promise<{ ok: boolean, id: stri
       },
     })
 
-    return tx.execute<InsertedCommentRow>(sql`
+    const inserted = await tx.execute<InsertedCommentRow>(sql`
       insert into ${commentsTable} (path, parent_id, uid, content, created_at, "like", dislike)
       values (${path}, ${parentId}, ${userId}, ${content}, ${now}, 0, 0)
       returning id::text as id
     `)
+    const id = inserted.rows[0]?.id ? String(inserted.rows[0].id) : ''
+    return { id, creditChange }
   })
 
-  const id = result.rows[0]?.id ? String(result.rows[0].id) : ''
-
-  return { ok: true, id }
+  return { ok: true, ...result }
 })

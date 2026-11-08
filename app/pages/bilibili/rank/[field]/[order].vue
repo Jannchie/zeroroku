@@ -37,7 +37,7 @@ const config = computed<RankConfig | null>(() => {
   if (field.value === 'fans') {
     return {
       title: '粉丝总数排行榜',
-      subtitle: 'Bilibili Fans Ranking',
+      subtitle: '按当前粉丝数排列的前 50 位 UP 主',
       valueLabel: '粉丝',
       valueKey: 'fans',
       apiUrl: '/api/bilibili/fans-ranking',
@@ -48,7 +48,7 @@ const config = computed<RankConfig | null>(() => {
     const isDesc = order.value === 'desc'
     return {
       title: isDesc ? '7日涨粉榜' : '7日掉粉榜',
-      subtitle: isDesc ? '7-day follower gain' : '7-day follower loss',
+      subtitle: isDesc ? '近 7 天粉丝增长最多' : '近 7 天粉丝减少最多',
       valueLabel: isDesc ? '7日涨粉' : '7日掉粉',
       valueKey: 'delta',
       apiUrl: `/api/bilibili/fans-trend?period=7&direction=${isDesc ? 'up' : 'down'}`,
@@ -61,7 +61,7 @@ const config = computed<RankConfig | null>(() => {
     const isDesc = order.value === 'desc'
     return {
       title: isDesc ? '1日涨粉榜' : '1日掉粉榜',
-      subtitle: isDesc ? '1-day follower gain' : '1-day follower loss',
+      subtitle: isDesc ? '近 1 天粉丝增长最多' : '近 1 天粉丝减少最多',
       valueLabel: isDesc ? '1日涨粉' : '1日掉粉',
       valueKey: 'delta',
       apiUrl: `/api/bilibili/fans-trend?period=1&direction=${isDesc ? 'up' : 'down'}`,

@@ -24,12 +24,6 @@ interface VisitTopResponse {
   items: VisitTopItem[]
 }
 
-interface ObserveResponse {
-  ok: boolean
-  cost: number
-  credit: number
-}
-
 interface RecentAuthorItem {
   mid: string
   name: string | null
@@ -54,10 +48,8 @@ const hasSearched = ref(false)
 const session = authClient.useSession()
 const user = computed(() => session.value?.data?.user ?? null)
 const observeMid = ref('')
-const observePending = ref(false)
-const observeError = ref<string | null>(null)
-const observeSuccess = ref<string | null>(null)
-const observeCost = 10
+const toast = useToast()
+const { observe, pending: observePending, cost: observeCost } = useObserveAuthor()
 const recentAuthors = ref<RecentAuthorItem[]>([])
 const recentStorageKey = 'bilibili_recent_authors'
 const recentLimit = 16
@@ -98,6 +90,7 @@ const visitTopSkeletons = visitTopSkeletonWidths.map((widthClass, index) => ({
   id: index,
   widthClass,
 }))
+const NuxtLinkComponent = resolveComponent('NuxtLink')
 const canSearch = computed(() => searchQuery.value.trim().length > 0 && !searchPending.value)
 
 function formatCount(value: number | string | undefined | null): string {
@@ -192,46 +185,17 @@ async function searchAuthors() {
   }
 }
 
-async function observeAuthor() {
-  if (!canObserve.value || observePending.value) {
+async function observeAuthor(): Promise<void> {
+  if (!canObserve.value) {
     return
   }
+  // 未登录时按钮换成了登录链接，但在输入框里回车仍会提交表单
   if (!user.value) {
-    observeError.value = '请先登录。'
-    observeSuccess.value = null
+    toast.show('请先登录', { tone: 'error' })
     return
   }
-
-  const trimmed = observeTarget.value
-  if (!/^\d+$/.test(trimmed)) {
-    observeError.value = 'MID 必须是数字。'
-    observeSuccess.value = null
-    return
-  }
-
-  observePending.value = true
-  observeError.value = null
-  observeSuccess.value = null
-
-  try {
-    const response = await $fetch<ObserveResponse>(
-      `/api/bilibili/author/${encodeURIComponent(trimmed)}/observe`,
-      { method: 'POST' },
-    )
-    observeSuccess.value = `观测已加入队列，剩余 ${formatCount(response.credit)} 积分。`
+  if (await observe(observeTarget.value)) {
     observeMid.value = ''
-    authClient.$store.notify('$sessionSignal')
-  }
-  catch (error) {
-    if (error && typeof error === 'object' && 'data' in error) {
-      const maybeData = error.data as { message?: string, statusMessage?: string }
-      observeError.value = maybeData.statusMessage ?? maybeData.message ?? '观测失败。'
-      return
-    }
-    observeError.value = '观测失败。'
-  }
-  finally {
-    observePending.value = false
   }
 }
 
@@ -243,10 +207,6 @@ watch(searchQuery, (value) => {
   }
 })
 
-watch(observeMid, () => {
-  observeError.value = null
-  observeSuccess.value = null
-})
 
 onMounted(() => {
   if (!import.meta.client || !globalThis.localStorage) {
@@ -257,349 +217,177 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="flex flex-col items-center">
+  <section class="flex w-full flex-col">
     <AuxlinePageHeader
+      :bordered="false"
       title="Bilibili"
-      subtitle="数据观测站"
+      subtitle="UP 主粉丝数据观测"
     />
     <BilibiliFansRankingNav />
 
-    <div class="w-full border-b border-[var(--auxline-line)]">
-      <div class="w-full max-w-3xl mx-auto sm:border-x border-[var(--auxline-line)]">
-        <div class="flex items-center border-b border-[var(--auxline-line)] p-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-          <span>最近访问</span>
+    <!-- 主线只有一条：搜索 → 结果；发现（最近访问 / 焦点）和观测排在后面 -->
+    <form class="zr-section" @submit.prevent="searchAuthors">
+      <label class="zr-search">
+        <span class="i-heroicons-magnifying-glass h-[18px] w-[18px] shrink-0 text-[var(--auxline-fg-muted)]" aria-hidden="true" />
+        <input
+          v-model="searchQuery"
+          type="search"
+          autocomplete="off"
+          placeholder="搜索 UP 主昵称或 MID"
+          aria-label="搜索 UP 主"
+        >
+        <AuxlineBtn
+          type="submit"
+          variant="contrast"
+          :loading="searchPending"
+          :disabled="!canSearch"
+        >
+          搜索
+        </AuxlineBtn>
+      </label>
+      <p class="mt-3 text-[13px] text-[var(--auxline-fg-muted)]">
+        名字包含关键词即可命中，粉丝多的 UP 主排在前面
+      </p>
+      <p v-if="searchError" class="mt-2 text-[13px] text-red-600">
+        {{ searchError }}
+      </p>
+    </form>
+
+    <div v-if="searchPending || hasSearched" class="border-t border-[var(--auxline-line)]">
+      <div class="zr-row-head">
+        <span>{{ searchPending ? '搜索中' : `找到 ${searchResults.length} 位 UP 主` }}</span>
+        <span>粉丝</span>
+      </div>
+      <template v-if="searchPending">
+        <div v-for="index in skeletonRows" :key="`search-${index}`" class="zr-row">
+          <span class="h-10 w-10 shrink-0 rounded-full bg-[var(--auxline-bg-emphasis)]" aria-hidden="true" />
+          <span class="flex flex-1 flex-col gap-2">
+            <span class="h-3.5 w-36 rounded bg-[var(--auxline-bg-emphasis)]" />
+            <span class="h-3 w-20 rounded bg-[var(--auxline-bg-emphasis)]" />
+          </span>
+          <span class="h-3.5 w-20 rounded bg-[var(--auxline-bg-emphasis)]" />
         </div>
-        <div class="flex flex-wrap gap-1 p-1">
+      </template>
+      <template v-else>
+        <component
+          :is="isAuthorLinkable(item.mid) ? NuxtLinkComponent : 'div'"
+          v-for="item in searchResults"
+          :key="item.mid"
+          :to="isAuthorLinkable(item.mid) ? authorLink(item.mid) : undefined"
+          class="zr-row"
+          :class="isAuthorLinkable(item.mid) ? 'zr-row-link' : ''"
+        >
+          <AuxlineAvatar :src="item.face" :name="displayAuthorName(item)" :size="40" />
+          <span class="flex min-w-0 flex-1 flex-col">
+            <span class="zr-row-name truncate">{{ displayAuthorName(item) }}</span>
+            <span class="zr-row-meta font-mono">{{ item.mid }}</span>
+          </span>
+          <span class="zr-row-value shrink-0">{{ formatCount(item.fans) }}</span>
+        </component>
+        <p v-if="searchResults.length === 0" class="zr-empty">
+          没有找到匹配的 UP 主
+        </p>
+      </template>
+    </div>
+
+    <div class="grid grid-cols-1 border-t border-[var(--auxline-line)] lg:grid-cols-2">
+      <section class="zr-section border-b border-[var(--auxline-line)] lg:border-b-0 lg:border-r">
+        <h2 class="zr-section-title">
+          最近访问<small v-if="limitedRecentAuthors.length > 0">{{ limitedRecentAuthors.length }}</small>
+        </h2>
+        <div class="flex flex-wrap gap-2">
           <NuxtLink
             v-for="item in limitedRecentAuthors"
             :key="`recent-${item.mid}`"
             :to="authorLink(item.mid)"
-            class="inline-flex items-center gap-2 border border-[var(--auxline-line)] pr-2 pl-0 py-0 text-xs text-[var(--auxline-fg)]
-                hover:bg-[var(--auxline-bg-hover)] focus-visible:outline focus-visible:outline-1
-                focus-visible:outline-[var(--auxline-line)]"
+            class="zr-chip"
           >
-            <span
-              class="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden border-r border-[var(--auxline-line)]
-                  bg-[var(--auxline-bg-emphasis)] text-[0.55rem] font-mono uppercase tracking-[0.12em]"
-              aria-hidden="true"
-            >
-              <NuxtImg
-                v-if="item.face"
-                :src="item.face"
-                alt=""
-                class="h-full w-full object-cover"
-                width="20"
-                height="20"
-              />
-              <span v-else>
-                {{ displayAuthorName(item).slice(0, 1) }}
-              </span>
-            </span>
-            <span class="max-w-[8rem] truncate">
-              {{ displayAuthorName(item) }}
-            </span>
+            <AuxlineAvatar :src="item.face" :name="displayAuthorName(item)" :size="24" />
+            <span class="max-w-[10rem] truncate">{{ displayAuthorName(item) }}</span>
           </NuxtLink>
-          <span
-            v-if="limitedRecentAuthors.length === 0"
-            class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-          >
-            暂无最近访问
-          </span>
+          <p v-if="limitedRecentAuthors.length === 0" class="text-[13px] text-[var(--auxline-fg-muted)]">
+            还没有访问过 UP 主，访问过的会出现在这里
+          </p>
         </div>
-      </div>
-    </div>
+      </section>
 
-    <div class="w-full border-b border-[var(--auxline-line)]">
-      <div class="w-full max-w-3xl mx-auto sm:border-x border-[var(--auxline-line)]">
-        <div class="flex items-center border-b border-[var(--auxline-line)] p-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-          <span>焦点UP主</span>
-        </div>
-        <div class="flex flex-wrap gap-1 p-1">
+      <section class="zr-section">
+        <h2 class="zr-section-title">
+          焦点 UP 主<small>近期访问最多</small>
+        </h2>
+        <div class="flex flex-wrap gap-2">
           <template v-if="visitTopPending">
-            <div
+            <span
               v-for="item in visitTopSkeletons"
               :key="`visit-top-${item.id}`"
-              class="inline-flex items-center gap-1 border border-[var(--auxline-line)] pr-2 pl-0 py-0 text-xs"
+              class="zr-chip pointer-events-none"
               aria-hidden="true"
             >
-              <span
-                class="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden border-r border-[var(--auxline-line)]
-                  bg-[var(--auxline-bg-emphasis)]"
-              />
-              <span class="h-3 bg-[var(--auxline-bg-emphasis)]" :class="item.widthClass" />
-            </div>
+              <span class="zr-avatar h-6 w-6" />
+              <span class="h-3 rounded bg-[var(--auxline-bg-emphasis)]" :class="item.widthClass" />
+            </span>
           </template>
           <template v-else>
             <NuxtLink
               v-for="item in visitTopItems"
               :key="item.mid"
               :to="authorLink(item.mid)"
-              class="inline-flex items-center gap-2 border border-[var(--auxline-line)] pr-2 pl-0 py-0 text-xs text-[var(--auxline-fg)]
-                hover:bg-[var(--auxline-bg-hover)] focus-visible:outline focus-visible:outline-1
-                focus-visible:outline-[var(--auxline-line)]"
+              class="zr-chip"
             >
-              <span
-                class="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden border-r border-[var(--auxline-line)]
-                  bg-[var(--auxline-bg-emphasis)] text-[0.55rem] font-mono uppercase tracking-[0.12em]"
-                aria-hidden="true"
-              >
-                <NuxtImg
-                  v-if="item.face"
-                  :src="item.face"
-                  alt=""
-                  class="h-full w-full object-cover"
-                  width="20"
-                  height="20"
-                />
-                <span v-else>
-                  {{ displayAuthorName(item).slice(0, 1) }}
-                </span>
-              </span>
-              <span class="max-w-[8rem] truncate">
-                {{ displayAuthorName(item) }}
-              </span>
+              <AuxlineAvatar :src="item.face" :name="displayAuthorName(item)" :size="24" />
+              <span class="max-w-[10rem] truncate">{{ displayAuthorName(item) }}</span>
             </NuxtLink>
-            <span
-              v-if="visitTopItems.length === 0"
-              class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-            >
-              暂无焦点UP主
-            </span>
+            <p v-if="visitTopItems.length === 0" class="text-[13px] text-[var(--auxline-fg-muted)]">
+              暂无焦点 UP 主
+            </p>
           </template>
         </div>
-        <p v-if="visitTopError" class="p-1 text-xs text-red-600">
-          焦点UP主加载失败
+        <p v-if="visitTopError" class="mt-3 text-[13px] text-red-600">
+          焦点 UP 主加载失败
+        </p>
+      </section>
+    </div>
+
+    <!-- 观测：次要操作，说明在左、输入在右 -->
+    <form
+      class="zr-section flex flex-col gap-4 border-t border-[var(--auxline-line)] lg:flex-row lg:items-center lg:justify-between"
+      @submit.prevent="observeAuthor"
+    >
+      <div>
+        <h2 class="zr-section-title !mb-1">
+          找不到想看的 UP 主？
+        </h2>
+        <p class="text-[13px] text-[var(--auxline-fg-muted)]">
+          输入 MID 加入观测队列，之后会定期抓取粉丝数。每次消耗 {{ observeCost }} 积分<template v-if="user">
+            ，当前积分 {{ formatCount(user.credit) }}
+          </template>。
         </p>
       </div>
-    </div>
-
-    <div class="w-full border-b border-[var(--auxline-line)]">
-      <div class="w-full max-w-3xl mx-auto sm:border-x border-[var(--auxline-line)]">
-        <div class="h-8" aria-hidden="true" />
+      <div class="flex w-full gap-2 lg:w-auto">
+        <input
+          v-model="observeMid"
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          autocomplete="off"
+          placeholder="UP 主 MID，如 1850091"
+          aria-label="UP 主 MID"
+          class="zr-input min-w-0 flex-1 font-mono lg:w-64 lg:flex-none"
+        >
+        <AuxlineBtn
+          v-if="user"
+          type="submit"
+          size="lg"
+          variant="contrast"
+          :loading="observePending"
+          :disabled="!canObserve"
+        >
+          观测
+        </AuxlineBtn>
+        <AuxlineBtn v-else to="/login" size="lg" variant="contrast">
+          登录后观测
+        </AuxlineBtn>
       </div>
-    </div>
-
-    <div class="w-full border-[var(--auxline-line)]">
-      <div class="w-full max-w-3xl mx-auto sm:border-x  border-[var(--auxline-line)]">
-        <div class="mx-auto border-[var(--auxline-line)]">
-          <form
-            class="flex flex-col sm:flex-row sm:items-end"
-            @submit.prevent="observeAuthor"
-          >
-            <label class="flex flex-1 flex-col text-xs tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-              <div class="pl-1 py-1 border-b border-[var(--auxline-line)]">
-                输入UP主ID观测
-              </div>
-              <div class="flex border-b border-[var(--auxline-line)]">
-                <input
-                  v-model="observeMid"
-                  type="text"
-                  inputmode="numeric"
-                  pattern="[0-9]*"
-                  autocomplete="off"
-                  placeholder="1850091"
-                  class="h-9 pl-1 grow border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
-                text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
-                focus-visible:outline-[var(--auxline-line)]"
-                  @keydown.enter.prevent="observeAuthor"
-                >
-                <AuxlineBtn
-                  type="submit"
-                  variant="contrast"
-                  :loading="observePending"
-                  :disabled="!canObserve"
-                >
-                  观测
-                </AuxlineBtn>
-              </div>
-            </label>
-          </form>
-          <div
-            class="flex items-center justify-between border-b border-[var(--auxline-line)] pl-1 text-xs
-              font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-          >
-            <span>观测消耗 {{ observeCost }} 积分</span>
-            <span v-if="user">
-              当前积分 {{ formatCount(user.credit) }}
-            </span>
-            <AuxlineBtn
-              v-else
-              size="xs"
-              to="/login"
-            >
-              登录后观测
-            </AuxlineBtn>
-          </div>
-          <p v-if="observeError" class="px-1 py-2 text-xs text-red-600">
-            {{ observeError }}
-          </p>
-          <p v-else-if="observeSuccess" class="px-1 py-2 text-xs text-green-600">
-            {{ observeSuccess }}
-          </p>
-        </div>
-
-        <div class="border-b border-[var(--auxline-line)]">
-          <div class="h-8" aria-hidden="true" />
-        </div>
-
-        <div class="mx-auto">
-          <form
-            class="flex flex-col sm:flex-row sm:items-end"
-            @submit.prevent="searchAuthors"
-          >
-            <label class="flex flex-1 flex-col text-xs tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-              <div class="pl-1 py-1 border-b border-[var(--auxline-line)]">
-                搜索UP
-              </div>
-              <div class="flex border-b border-[var(--auxline-line)]">
-                <input
-                  v-model="searchQuery"
-                  type="text"
-                  autocomplete="off"
-                  placeholder="昵称或 MID"
-                  class="h-9 pl-1 grow border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
-                text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
-                focus-visible:outline-[var(--auxline-line)]"
-                  @keydown.enter.prevent="searchAuthors"
-                >
-                <AuxlineBtn
-                  type="submit"
-                  variant="contrast"
-                  :loading="searchPending"
-                  :disabled="!canSearch"
-                >
-                  搜索
-                </AuxlineBtn>
-              </div>
-            </label>
-          </form>
-        </div>
-
-        <div class="border-[var(--auxline-line)]">
-          <div class="flex items-center justify-between border-b border-[var(--auxline-line)] py-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-            <span class="px-1">搜索结果</span>
-            <span class="px-1">粉丝</span>
-          </div>
-          <template v-if="searchPending">
-            <div
-              v-for="index in skeletonRows"
-              :key="`search-${index}`"
-              class="flex items-center justify-between border-b border-[var(--auxline-line)] last:border-b-0"
-            >
-              <span class="w-10 px-1 text-sm font-mono text-transparent">
-                00
-              </span>
-              <div class="flex flex-1 items-center gap-3 pl-4">
-                <div class="h-9 w-9 bg-[var(--auxline-bg-emphasis)]" aria-hidden="true" />
-                <div class="flex flex-col">
-                  <span class="h-4 w-32 bg-[var(--auxline-bg-emphasis)]" />
-                  <span class="mt-1 h-3 w-20 bg-[var(--auxline-bg-emphasis)]" />
-                </div>
-              </div>
-              <span class="px-1">
-                <span class="block h-4 w-16 bg-[var(--auxline-bg-emphasis)]" />
-              </span>
-            </div>
-          </template>
-          <template v-else-if="hasSearched">
-            <template v-for="item in searchResults" :key="item.mid">
-              <NuxtLink
-                v-if="isAuthorLinkable(item.mid)"
-                :to="authorLink(item.mid)"
-                class="flex items-center justify-between border-b border-[var(--auxline-line)] last:border-b-0 hover:bg-[var(--auxline-bg-hover)]
-                  focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)]"
-              >
-                <span class="w-10 px-1 text-sm font-mono text-[var(--auxline-fg-muted)]">
-                  UP
-                </span>
-                <div class="flex flex-1 items-center gap-3 pl-4 min-w-0">
-                  <div
-                    class="flex h-9 w-9 items-center justify-center overflow-hidden border-x border-[var(--auxline-line)]
-                      bg-[var(--auxline-bg-emphasis)] text-xs font-mono uppercase tracking-[0.12em]"
-                    aria-hidden="true"
-                  >
-                    <NuxtImg
-                      v-if="item.face"
-                      :src="item.face"
-                      alt=""
-                      class="h-full w-full object-cover"
-                      width="36"
-                      height="36"
-                    />
-                    <span v-else>
-                      {{ displayAuthorName(item).slice(0, 1) }}
-                    </span>
-                  </div>
-                  <div class="flex flex-col min-w-0">
-                    <span class="text-sm truncate">
-                      {{ displayAuthorName(item) }}
-                    </span>
-                    <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                      {{ item.mid }}
-                    </span>
-                  </div>
-                </div>
-                <span class="text-sm px-1 font-mono">
-                  {{ formatCount(item.fans) }}
-                </span>
-              </NuxtLink>
-              <div
-                v-else
-                class="flex items-center justify-between border-b border-[var(--auxline-line)] last:border-b-0"
-              >
-                <span class="w-10 px-1 text-sm font-mono text-[var(--auxline-fg-muted)]">
-                  UP
-                </span>
-                <div class="flex flex-1 items-center gap-3 pl-4 min-w-0">
-                  <div
-                    class="flex h-9 w-9 items-center justify-center overflow-hidden border-x border-[var(--auxline-line)]
-                      bg-[var(--auxline-bg-emphasis)] text-xs font-mono uppercase tracking-[0.12em]"
-                    aria-hidden="true"
-                  >
-                    <NuxtImg
-                      v-if="item.face"
-                      :src="item.face"
-                      alt=""
-                      class="h-full w-full object-cover"
-                      width="36"
-                      height="36"
-                    />
-                    <span v-else>
-                      {{ displayAuthorName(item).slice(0, 1) }}
-                    </span>
-                  </div>
-                  <div class="flex flex-col min-w-0">
-                    <span class="text-sm truncate">
-                      {{ displayAuthorName(item) }}
-                    </span>
-                    <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                      {{ item.mid }}
-                    </span>
-                  </div>
-                </div>
-                <span class="text-sm px-1 font-mono">
-                  {{ formatCount(item.fans) }}
-                </span>
-              </div>
-            </template>
-            <div
-              v-if="searchResults.length === 0"
-              class="py-6 text-center text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-            >
-              暂无结果
-            </div>
-          </template>
-          <div
-            v-else
-            class="py-6 text-center text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-          >
-            输入关键词开始搜索
-          </div>
-          <p v-if="searchError" class="px-4 py-2 text-xs text-red-600">
-            {{ searchError }}
-          </p>
-        </div>
-      </div>
-    </div>
+    </form>
   </section>
 </template>

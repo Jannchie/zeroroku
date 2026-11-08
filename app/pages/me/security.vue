@@ -93,45 +93,39 @@ async function changePassword() {
 <template>
   <div v-if="user">
     <form class="flex flex-col gap-3 px-4 py-5" @submit.prevent="changePassword">
-      <p class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+      <p class="auxline-label text-[var(--auxline-fg-muted)]">
         修改密码
       </p>
-      <label class="flex flex-col gap-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+      <label class="flex flex-col gap-1 auxline-label text-[var(--auxline-fg-muted)]">
         当前密码
         <input
           v-model="currentPassword"
           type="password"
           autocomplete="current-password"
           :disabled="isChangingPassword"
-          class="h-9 px-3 border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
-            text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
-            focus-visible:outline-[var(--auxline-line)]"
+          class="zr-input w-full"
           @input="onPasswordInput"
         >
       </label>
-      <label class="flex flex-col gap-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+      <label class="flex flex-col gap-1 auxline-label text-[var(--auxline-fg-muted)]">
         新密码
         <input
           v-model="newPassword"
           type="password"
           autocomplete="new-password"
           :disabled="isChangingPassword"
-          class="h-9 px-3 border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
-            text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
-            focus-visible:outline-[var(--auxline-line)]"
+          class="zr-input w-full"
           @input="onPasswordInput"
         >
       </label>
-      <label class="flex flex-col gap-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+      <label class="flex flex-col gap-1 auxline-label text-[var(--auxline-fg-muted)]">
         确认新密码
         <input
           v-model="confirmPassword"
           type="password"
           autocomplete="new-password"
           :disabled="isChangingPassword"
-          class="h-9 px-3 border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
-            text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
-            focus-visible:outline-[var(--auxline-line)]"
+          class="zr-input w-full"
           @input="onPasswordInput"
         >
       </label>

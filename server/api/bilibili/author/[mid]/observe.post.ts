@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import { createError, getRouterParam } from 'h3'
 import { authorFansSchedules, authorInfoSchedules, authorVideoSchedules } from '~~/drizzle/schema'
 import { auth } from '~~/lib/auth'
+import { type CreditChange, OBSERVE_COST } from '~~/lib/credit'
 import { db } from '~~/server/index'
 import { applyCreditChange } from '~~/server/utils/credit'
 import { parseUnsignedBigInt } from '~~/server/utils/parsers'
@@ -9,11 +10,9 @@ import { getTableIdentifier } from '~~/server/utils/table'
 
 interface ObserveResponse {
   ok: boolean
-  cost: number
-  credit: number
+  creditChange: CreditChange
 }
 
-const OBSERVE_COST = 10
 
 function parseUserId(value: unknown): number | null {
   if (typeof value === 'number' && Number.isSafeInteger(value) && value > 0) {
@@ -88,12 +87,11 @@ export default defineEventHandler(async (event): Promise<ObserveResponse> => {
       set next = excluded.next, updated_at = excluded.updated_at
     `)
 
-    return creditResult.credit
+    return creditResult
   })
 
   return {
     ok: true,
-    cost: OBSERVE_COST,
-    credit: result,
+    creditChange: result,
   }
 })

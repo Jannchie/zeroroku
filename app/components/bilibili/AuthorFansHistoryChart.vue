@@ -231,7 +231,7 @@ onBeforeUnmount(() => {
       v-if="props.loading"
       class="absolute inset-0 flex items-center justify-center bg-[var(--auxline-bg-emphasis)]"
     >
-      <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+      <span class="auxline-label text-[var(--auxline-fg-muted)]">
         加载中
       </span>
     </div>
@@ -239,7 +239,7 @@ onBeforeUnmount(() => {
       v-else-if="!hasData"
       class="absolute inset-0 flex items-center justify-center bg-[var(--auxline-bg-emphasis)]"
     >
-      <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+      <span class="auxline-label text-[var(--auxline-fg-muted)]">
         暂无数据
       </span>
     </div>

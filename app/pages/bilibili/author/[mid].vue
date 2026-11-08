@@ -55,12 +55,6 @@ interface LivePaidEventAggregationResponse {
   items: Record<string, string | number | null>[]
 }
 
-interface ObserveResponse {
-  ok: boolean
-  cost: number
-  credit: number
-}
-
 interface RecentAuthorItem {
   mid: string
   name: string | null
@@ -138,12 +132,6 @@ const liveRoomId = computed(() => author.value?.liveRoomId ?? null)
 const liveRoomUrl = computed(() => (liveRoomId.value ? liveRoomLink(liveRoomId.value) : null))
 const showLiveStatus = computed(() => Boolean(author.value && liveRoomId.value))
 const showAggregation = computed(() => Boolean(liveRoomId.value))
-const liveStatusLabel = computed(() => {
-  return isLive.value ? '直播中' : '未开播'
-})
-const liveStatusClass = computed(() => {
-  return isLive.value ? 'text-green-600' : 'text-[var(--auxline-fg-muted)]'
-})
 
 const historyItems = computed(() => historyData.value?.items ?? [])
 const hiddenAggregationColumnKeys = new Set(['id', 'roomid', 'updateat', 'updatedat', 'updatetime', 'updatedtime'])
@@ -179,12 +167,8 @@ const aggregationDateFormatter = new Intl.DateTimeFormat('zh-CN', {
   month: '2-digit',
   day: '2-digit',
 })
-const observeCost = 10
-const observePending = ref(false)
-const observeError = ref<string | null>(null)
-const observeSuccess = ref<string | null>(null)
+const { observe, pending: observePending, cost: observeCost } = useObserveAuthor()
 const observeTarget = computed(() => mid.value.trim())
-const isObserveMidValid = computed(() => /^\d+$/.test(observeTarget.value))
 
 const pageSize = 10
 const currentPage = ref(1)
@@ -199,7 +183,7 @@ const pagedHistory = computed(() => {
   return historyItems.value.slice(start, start + pageSize)
 })
 const historyTableHeaderRef = ref<HTMLDivElement | null>(null)
-const canObserve = computed(() => observeTarget.value.length > 0 && isObserveMidValid.value && !observePending.value)
+const canObserve = computed(() => /^\d+$/.test(observeTarget.value) && !observePending.value)
 
 const aggregationSkeletonRows = Array.from({ length: 10 }, (_, index) => index)
 const aggregationTableHeaderRef = ref<HTMLDivElement | null>(null)
@@ -254,10 +238,6 @@ watch(aggregationItems, () => {
   aggregationCurrentPage.value = 1
 })
 
-watch(mid, () => {
-  observeError.value = null
-  observeSuccess.value = null
-})
 
 watch(totalPages, (value) => {
   if (value <= 0) {
@@ -291,6 +271,13 @@ function formatDelta(value: number | null | undefined): string {
     return '--'
   }
   return deltaFormatter.format(Math.round(value))
+}
+
+function deltaClass(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value) || value >= 0) {
+    return ''
+  }
+  return 'text-red-500'
 }
 
 function formatRankMeta(rank: number | null | undefined, total: number | null | undefined): string | null {
@@ -703,44 +690,8 @@ function displayAuthorName(value: AuthorDetailItem | null): string {
 }
 
 async function observeAuthor(): Promise<void> {
-  if (!canObserve.value || observePending.value) {
-    return
-  }
-  if (!user.value) {
-    observeError.value = '请先登录。'
-    observeSuccess.value = null
-    return
-  }
-  if (!isObserveMidValid.value) {
-    observeError.value = 'MID 必须是数字。'
-    observeSuccess.value = null
-    return
-  }
-
-  observePending.value = true
-  observeError.value = null
-  observeSuccess.value = null
-
-  try {
-    const response = await $fetch<ObserveResponse>(
-      `/api/bilibili/author/${encodeURIComponent(observeTarget.value)}/observe`,
-      {
-        method: 'POST',
-      },
-    )
-    observeSuccess.value = `观测已加入队列，剩余 ${formatCount(response.credit)} 积分。`
-    authClient.$store.notify('$sessionSignal')
-  }
-  catch (error) {
-    if (error && typeof error === 'object' && 'data' in error) {
-      const maybeData = error.data as { message?: string, statusMessage?: string }
-      observeError.value = maybeData.statusMessage ?? maybeData.message ?? '观测失败。'
-      return
-    }
-    observeError.value = '观测失败。'
-  }
-  finally {
-    observePending.value = false
+  if (canObserve.value) {
+    await observe(observeTarget.value)
   }
 }
 
@@ -837,419 +788,296 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="flex flex-col items-center border-b-0">
-    <div class="w-full max-w-3xl border-b border-[var(--auxline-line)]">
-      <div class="flex items-center justify-between gap-4 border-x border-[var(--auxline-line)]">
-        <div class="flex min-w-0 items-center gap-4">
-          <div
-            class="flex h-16 w-16 items-center justify-center overflow-hidden border border-[var(--auxline-line)]
-              bg-[var(--auxline-bg-emphasis)] text-[0.7rem] font-mono uppercase tracking-[0.12em]"
-            aria-hidden="true"
-          >
-            <NuxtImg
-              v-if="author?.face"
-              :src="author.face"
-              alt=""
-              class="h-full w-full object-cover"
-              width="64"
-              height="64"
-            />
-            <span v-else>
-              {{ displayAuthorName(author).slice(0, 1) }}
-            </span>
-          </div>
-          <div class="flex min-w-0 flex-col">
-            <h1 class="text-2xl truncate">
-              {{ displayAuthorName(author) }}
-            </h1>
-            <div
-              class="flex flex-wrap items-center gap-2 text-xs font-mono uppercase tracking-[0.12em]
-                text-[var(--auxline-fg-muted)]"
+  <section class="flex w-full flex-col">
+    <!-- 头部：头像 + 名字 + 元信息 + 简介；右边观测按钮 -->
+    <header class="flex flex-col gap-5 border-b border-[var(--auxline-line)] px-[var(--zr-gutter)] pb-8 pt-10 sm:flex-row sm:items-start sm:justify-between">
+      <div class="flex min-w-0 items-start gap-5">
+        <AuxlineAvatar :src="author?.face" :name="displayAuthorName(author)" :size="72" />
+        <div class="flex min-w-0 flex-col gap-1.5">
+          <h1 class="zr-page-title truncate">
+            {{ displayAuthorName(author) }}
+          </h1>
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-[var(--auxline-fg-muted)]">
+            <span>MID <span class="font-mono text-[var(--auxline-fg-2)]">{{ mid }}</span></span>
+            <a
+              v-if="bilibiliProfileLink"
+              :href="bilibiliProfileLink"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-1 hover:text-[var(--auxline-fg)]"
+              title="打开B站主页"
             >
-              <span>UP {{ mid }}</span>
-              <span
-                v-if="bilibiliProfileLink"
-                class="h-3 w-px bg-[var(--auxline-line)]"
-                aria-hidden="true"
-              />
+              B站主页
+              <span class="i-heroicons-arrow-up-right h-3 w-3" aria-hidden="true" />
+            </a>
+            <template v-if="showLiveStatus">
               <a
-                v-if="bilibiliProfileLink"
-                :href="bilibiliProfileLink"
+                v-if="isLive && liveRoomUrl"
+                :href="liveRoomUrl"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="inline-flex items-center gap-1 hover:text-[var(--auxline-fg)]"
-                title="打开B站主页"
+                class="inline-flex items-center gap-1.5 text-green-600 hover:underline"
+                title="打开直播间"
               >
-                <span>B站主页</span>
-                <span
-                  class="text-[0.7rem] i-heroicons-arrow-top-right-on-square-20-solid"
-                  aria-hidden="true"
-                />
+                <span class="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
+                直播中
+                <span class="i-heroicons-arrow-up-right h-3 w-3" aria-hidden="true" />
               </a>
-              <span
-                v-if="showLiveStatus"
-                class="h-3 w-px bg-[var(--auxline-line)]"
-                aria-hidden="true"
-              />
-              <template v-if="showLiveStatus">
-                <a
-                  v-if="isLive && liveRoomUrl"
-                  :href="liveRoomUrl"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="inline-flex items-center gap-1 hover:text-blue-500" :class="[liveStatusClass]"
-                  title="打开直播间"
-                >
-                  <span>直播中</span>
-                  <span
-                    class="text-[0.7rem] i-heroicons-arrow-top-right-on-square-20-solid"
-                    aria-hidden="true"
-                  />
-                </a>
-                <span v-else :class="liveStatusClass">
-                  {{ liveStatusLabel }}
-                </span>
-              </template>
-            </div>
+              <span v-else>未开播</span>
+            </template>
           </div>
-        </div>
-        <div class="flex flex-col items-end gap-1">
-          <template v-if="user">
-            <AuxlineBtn
-              type="button"
-              size="sm"
-              :loading="observePending"
-              :disabled="!canObserve"
-              @click="observeAuthor"
-            >
-              观测 -{{ observeCost }}积分
-            </AuxlineBtn>
-            <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-              当前积分 {{ formatCount(user.credit) }}
-            </span>
-          </template>
-          <template v-else>
-            <AuxlineBtn
-              size="sm"
-              to="/login"
-            >
-              登录后观测
-            </AuxlineBtn>
-            <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)] px-2">
-              观测消耗 {{ observeCost }} 积分
-            </span>
-          </template>
-        </div>
-      </div>
-      <p
-        v-if="observeError"
-        class="border-x border-[var(--auxline-line)] px-2 py-2 text-xs text-red-600"
-      >
-        {{ observeError }}
-      </p>
-      <p
-        v-else-if="observeSuccess"
-        class="border-x border-[var(--auxline-line)] px-2 py-2 text-xs text-green-600"
-      >
-        {{ observeSuccess }}
-      </p>
-    </div>
-
-    <div class="w-full max-w-3xl">
-      <template v-if="pending">
-        <div class="flex flex-col gap-3 px-4 py-6">
-          <span class="h-4 w-32 bg-[var(--auxline-bg-emphasis)]" />
-          <span class="h-4 w-24 bg-[var(--auxline-bg-emphasis)]" />
-          <span class="h-4 w-28 bg-[var(--auxline-bg-emphasis)]" />
-        </div>
-      </template>
-      <template v-else-if="author">
-        <div class="border-b border-[var(--auxline-line)] px-2 py-2 sm:border-x border-[var(--auxline-line)]">
-          <p class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-            简介
-          </p>
-          <p class="mt-2 text-sm whitespace-pre-line">
+          <p
+            v-if="author"
+            class="mt-1.5 max-w-2xl whitespace-pre-line text-sm leading-relaxed text-[var(--auxline-fg-2)]"
+          >
             {{ author.sign || '暂无简介' }}
           </p>
         </div>
-        <div class="grid grid-cols-1 gap-4 border-b border-[var(--auxline-line)] sm:border-x sm:grid-cols-3">
-          <div v-for="item in infoRows" :key="item.label" class="flex flex-col gap-1">
-            <span class="px-2 text-sm tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-              {{ item.label }}
-            </span>
-            <span class="px-2 text-lg">
-              {{ item.value }}
-            </span>
-            <span
-              v-if="showRankingSkeleton"
-              class="px-2"
-              aria-hidden="true"
-            >
-              <span class="block h-4 w-28 bg-[var(--auxline-bg-emphasis)]" />
-            </span>
-            <span v-else-if="item.meta" class="px-2 text-xs text-[var(--auxline-fg-muted)]">
-              {{ item.meta }}
-            </span>
-          </div>
+      </div>
+      <div class="flex shrink-0 flex-col items-start gap-1.5 sm:items-end">
+        <template v-if="user">
+          <AuxlineBtn
+            type="button"
+            variant="contrast"
+            :loading="observePending"
+            :disabled="!canObserve"
+            @click="observeAuthor"
+          >
+            观测 · {{ observeCost }} 积分
+          </AuxlineBtn>
+          <span class="text-xs text-[var(--auxline-fg-muted)]">
+            当前积分 {{ formatCount(user.credit) }}
+          </span>
+        </template>
+        <template v-else>
+          <AuxlineBtn variant="contrast" to="/login">
+            登录后观测
+          </AuxlineBtn>
+          <span class="text-xs text-[var(--auxline-fg-muted)]">
+            每次消耗 {{ observeCost }} 积分
+          </span>
+        </template>
+      </div>
+    </header>
+
+    <template v-if="pending">
+      <div class="grid grid-cols-1 border-b border-[var(--auxline-line)] sm:grid-cols-3">
+        <div v-for="index in 3" :key="index" class="zr-stat">
+          <span class="h-3 w-12 rounded bg-[var(--auxline-bg-emphasis)]" />
+          <span class="mt-2 h-7 w-32 rounded bg-[var(--auxline-bg-emphasis)]" />
         </div>
-        <div class="sm:border-x border-[var(--auxline-line)]">
-          <div class="flex flex-col gap-2 sm:flex-row border-b border-[var(--auxline-line)] sm:items-center sm:justify-between">
-            <div class="flex flex-wrap items-center gap-2">
-              <p class="text-sm px-2 font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                历史数据
-              </p>
-              <AuxlineBtn
-                type="button"
-                size="sm"
-                :disabled="!canDownloadHistory"
-                @click="downloadHistory"
-              >
-                下载
-              </AuxlineBtn>
-            </div>
-            <div class="flex items-center gap-2 px-2">
-              <span class="text-sm font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                共 {{ totalHistory }} 条
-              </span>
-            </div>
-          </div>
-          <div class="border-[var(--auxline-line)] border-b divide-y divide-[var(--auxline-line)]">
+      </div>
+    </template>
+    <template v-else-if="author">
+      <!-- 三个数字：粉丝 / 7 日 / 1 日，格子之间一条竖线 -->
+      <div class="grid grid-cols-1 border-b border-[var(--auxline-line)] sm:grid-cols-3">
+        <div v-for="item in infoRows" :key="item.label" class="zr-stat">
+          <span class="zr-stat-label">{{ item.label }}</span>
+          <span class="zr-stat-value">{{ item.value }}</span>
+          <span v-if="showRankingSkeleton" aria-hidden="true">
+            <span class="block h-3 w-28 rounded bg-[var(--auxline-bg-emphasis)]" />
+          </span>
+          <span v-else-if="item.meta" class="zr-stat-meta">{{ item.meta }}</span>
+        </div>
+      </div>
+
+      <!-- 粉丝历史：图表、日变化热力图、明细表 -->
+      <section class="border-b border-[var(--auxline-line)]">
+        <div class="zr-block-head">
+          <h2 class="zr-section-title">
+            粉丝历史<small>{{ formatCount(totalHistory) }} 条</small>
+          </h2>
+          <AuxlineBtn
+            type="button"
+            size="sm"
+            :disabled="!canDownloadHistory"
+            @click="downloadHistory"
+          >
+            <span class="i-heroicons-arrow-down-tray h-3.5 w-3.5" aria-hidden="true" />
+            下载 CSV
+          </AuxlineBtn>
+        </div>
+        <div class="divide-y divide-[var(--auxline-line)] border-y border-[var(--auxline-line)]">
+          <div class="px-[var(--zr-gutter)] py-6">
             <BilibiliAuthorFansHistoryChart
               :items="historyItems"
               :loading="historyPending"
-              :height="220"
-            />
-            <BilibiliAuthorFansHistoryHeatmap
-              :items="historyItems"
-              :loading="historyPending"
+              :height="260"
             />
           </div>
-          <div class="overflow-x-auto border-[var(--auxline-line)]">
-            <div class="min-w-[480px] sm:min-w-[560px] divide-y divide-[var(--auxline-line)]">
-              <div
-                ref="historyTableHeaderRef"
-                class="grid grid-cols-4 gap-3 px-3 py-2 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-              >
-                <span
-                  v-for="item in historyHeaders"
-                  :key="item.key"
-                  :class="item.align"
-                >
-                  {{ item.label }}
-                </span>
-              </div>
-              <template v-if="historyPending">
-                <div
-                  v-for="index in historySkeletonRows"
-                  :key="index"
-                  class="grid grid-cols-4 gap-3 px-3 py-2"
-                >
-                  <span
-                    v-for="cellIndex in 4"
-                    :key="cellIndex"
-                    class="h-4 w-full bg-[var(--auxline-bg-emphasis)]"
-                    aria-hidden="true"
-                  />
-                </div>
-              </template>
-              <div
-                v-else-if="totalHistory === 0"
-                class="px-3 py-6 text-center text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-              >
-                暂无历史数据
-              </div>
-              <template v-else>
-                <div
-                  v-for="row in pagedHistory"
-                  :key="row.id"
-                  class="grid grid-cols-4 gap-3 px-3 py-2 text-xs"
-                >
-                  <span class="text-left whitespace-nowrap">
-                    {{ formatTimestamp(row.createdAt) }}
-                  </span>
-                  <span class="text-right tabular-nums">
-                    {{ formatCount(row.fans) }}
-                  </span>
-                  <span class="text-right tabular-nums">
-                    {{ formatDelta(row.rate7) }}
-                  </span>
-                  <span class="text-right tabular-nums">
-                    {{ formatDelta(row.rate1) }}
-                  </span>
-                </div>
-              </template>
-            </div>
-          </div>
-          <div
-            v-if="totalHistory > 0"
-            class="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--auxline-line)]"
-          >
-            <button
-              type="button"
-              class="border-r border-[var(--auxline-line)] px-3 py-1 text-xs font-mono uppercase tracking-[0.12em]
-                text-[var(--auxline-fg)] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-              :class="currentPage > 1 ? 'hover:bg-[var(--auxline-bg-hover)]' : ''"
-              :disabled="currentPage <= 1"
-              @click="goPrevPage"
-            >
-              上一页
-            </button>
-            <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-              第 {{ totalPages === 0 ? 0 : currentPage }} / {{ totalPages }} 页
-            </span>
-            <button
-              type="button"
-              class="border-l border-[var(--auxline-line)] px-3 py-1 text-xs font-mono uppercase tracking-[0.12em]
-                text-[var(--auxline-fg)] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-              :class="totalPages > 0 && currentPage < totalPages ? 'hover:bg-[var(--auxline-bg-hover)]' : ''"
-              :disabled="totalPages === 0 || currentPage >= totalPages"
-              @click="goNextPage"
-            >
-              下一页
-            </button>
-          </div>
-          <p v-if="historyError" class="mt-4 text-xs font-mono uppercase tracking-[0.12em] text-red-500">
-            历史数据加载失败
-          </p>
+          <BilibiliAuthorFansHistoryHeatmap
+            :items="historyItems"
+            :loading="historyPending"
+          />
         </div>
-        <template v-if="showAggregation">
-          <div class="border h-4 auxline-stripe-mask border-[var(--auxline-line)]" />
-          <div class="sm:border-x border-[var(--auxline-line)]">
-            <div class="flex flex-col gap-2 sm:flex-row border-b border-[var(--auxline-line)] sm:items-center sm:justify-between">
-              <div class="flex flex-wrap items-center gap-2">
-                <p class="text-sm px-2 font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                  直播礼物聚合
-                </p>
-                <a
-                  :href="liveRoomLink(aggregationRoomLabel)"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="px-2 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]
-                    hover:text-[var(--auxline-fg)]"
-                >
-                  ROOM {{ aggregationRoomLabel }}
-                </a>
-              </div>
-              <div class="flex flex-wrap items-center gap-3 px-2 justify-end">
-                <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                  日合计 {{ formatAmountValue(aggregationTotals?.day ?? null) }}
-                </span>
-                <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                  周合计 {{ formatAmountValue(aggregationTotals?.week ?? null) }}
-                </span>
-                <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                  月合计 {{ formatAmountValue(aggregationTotals?.month ?? null) }}
-                </span>
-                <span
-                  v-if="aggregationTotal > 0"
-                  class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-                >
-                  共 {{ aggregationTotal }} 条
-                </span>
-              </div>
+        <div class="overflow-x-auto">
+          <div class="min-w-[520px]">
+            <div ref="historyTableHeaderRef" class="zr-table-head grid-cols-4">
+              <span v-for="item in historyHeaders" :key="item.key" :class="item.align">
+                {{ item.label }}
+              </span>
             </div>
-            <div class="border-[var(--auxline-line)] border-b divide-y divide-[var(--auxline-line)]">
-              <template v-if="aggregationPending">
-                <div
-                  v-for="index in aggregationSkeletonRows"
-                  :key="index"
-                  class="grid gap-3 px-3 py-2"
-                  :style="{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }"
-                >
-                  <span
-                    v-for="cellIndex in 4"
-                    :key="cellIndex"
-                    class="h-4 w-full bg-[var(--auxline-bg-emphasis)]"
-                    aria-hidden="true"
-                  />
-                </div>
-              </template>
-              <div
-                v-else-if="aggregationColumns.length === 0"
-                class="px-3 py-6 text-center text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-              >
-                暂无礼物聚合数据
+            <template v-if="historyPending">
+              <div v-for="index in historySkeletonRows" :key="index" class="zr-table-row grid-cols-4">
+                <span
+                  v-for="cellIndex in 4"
+                  :key="cellIndex"
+                  class="h-3.5 w-full rounded bg-[var(--auxline-bg-emphasis)]"
+                  aria-hidden="true"
+                />
               </div>
-              <template v-else>
-                <div
-                  ref="aggregationTableHeaderRef"
-                  class="grid gap-3 px-3 py-2 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-                  :style="{ gridTemplateColumns: `repeat(${aggregationColumns.length}, minmax(0, 1fr))` }"
-                >
-                  <span v-for="column in aggregationColumns" :key="column" :class="aggregationColumnClass(column)">
-                    {{ normalizeColumnLabel(column) }}
-                  </span>
-                </div>
-                <template v-if="aggregationItems.length === 0">
-                  <div
-                    class="px-3 py-6 text-center text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-                  >
-                    暂无礼物聚合数据
-                  </div>
-                </template>
-                <template v-else>
-                  <div
-                    v-for="(row, rowIndex) in aggregationPagedItems"
-                    :key="rowIndex"
-                    class="grid gap-3 px-3 py-2 text-xs"
-                    :style="{ gridTemplateColumns: `repeat(${aggregationColumns.length}, minmax(0, 1fr))` }"
-                  >
-                    <span
-                      v-for="column in aggregationColumns"
-                      :key="column"
-                      :class="aggregationColumnClass(column)"
-                    >
-                      {{ formatAggregationValue(column, row[column] ?? null) }}
-                    </span>
-                  </div>
-                </template>
-              </template>
+            </template>
+            <p v-else-if="totalHistory === 0" class="zr-empty">
+              暂无历史数据
+            </p>
+            <template v-else>
+              <div v-for="row in pagedHistory" :key="row.id" class="zr-table-row grid-cols-4">
+                <span class="whitespace-nowrap text-left text-[var(--auxline-fg-2)]">{{ formatTimestamp(row.createdAt) }}</span>
+                <span class="text-right">{{ formatCount(row.fans) }}</span>
+                <span class="text-right" :class="deltaClass(row.rate7)">{{ formatDelta(row.rate7) }}</span>
+                <span class="text-right" :class="deltaClass(row.rate1)">{{ formatDelta(row.rate1) }}</span>
+              </div>
+            </template>
+          </div>
+        </div>
+        <div v-if="totalHistory > 0" class="zr-pager">
+          <AuxlineBtn size="sm" :disabled="currentPage <= 1" @click="goPrevPage">
+            <span class="i-heroicons-chevron-left h-3.5 w-3.5" aria-hidden="true" />
+            上一页
+          </AuxlineBtn>
+          <span class="text-xs text-[var(--auxline-fg-muted)]">
+            {{ totalPages === 0 ? 0 : currentPage }} / {{ totalPages }}
+          </span>
+          <AuxlineBtn size="sm" :disabled="totalPages === 0 || currentPage >= totalPages" @click="goNextPage">
+            下一页
+            <span class="i-heroicons-chevron-right h-3.5 w-3.5" aria-hidden="true" />
+          </AuxlineBtn>
+        </div>
+        <p v-if="historyError" class="px-[var(--zr-gutter)] pb-4 text-xs text-red-500">
+          历史数据加载失败
+        </p>
+      </section>
+
+      <!-- 直播礼物聚合 -->
+      <section v-if="showAggregation" class="border-b border-[var(--auxline-line)]">
+        <div class="zr-block-head flex-wrap">
+          <h2 class="zr-section-title">
+            直播礼物<small v-if="aggregationTotal > 0">{{ aggregationTotal }} 条</small>
+            <a
+              :href="liveRoomLink(aggregationRoomLabel)"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-1 text-xs font-normal text-[var(--auxline-fg-muted)] hover:text-[var(--auxline-fg)]"
+            >
+              直播间 <span class="font-mono">{{ aggregationRoomLabel }}</span>
+              <span class="i-heroicons-arrow-up-right h-3 w-3" aria-hidden="true" />
+            </a>
+          </h2>
+          <dl class="m-0 flex flex-wrap items-center gap-x-6 gap-y-1 text-[13px]">
+            <div class="flex items-baseline gap-1.5">
+              <dt class="text-[var(--auxline-fg-muted)]">
+                日
+              </dt>
+              <dd class="m-0">
+                {{ formatAmountValue(aggregationTotals?.day ?? null) }}
+              </dd>
+            </div>
+            <div class="flex items-baseline gap-1.5">
+              <dt class="text-[var(--auxline-fg-muted)]">
+                周
+              </dt>
+              <dd class="m-0">
+                {{ formatAmountValue(aggregationTotals?.week ?? null) }}
+              </dd>
+            </div>
+            <div class="flex items-baseline gap-1.5">
+              <dt class="text-[var(--auxline-fg-muted)]">
+                月
+              </dt>
+              <dd class="m-0">
+                {{ formatAmountValue(aggregationTotals?.month ?? null) }}
+              </dd>
+            </div>
+          </dl>
+        </div>
+        <div class="border-t border-[var(--auxline-line)]">
+          <template v-if="aggregationPending">
+            <div
+              v-for="index in aggregationSkeletonRows"
+              :key="index"
+              class="zr-table-row"
+              :style="{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }"
+            >
+              <span
+                v-for="cellIndex in 4"
+                :key="cellIndex"
+                class="h-3.5 w-full rounded bg-[var(--auxline-bg-emphasis)]"
+                aria-hidden="true"
+              />
+            </div>
+          </template>
+          <p
+            v-else-if="aggregationColumns.length === 0 || aggregationItems.length === 0"
+            class="zr-empty"
+          >
+            暂无礼物聚合数据
+          </p>
+          <template v-else>
+            <div
+              ref="aggregationTableHeaderRef"
+              class="zr-table-head"
+              :style="{ gridTemplateColumns: `repeat(${aggregationColumns.length}, minmax(0, 1fr))` }"
+            >
+              <span v-for="column in aggregationColumns" :key="column" :class="aggregationColumnClass(column)">
+                {{ normalizeColumnLabel(column) }}
+              </span>
             </div>
             <div
-              v-if="aggregationTotal > 0"
-              class="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--auxline-line)]"
+              v-for="(row, rowIndex) in aggregationPagedItems"
+              :key="rowIndex"
+              class="zr-table-row"
+              :style="{ gridTemplateColumns: `repeat(${aggregationColumns.length}, minmax(0, 1fr))` }"
             >
-              <button
-                type="button"
-                class="border-r border-[var(--auxline-line)] px-3 py-1 text-xs font-mono uppercase tracking-[0.12em]
-                  text-[var(--auxline-fg)] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-                :class="aggregationCurrentPage > 1 ? 'hover:bg-[var(--auxline-bg-hover)]' : ''"
-                :disabled="aggregationCurrentPage <= 1"
-                @click="goPrevAggregationPage"
+              <span
+                v-for="column in aggregationColumns"
+                :key="column"
+                :class="aggregationColumnClass(column)"
               >
-                上一页
-              </button>
-              <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                第 {{ aggregationTotalPages === 0 ? 0 : aggregationCurrentPage }} / {{ aggregationTotalPages }} 页
+                {{ formatAggregationValue(column, row[column] ?? null) }}
               </span>
-              <button
-                type="button"
-                class="border-l border-[var(--auxline-line)] px-3 py-1 text-xs font-mono uppercase tracking-[0.12em]
-                  text-[var(--auxline-fg)] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-                :class="aggregationTotalPages > 0 && aggregationCurrentPage < aggregationTotalPages
-                  ? 'hover:bg-[var(--auxline-bg-hover)]'
-                  : ''"
-                :disabled="aggregationTotalPages === 0 || aggregationCurrentPage >= aggregationTotalPages"
-                @click="goNextAggregationPage"
-              >
-                下一页
-              </button>
             </div>
-            <p v-if="aggregationError" class="mt-4 text-xs font-mono uppercase tracking-[0.12em] text-red-500">
-              直播礼物聚合加载失败
-            </p>
-          </div>
-        </template>
-      </template>
-      <div
-        v-else
-        class="px-4 py-6 text-center text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-      >
-        未找到该 UP
-      </div>
-      <p v-if="error" class="mt-4 px-4 text-xs font-mono uppercase tracking-[0.12em] text-red-500">
-        详情加载失败
-      </p>
-    </div>
+          </template>
+        </div>
+        <div v-if="aggregationTotal > 0" class="zr-pager">
+          <AuxlineBtn size="sm" :disabled="aggregationCurrentPage <= 1" @click="goPrevAggregationPage">
+            <span class="i-heroicons-chevron-left h-3.5 w-3.5" aria-hidden="true" />
+            上一页
+          </AuxlineBtn>
+          <span class="text-xs text-[var(--auxline-fg-muted)]">
+            {{ aggregationTotalPages === 0 ? 0 : aggregationCurrentPage }} / {{ aggregationTotalPages }}
+          </span>
+          <AuxlineBtn
+            size="sm"
+            :disabled="aggregationTotalPages === 0 || aggregationCurrentPage >= aggregationTotalPages"
+            @click="goNextAggregationPage"
+          >
+            下一页
+            <span class="i-heroicons-chevron-right h-3.5 w-3.5" aria-hidden="true" />
+          </AuxlineBtn>
+        </div>
+        <p v-if="aggregationError" class="px-[var(--zr-gutter)] pb-4 text-xs text-red-500">
+          直播礼物聚合加载失败
+        </p>
+      </section>
+    </template>
+    <p
+      v-else
+      class="zr-empty"
+    >
+      未找到该 UP 主
+    </p>
+    <p v-if="error" class="px-[var(--zr-gutter)] py-4 text-xs text-red-500">
+      详情加载失败
+    </p>
   </section>
 </template>

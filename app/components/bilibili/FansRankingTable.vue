@@ -36,7 +36,6 @@ const percentFormatter = new Intl.NumberFormat('zh-CN', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 })
-const stripeOffsetRem = 5.75
 
 function formatValue(value: string | number | null | undefined): string {
   if (value === null || value === undefined) {
@@ -112,16 +111,6 @@ function barRatio(item: FansRankingItem): number {
   return Math.min(Math.abs(value) / base, 1)
 }
 
-function barStyle(item: FansRankingItem): Record<string, string> {
-  const ratio = Math.max(barRatio(item), 0)
-  return {
-    left: `${stripeOffsetRem}rem`,
-    width: ratio <= 0
-      ? '0%'
-      : `calc(${ratio * 100}% - ${ratio * stripeOffsetRem}rem)`,
-  }
-}
-
 function displayName(item: FansRankingItem): string {
   if (item.name && item.name.trim().length > 0) {
     return item.name
@@ -148,179 +137,75 @@ function authorLink(mid: string | null | undefined): string {
   return buildAuthorLink(mid) ?? ''
 }
 
+const NuxtLinkComponent = resolveComponent('NuxtLink')
 const skeletonRows = Array.from({ length: 50 }, (_, index) => index)
 </script>
 
 <template>
-  <section class="flex flex-col items-center pb-12">
+  <section class="flex w-full flex-col pb-12">
     <AuxlinePageHeader
+      :bordered="false"
       :title="props.title"
       :subtitle="props.subtitle"
     />
-    <div class="w-full">
-      <BilibiliFansRankingNav />
+    <BilibiliFansRankingNav />
+    <div class="zr-row-head">
+      <span class="flex items-center gap-3">
+        <span class="zr-rank">#</span>
+        <span>UP 主</span>
+      </span>
+      <span>{{ props.valueLabel }}</span>
     </div>
-    <div class="w-full border-b border-[var(--auxline-line)]">
-      <div class="max-w-3xl mx-auto">
-        <div class="flex items-center justify-between border-b sm:border-x border-[var(--auxline-line)] py-3 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-          <span class="px-1">排名</span>
-          <span class="text-left flex-1 pl-4">UP</span>
-          <span class="px-1">{{ props.valueLabel }}</span>
-        </div>
-        <template v-if="pending">
-          <div
-            v-for="index in skeletonRows"
-            :key="index"
-            class="relative overflow-hidden border-b border-[var(--auxline-line)] last:border-b-0 sm:border-x"
-          >
-            <div class="relative z-10 flex w-full items-center justify-between">
-              <span class="w-10 px-1 text-sm font-mono text-transparent">
-                00
-              </span>
-              <div class="flex flex-1 items-center gap-3 pl-4">
-                <div
-                  class="h-9 w-9 bg-[var(--auxline-bg-emphasis)]"
-                  aria-hidden="true"
-                />
-                <div class="flex flex-col">
-                  <span class="h-4 w-32 bg-[var(--auxline-bg-emphasis)]" />
-                  <span class="mt-1 h-3 w-20 bg-[var(--auxline-bg-emphasis)]" />
-                </div>
-              </div>
-              <div class="flex flex-col items-end gap-1 px-1">
-                <span class="block h-4 w-16 bg-[var(--auxline-bg-emphasis)]" />
-                <template v-if="props.showTrendMeta">
-                  <span class="block h-3 w-24 bg-[var(--auxline-bg-emphasis)]" />
-                </template>
-              </div>
-            </div>
-          </div>
-        </template>
-        <template v-else>
-          <template v-for="(item, index) in data?.items ?? []" :key="item.mid">
-            <NuxtLink
-              v-if="isAuthorLinkable(item.mid)"
-              :to="authorLink(item.mid)"
-              class="relative block overflow-hidden border-b border-[var(--auxline-line)] last:border-b-0 sm:border-x hover:bg-[var(--auxline-bg-hover)]
-                focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)]"
-            >
-              <span
-                class="absolute inset-y-0 z-0 pointer-events-none auxline-stripe-mask"
-                :style="barStyle(item)"
-                aria-hidden="true"
-              />
-              <div class="relative z-10 flex w-full items-center justify-between">
-                <span class="w-10 px-1 text-sm font-mono">
-                  {{ String(index + 1).padStart(2, '0') }}
-                </span>
-                <div class="flex flex-1 items-center gap-3 pl-4 min-w-0">
-                  <div
-                    class="flex h-9 w-9 items-center justify-center overflow-hidden border-x border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)] text-xs font-mono uppercase tracking-[0.12em]"
-                    aria-hidden="true"
-                  >
-                    <NuxtImg
-                      v-if="item.face"
-                      :src="item.face"
-                      alt=""
-                      class="h-full w-full object-cover"
-                      width="36"
-                      height="36"
-                    />
-                    <span v-else>
-                      {{ displayName(item).slice(0, 1) }}
-                    </span>
-                  </div>
-                  <div class="flex flex-col">
-                    <span class="text-sm">
-                      {{ displayName(item) }}
-                    </span>
-                    <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                      {{ item.mid }}
-                    </span>
-                  </div>
-                </div>
-                <div class="flex flex-col items-end gap-1 px-1">
-                  <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                    {{ formatValue(item[props.valueKey]) }}
-                  </span>
-                  <template v-if="props.showTrendMeta">
-                    <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                      <span class="hidden sm:inline">{{ formatCount(item.fans) }}</span>
-                      <span class="hidden sm:inline"> · </span>
-                      <span>{{ formatPercent(item.delta, item.fans) }}</span>
-                    </span>
-                  </template>
-                </div>
-              </div>
-            </NuxtLink>
-            <div
-              v-else
-              class="relative overflow-hidden border-b border-[var(--auxline-line)] last:border-b-0 sm:border-x"
-            >
-              <span
-                class="absolute inset-y-0 z-0 pointer-events-none auxline-stripe-mask"
-                :style="barStyle(item)"
-                aria-hidden="true"
-              />
-              <div class="relative z-10 flex w-full items-center justify-between">
-                <span class="w-10 px-1 text-sm font-mono">
-                  {{ String(index + 1).padStart(2, '0') }}
-                </span>
-                <div class="flex flex-1 items-center gap-3 pl-4 min-w-0">
-                  <div
-                    class="flex h-9 w-9 items-center justify-center overflow-hidden border-x border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)] text-xs font-mono uppercase tracking-[0.12em]"
-                    aria-hidden="true"
-                  >
-                    <NuxtImg
-                      v-if="item.face"
-                      :src="item.face"
-                      alt=""
-                      class="h-full w-full object-cover"
-                      width="36"
-                      height="36"
-                    />
-                    <span v-else>
-                      {{ displayName(item).slice(0, 1) }}
-                    </span>
-                  </div>
-                  <div class="flex flex-col">
-                    <span class="text-sm">
-                      {{ displayName(item) }}
-                    </span>
-                    <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                      {{ item.mid }}
-                    </span>
-                  </div>
-                </div>
-                <div class="flex flex-col items-end gap-1 px-1">
-                  <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                    {{ formatValue(item[props.valueKey]) }}
-                  </span>
-                  <template v-if="props.showTrendMeta">
-                    <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                      <span class="hidden sm:inline">{{ formatCount(item.fans) }}</span>
-                      <span class="hidden sm:inline"> · </span>
-                      <span>{{ formatPercent(item.delta, item.fans) }}</span>
-                    </span>
-                  </template>
-                </div>
-              </div>
-            </div>
-          </template>
-          <div
-            v-if="data && data.items.length === 0"
-            class="py-6 text-center text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)] border-l border-r border-[var(--auxline-line)]"
-          >
-            暂无数据
-          </div>
-        </template>
-        <p
-          v-if="error"
-          class="mt-4 text-xs font-mono uppercase tracking-[0.12em] text-red-500"
-        >
-          排行榜加载失败
-        </p>
+    <template v-if="pending">
+      <div v-for="index in skeletonRows" :key="index" class="zr-row">
+        <span class="h-3 w-8 rounded bg-[var(--auxline-bg-emphasis)]" />
+        <span class="h-10 w-10 shrink-0 rounded-full bg-[var(--auxline-bg-emphasis)]" aria-hidden="true" />
+        <span class="flex flex-1 flex-col gap-1.5">
+          <span class="h-3.5 w-32 rounded bg-[var(--auxline-bg-emphasis)]" />
+          <span class="h-3 w-20 rounded bg-[var(--auxline-bg-emphasis)]" />
+        </span>
+        <span class="h-3.5 w-20 rounded bg-[var(--auxline-bg-emphasis)]" />
       </div>
-    </div>
+    </template>
+    <template v-else>
+      <component
+        :is="isAuthorLinkable(item.mid) ? NuxtLinkComponent : 'div'"
+        v-for="(item, index) in data?.items ?? []"
+        :key="item.mid"
+        :to="isAuthorLinkable(item.mid) ? authorLink(item.mid) : undefined"
+        class="zr-row relative overflow-hidden"
+        :class="isAuthorLinkable(item.mid) ? 'zr-row-link' : ''"
+      >
+        <!-- 数值条：从左往右的斜线底纹，长度按第一名归一 -->
+        <span
+          class="auxline-stripe-mask pointer-events-none absolute inset-y-0 left-0 opacity-50"
+          :style="{ width: `${barRatio(item) * 100}%` }"
+          aria-hidden="true"
+        />
+        <span class="zr-rank relative">
+          {{ index + 1 }}
+        </span>
+        <AuxlineAvatar :src="item.face" :name="displayName(item)" :size="40" class="relative" />
+        <span class="relative flex min-w-0 flex-1 flex-col">
+          <span class="zr-row-name truncate">{{ displayName(item) }}</span>
+          <span class="zr-row-meta font-mono">{{ item.mid }}</span>
+        </span>
+        <span class="relative flex shrink-0 flex-col items-end">
+          <span class="zr-row-value">{{ formatValue(item[props.valueKey]) }}</span>
+          <span v-if="props.showTrendMeta" class="zr-row-meta">
+            <span class="hidden sm:inline">{{ formatCount(item.fans) }} · </span>{{ formatPercent(item.delta, item.fans) }}
+          </span>
+        </span>
+      </component>
+      <p
+        v-if="data && data.items.length === 0"
+        class="zr-empty"
+      >
+        暂无数据
+      </p>
+    </template>
+    <p v-if="error" class="px-[var(--zr-gutter)] py-4 text-xs text-red-500">
+      排行榜加载失败
+    </p>
   </section>
 </template>

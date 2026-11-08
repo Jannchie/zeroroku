@@ -107,7 +107,7 @@ async function resendVerificationEmail(): Promise<void> {
 </script>
 
 <template>
-  <section class="flex flex-col items-center gap-4">
+  <section class="flex flex-col items-center gap-4 px-5 pb-16">
     <AuxlinePageHeader :title="pageTitle" :subtitle="pageSubtitle" />
     <div class="w-full max-w-sm flex flex-col gap-3">
       <p :class="isCompleteMode && !routeError ? 'text-xs text-green-600' : 'text-xs text-[var(--auxline-fg-muted)]'">
@@ -115,15 +115,13 @@ async function resendVerificationEmail(): Promise<void> {
       </p>
 
       <template v-if="!isCompleteMode || routeError">
-        <label class="flex flex-col gap-1 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+        <label class="flex flex-col gap-1 auxline-label text-[var(--auxline-fg-muted)]">
           邮箱
           <input
             v-model="email"
             type="email"
             autocomplete="email"
-            class="h-9 px-3 border border-[var(--auxline-line)] bg-[var(--auxline-bg-emphasis)]
-              text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
-              focus-visible:outline-[var(--auxline-line)]"
+            class="zr-input w-full"
             @input="onEmailInput"
           >
         </label>

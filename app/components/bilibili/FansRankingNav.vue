@@ -25,18 +25,17 @@ function isActiveRoute(item: { to: string, activePaths?: string[] }): boolean {
 </script>
 
 <template>
-  <div class="flex flex-wrap justify-center border-b border-[var(--auxline-line)] children:border-r first:children:border-l w-full">
-    <AuxlineBtn
+  <nav class="zr-tabs" aria-label="排行榜">
+    <NuxtLink
       v-for="item in navItems"
       :key="item.to"
-      size="sm"
       :to="item.to"
-      :variant="isActiveRoute(item) ? 'contrast' : 'solid'"
+      class="zr-tab"
       :aria-current="isActiveRoute(item) ? 'page' : undefined"
       :aria-label="item.label"
     >
       <span class="sm:hidden">{{ item.shortLabel }}</span>
       <span class="hidden sm:inline">{{ item.label }}</span>
-    </AuxlineBtn>
-  </div>
+    </NuxtLink>
+  </nav>
 </template>

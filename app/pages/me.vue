@@ -32,6 +32,10 @@ const route = useRoute()
 const activeTab = computed<'profile' | 'security'>(() => {
   return route.path.startsWith('/me/security') ? 'security' : 'profile'
 })
+const meTabs = [
+  { key: 'profile', label: '资料', to: '/me' },
+  { key: 'security', label: '安全', to: '/me/security' },
+] as const
 const loginLink = computed(() => `/login?redirect=${encodeURIComponent(route.fullPath)}`)
 
 watch(
@@ -128,45 +132,29 @@ async function updateName() {
 </script>
 
 <template>
-  <section class="flex flex-col items-center">
+  <section class="flex w-full flex-col">
     <AuxlinePageHeader
       title="个人资料"
       subtitle="基础信息与账户概览"
     />
 
-    <div v-if="!user" class="w-full max-w-md sm:border-x border-[var(--auxline-line)] px-4 py-6 text-center">
-      <p class="text-sm font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+    <div v-if="!user" class="flex flex-col items-center gap-4 px-4 py-16 text-center">
+      <p class="text-[13px] text-[var(--auxline-fg-muted)]">
         当前未登录
       </p>
-      <AuxlineBtn :to="loginLink" class="mt-4">
+      <AuxlineBtn :to="loginLink" variant="contrast">
         去登录
       </AuxlineBtn>
     </div>
 
-    <div v-else class="w-full border-[var(--auxline-line)] max-w-3xl sm:border-x">
-      <div class="flex items-start">
-        <div
-          class="flex h-20 w-20 items-center justify-center overflow-hidden border-r border-[var(--auxline-line)]
-            bg-[var(--auxline-bg-emphasis)] text-[0.7rem] font-mono uppercase tracking-[0.12em]"
-          aria-hidden="true"
-        >
-          <NuxtImg
-            v-if="avatarUrl"
-            :src="avatarUrl"
-            alt=""
-            class="h-full w-full object-cover"
-            width="80"
-            height="80"
-          />
-          <span v-else>
-            {{ avatarInitial }}
-          </span>
-        </div>
-        <div class="flex flex-col items-start text-left">
-          <div class="flex flex-wrap items-center justify-start">
+    <div v-else class="w-full">
+      <div class="flex items-start gap-4 border-b border-[var(--auxline-line)] px-[var(--zr-gutter)] py-6">
+        <AuxlineAvatar :src="avatarUrl" :name="avatarInitial" :size="64" />
+        <div class="flex min-w-0 flex-col items-start gap-1 text-left">
+          <div class="flex flex-wrap items-center gap-2">
             <form
               v-if="isEditingName"
-              class="flex flex-wrap items-center justify-start"
+              class="flex flex-wrap items-center gap-2"
               @submit.prevent="updateName"
             >
               <input
@@ -174,9 +162,7 @@ async function updateName() {
                 type="text"
                 autocomplete="username"
                 :disabled="isUpdatingName"
-                class="h-8 w-48 px-3 bg-[var(--auxline-bg-emphasis)]
-                  text-sm text-[var(--auxline-fg)] focus-visible:outline focus-visible:outline-1
-                  focus-visible:outline-[var(--auxline-line)]"
+                class="zr-input w-48"
                 @input="onNameInput"
               >
               <AuxlineBtn
@@ -198,7 +184,7 @@ async function updateName() {
               </AuxlineBtn>
             </form>
             <template v-else>
-              <span class="text-xl px-2">
+              <span class="text-xl font-semibold tracking-tight">
                 {{ displayName }}
               </span>
               <AuxlineBtn
@@ -216,42 +202,27 @@ async function updateName() {
           <p v-else-if="nameSuccess" class="text-xs text-green-600">
             {{ nameSuccess }}
           </p>
-          <span class="text-xs px-2 font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-            {{ user.email }}
-          </span>
-          <span class="text-xs px-2 font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-            #{{ user.id }}
+          <span class="text-xs text-[var(--auxline-fg-muted)]">
+            {{ user.email }} · <span class="font-mono">#{{ user.id }}</span>
           </span>
         </div>
       </div>
 
-      <div class="border-t border-[var(--auxline-line)]">
+      <div>
         <nav
-          class="flex items-center border-b border-[var(--auxline-line)]"
+          class="flex items-center gap-1 border-b border-[var(--auxline-line)] px-[calc(var(--zr-gutter)-10px)] py-2"
           aria-label="个人资料设置"
         >
-          <NuxtLink
-            to="/me"
-            class="px-3 py-2 text-xs font-mono uppercase tracking-[0.12em] transition-colors
-              focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)]"
-            :class="activeTab === 'profile'
-              ? 'bg-[var(--auxline-bg-emphasis)] text-[var(--auxline-fg)]'
-              : 'text-[var(--auxline-fg-muted)] hover:bg-[var(--auxline-bg-hover)]'"
-            :aria-current="activeTab === 'profile' ? 'page' : undefined"
+          <AuxlineBtn
+            v-for="tab in meTabs"
+            :key="tab.key"
+            :to="tab.to"
+            size="sm"
+            :variant="activeTab === tab.key ? 'contrast' : 'solid'"
+            :aria-current="activeTab === tab.key ? 'page' : undefined"
           >
-            资料
-          </NuxtLink>
-          <NuxtLink
-            to="/me/security"
-            class="px-3 py-2 text-xs font-mono uppercase tracking-[0.12em] transition-colors
-              focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--auxline-line)]"
-            :class="activeTab === 'security'
-              ? 'bg-[var(--auxline-bg-emphasis)] text-[var(--auxline-fg)]'
-              : 'text-[var(--auxline-fg-muted)] hover:bg-[var(--auxline-bg-hover)]'"
-            :aria-current="activeTab === 'security' ? 'page' : undefined"
-          >
-            安全
-          </NuxtLink>
+            {{ tab.label }}
+          </AuxlineBtn>
         </nav>
         <NuxtPage />
       </div>

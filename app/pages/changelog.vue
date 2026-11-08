@@ -96,93 +96,53 @@ const parseFailed = computed(() => parseResult.value.error)
 </script>
 
 <template>
-  <section class="flex flex-col items-center">
+  <section class="flex w-full flex-col">
     <AuxlinePageHeader
       title="更新日志"
       subtitle="站点更新记录"
     />
-    <div class="w-full max-w-3xl border-[var(--auxline-line)] sm:border-x">
-      <div class="flex items-center justify-between border-b border-[var(--auxline-line)]">
-        <p class="px-2 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-          更新记录
-        </p>
-        <AuxlineBtn to="/" size="sm">
-          返回主页面
-        </AuxlineBtn>
-      </div>
-      <article class="flex flex-col gap-6 py-6 text-sm leading-7">
-        <p
-          v-if="pending"
-          class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-        >
-          正在加载更新日志
-        </p>
-        <p
-          v-else-if="error"
-          class="text-xs font-mono uppercase tracking-[0.12em] text-red-600"
-        >
-          更新日志加载失败
-        </p>
-        <p
-          v-else-if="parseFailed"
-          class="text-xs font-mono uppercase tracking-[0.12em] text-red-600"
-        >
-          更新日志解析失败
-        </p>
-        <p
-          v-else-if="!hasEntries"
-          class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-        >
-          暂无更新
-        </p>
-        <div v-else class="flex flex-col children:px-4 gap-6">
-          <section
-            v-for="item in changelogItems"
-            :key="`${item.date}-${item.version}`"
-            class="flex flex-col gap-3 border-b border-[var(--auxline-line)] pb-4 last:border-b-0 last:pb-0"
-          >
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                  {{ item.date || '未注明日期' }}
-                </span>
-                <span
-                  v-if="item.version"
-                  class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-                >
-                  v{{ item.version }}
-                </span>
-              </div>
-              <span
-                v-if="item.summary"
-                class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-              >
-                {{ item.summary }}
-              </span>
-            </div>
-            <ul v-if="item.entries.length > 0" class="flex flex-col gap-2">
-              <li
-                v-for="(entry, index) in item.entries"
-                :key="`${item.date}-${item.version}-${index}`"
-                class="flex flex-wrap items-center gap-3"
-              >
-                <span class="min-w-[3rem] text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-                  {{ entry.type }}
-                </span>
-                <span class="flex-1 min-w-[12rem]">
-                  {{ entry.text }}
-                </span>
-              </li>
-            </ul>
-            <p
-              v-else
-              class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]"
-            >
-              暂无记录
-            </p>
-          </section>
+    <p v-if="pending" class="zr-section text-[13px] text-[var(--auxline-fg-muted)]">
+      正在加载更新日志
+    </p>
+    <p v-else-if="error" class="zr-section text-[13px] text-red-600">
+      更新日志加载失败
+    </p>
+    <p v-else-if="parseFailed" class="zr-section text-[13px] text-red-600">
+      更新日志解析失败
+    </p>
+    <p v-else-if="!hasEntries" class="zr-section text-[13px] text-[var(--auxline-fg-muted)]">
+      暂无更新
+    </p>
+    <!-- 每个版本一行：左边版本号与日期，右边条目；条目类型是一枚小标签 -->
+    <template v-else>
+      <section
+        v-for="item in changelogItems"
+        :key="`${item.date}-${item.version}`"
+        class="grid grid-cols-1 gap-3 border-b border-[var(--auxline-line)] px-[var(--zr-gutter)] py-6 sm:grid-cols-[160px_minmax(0,1fr)] sm:gap-8"
+      >
+        <div class="flex flex-row items-baseline gap-3 sm:flex-col sm:gap-1">
+          <span v-if="item.version" class="text-[15px] font-semibold">v{{ item.version }}</span>
+          <span class="text-xs text-[var(--auxline-fg-muted)]">{{ item.date || '未注明日期' }}</span>
         </div>
-      </article>
-    </div>
+        <div class="flex min-w-0 max-w-3xl flex-col gap-3">
+          <p v-if="item.summary" class="text-sm font-medium">
+            {{ item.summary }}
+          </p>
+          <ul v-if="item.entries.length > 0" class="m-0 flex list-none flex-col gap-2 p-0">
+            <li
+              v-for="(entry, index) in item.entries"
+              :key="`${item.date}-${item.version}-${index}`"
+              class="flex items-start gap-3 text-[13px] leading-relaxed text-[var(--auxline-fg-2)]"
+            >
+              <span class="zr-tag mt-0.5">{{ entry.type }}</span>
+              <span class="min-w-0 flex-1">{{ entry.text }}</span>
+            </li>
+          </ul>
+          <p v-else class="text-xs text-[var(--auxline-fg-muted)]">
+            暂无记录
+          </p>
+        </div>
+      </section>
+    </template>
   </section>
 </template>

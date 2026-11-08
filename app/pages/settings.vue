@@ -12,19 +12,19 @@ useSeoMeta({
 </script>
 
 <template>
-  <section class="flex flex-col items-center">
+  <section class="flex w-full flex-col">
     <AuxlinePageHeader
       title="设置"
       subtitle="外观与显示"
     />
 
-    <div class="w-full max-w-xl border-[var(--auxline-line)]">
-      <div class="flex flex-col gap-4 px-4 py-6 border-x border-[var(--auxline-line)]">
+    <div class="w-full">
+      <div class="flex max-w-xl flex-col gap-6 px-[var(--zr-gutter)] py-6">
         <div class="flex flex-col gap-2">
-          <p class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+          <p class="text-sm font-medium">
             主题模式
           </p>
-          <div class="flex flex-wrap items-center" role="group" aria-label="主题模式切换">
+          <div class="flex flex-wrap items-center gap-0.5" role="group" aria-label="主题模式切换">
             <AuxlineBtn
               size="sm"
               :variant="selectedScheme === 'auto' ? 'contrast' : 'solid'"
@@ -56,10 +56,10 @@ useSeoMeta({
           </p>
         </div>
         <div class="flex flex-col gap-2">
-          <p class="text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
+          <p class="text-sm font-medium">
             侧边赞助栏
           </p>
-          <div class="flex flex-wrap items-center" role="group" aria-label="侧边赞助栏显示">
+          <div class="flex flex-wrap items-center gap-0.5" role="group" aria-label="侧边赞助栏显示">
             <AuxlineBtn
               size="sm"
               :variant="showSponsorsSidebar ? 'contrast' : 'solid'"

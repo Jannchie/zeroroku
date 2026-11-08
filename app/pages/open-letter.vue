@@ -5,21 +5,13 @@ useSeoMeta({
 </script>
 
 <template>
-  <section class="flex flex-col items-center">
+  <section class="flex w-full flex-col">
     <AuxlinePageHeader
       title="公开信"
-      subtitle="06数据观测站"
+      subtitle="致观测者"
     />
-    <div class="w-full max-w-3xl border-[var(--auxline-line)] sm:border-x">
-      <div class="flex items-center justify-between border-b border-[var(--auxline-line)]">
-        <p class="px-2 text-xs font-mono uppercase tracking-[0.12em] text-[var(--auxline-fg-muted)]">
-          致观测者
-        </p>
-        <AuxlineBtn to="/" size="sm">
-          返回主页面
-        </AuxlineBtn>
-      </div>
-      <article class="flex flex-col gap-4 px-4 py-6 text-sm leading-7">
+    <div class="w-full">
+      <article class="flex max-w-2xl flex-col gap-4 px-[var(--zr-gutter)] py-8 text-sm leading-7 text-[var(--auxline-fg-2)]">
         <p>
           你好，这里是Jannchie见齐，B站ID:1850091。zeroroku是一个数据观测站。
         </p>
